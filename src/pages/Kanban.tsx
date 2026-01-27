@@ -1,0 +1,153 @@
+import { useState } from 'react';
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
+import { AppLayout } from '@/components/layout/AppLayout';
+import { LeadCard } from '@/components/leads/LeadCard';
+import { LeadDetailDialog } from '@/components/leads/LeadDetailDialog';
+import { ScheduleMeetingDialog } from '@/components/calendar/ScheduleMeetingDialog';
+import { useLeads } from '@/hooks/useLeads';
+import { Lead, LeadStatus, KANBAN_COLUMNS } from '@/types/crm';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+
+export default function KanbanPage() {
+  const { leads, loading, updateLeadStatus } = useLeads();
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [schedulingLead, setSchedulingLead] = useState<Lead | null>(null);
+
+  const getLeadsByStatus = (status: LeadStatus) => 
+    leads.filter(l => l.status === status);
+
+  const handleDragEnd = async (result: DropResult) => {
+    if (!result.destination) return;
+
+    const leadId = result.draggableId;
+    const newStatus = result.destination.droppableId as LeadStatus;
+    const lead = leads.find(l => l.id === leadId);
+
+    if (!lead || lead.status === newStatus) return;
+
+    // If moving to qualificado, show schedule meeting dialog
+    if (newStatus === 'qualificado' || newStatus === 'reuniao_marcada') {
+      setSchedulingLead({ ...lead, status: newStatus } as Lead);
+      return;
+    }
+
+    await updateLeadStatus(leadId, newStatus);
+  };
+
+  if (loading) {
+    return (
+      <AppLayout title="Kanban">
+        <div className="flex gap-4 overflow-x-auto pb-4">
+          {KANBAN_COLUMNS.map(col => (
+            <div key={col.id} className="min-w-[300px] space-y-3">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-40 w-full" />
+              <Skeleton className="h-40 w-full" />
+            </div>
+          ))}
+        </div>
+      </AppLayout>
+    );
+  }
+
+  return (
+    <AppLayout title="Kanban">
+      <DragDropContext onDragEnd={handleDragEnd}>
+        <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin">
+          {KANBAN_COLUMNS.map(column => {
+            const columnLeads = getLeadsByStatus(column.id);
+            
+            return (
+              <div 
+                key={column.id} 
+                className="min-w-[320px] flex-shrink-0"
+              >
+                {/* Column header */}
+                <div className={`rounded-t-lg p-3 ${column.color} border border-b-0`}>
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold text-sm">{column.title}</h3>
+                    <Badge variant="secondary" className="text-xs">
+                      {columnLeads.length}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {column.role === 'sdr' ? 'SDR' : 'Closer'}
+                  </p>
+                </div>
+
+                {/* Droppable area */}
+                <Droppable droppableId={column.id}>
+                  {(provided, snapshot) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.droppableProps}
+                      className={`min-h-[500px] space-y-3 rounded-b-lg border border-t-0 p-3 transition-colors ${
+                        snapshot.isDraggingOver 
+                          ? 'bg-primary/5 border-primary/50' 
+                          : 'bg-card'
+                      }`}
+                    >
+                      {columnLeads.map((lead, index) => (
+                        <Draggable
+                          key={lead.id}
+                          draggableId={lead.id}
+                          index={index}
+                        >
+                          {(provided, snapshot) => (
+                            <div
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                              className={`transition-transform ${
+                                snapshot.isDragging ? 'rotate-2 scale-105' : ''
+                              }`}
+                            >
+                              <LeadCard
+                                lead={lead}
+                                onClick={() => setSelectedLead(lead)}
+                              />
+                            </div>
+                          )}
+                        </Draggable>
+                      ))}
+                      {provided.placeholder}
+                      
+                      {columnLeads.length === 0 && (
+                        <div className="flex h-32 items-center justify-center rounded-lg border-2 border-dashed border-muted">
+                          <p className="text-sm text-muted-foreground">
+                            Arraste leads aqui
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </Droppable>
+              </div>
+            );
+          })}
+        </div>
+      </DragDropContext>
+
+      {/* Lead detail dialog */}
+      <LeadDetailDialog
+        lead={selectedLead}
+        open={!!selectedLead}
+        onOpenChange={(open) => !open && setSelectedLead(null)}
+      />
+
+      {/* Schedule meeting dialog */}
+      <ScheduleMeetingDialog
+        lead={schedulingLead}
+        open={!!schedulingLead}
+        onOpenChange={(open) => !open && setSchedulingLead(null)}
+        onScheduled={() => {
+          if (schedulingLead) {
+            updateLeadStatus(schedulingLead.id, schedulingLead.status);
+          }
+          setSchedulingLead(null);
+        }}
+      />
+    </AppLayout>
+  );
+}
