@@ -106,6 +106,7 @@ export default function KanbanPage() {
                               <LeadCard
                                 lead={lead}
                                 onClick={() => setSelectedLead(lead)}
+                                compact
                               />
                             </div>
                           )}
