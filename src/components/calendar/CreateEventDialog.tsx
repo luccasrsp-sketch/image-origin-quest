@@ -75,7 +75,7 @@ export function CreateEventDialog({ open, onOpenChange, defaultDate }: CreateEve
     await createEvent({
       title: formData.title,
       description: formData.description || undefined,
-      lead_id: formData.leadId || undefined,
+      lead_id: formData.leadId && formData.leadId !== 'none' ? formData.leadId : undefined,
       user_id: formData.userId,
       start_time: startDateTime.toISOString(),
       end_time: endDateTime.toISOString(),
@@ -203,7 +203,7 @@ export function CreateEventDialog({ open, onOpenChange, defaultDate }: CreateEve
                 <SelectValue placeholder="Vincular a um lead" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Nenhum</SelectItem>
+                <SelectItem value="none">Nenhum</SelectItem>
                 {leads.map(lead => (
                   <SelectItem key={lead.id} value={lead.id}>
                     <div className="flex items-center gap-2">
