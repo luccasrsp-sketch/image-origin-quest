@@ -124,7 +124,7 @@ export interface LeadActivity {
 }
 
 // Kanban column configuration
-export const KANBAN_COLUMNS: { id: LeadStatus; title: string; color: string; role: 'sdr' | 'closer' }[] = [
+export const KANBAN_COLUMNS: { id: LeadStatus; title: string; color: string; role: 'sdr' | 'closer'; adminOnly?: boolean }[] = [
   { id: 'sem_atendimento', title: 'Sem Atendimento', color: 'bg-white text-slate-900', role: 'sdr' },
   { id: 'nao_atendeu', title: 'Não Atendeu', color: 'bg-amber-100 text-amber-900', role: 'sdr' },
   { id: 'em_contato', title: 'Em Contato', color: 'bg-sky-100 text-sky-900', role: 'sdr' },
@@ -132,7 +132,7 @@ export const KANBAN_COLUMNS: { id: LeadStatus; title: string; color: string; rol
   { id: 'reuniao_marcada', title: 'Reunião Marcada', color: 'bg-violet-100 text-violet-900', role: 'closer' },
   { id: 'envio_proposta', title: 'Envio de Proposta', color: 'bg-blue-100 text-blue-900', role: 'closer' },
   { id: 'vendido', title: 'Vendido', color: 'bg-green-100 text-green-900', role: 'closer' },
-  { id: 'perdido', title: 'Perdido', color: 'bg-gray-200 text-gray-700', role: 'closer' },
+  { id: 'perdido', title: 'Perdido', color: 'bg-gray-200 text-gray-700', role: 'closer', adminOnly: true },
   { id: 'recuperacao_sdr', title: 'Recuperação SDR', color: 'bg-rose-100 text-rose-900', role: 'sdr' },
 ];
 

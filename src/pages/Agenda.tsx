@@ -4,8 +4,16 @@ import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useCalendar } from '@/hooks/useCalendar';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTeam } from '@/hooks/useTeam';
 import { format, isSameDay, startOfDay, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { 
@@ -16,6 +24,7 @@ import {
   Calendar as CalendarIcon,
   ChevronLeft,
   ChevronRight,
+  Users,
 } from 'lucide-react';
 import { CreateEventDialog } from '@/components/calendar/CreateEventDialog';
 import { EventDetailDialog } from '@/components/calendar/EventDetailDialog';
@@ -23,14 +32,23 @@ import { CalendarEvent } from '@/types/crm';
 
 export default function AgendaPage() {
   const { events, loading } = useCalendar();
-  const { profile } = useAuth();
+  const { profile, isAdmin } = useAuth();
+  const { getClosers } = useTeam();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [viewMode, setViewMode] = useState<'day' | 'week'>('day');
+  const [selectedCloserId, setSelectedCloserId] = useState<string>('all');
+
+  const closers = getClosers();
+
+  // Filter events based on selected closer (admin only)
+  const filteredEvents = isAdmin() && selectedCloserId !== 'all'
+    ? events.filter(event => event.user_id === selectedCloserId)
+    : events;
 
   // Get events for selected date
-  const dayEvents = events.filter(event => 
+  const dayEvents = filteredEvents.filter(event => 
     isSameDay(new Date(event.start_time), selectedDate)
   );
 
@@ -39,7 +57,7 @@ export default function AgendaPage() {
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
   // Get dates that have events for calendar highlighting
-  const eventDates = events.map(e => startOfDay(new Date(e.start_time)));
+  const eventDates = filteredEvents.map(e => startOfDay(new Date(e.start_time)));
 
   const navigateDay = (direction: number) => {
     setSelectedDate(d => addDays(d, direction));
@@ -79,6 +97,33 @@ export default function AgendaPage() {
             <Plus className="h-4 w-4" />
             Novo Evento
           </Button>
+
+          {/* Closer selector for admins */}
+          {isAdmin() && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Visualizar Agenda
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Select value={selectedCloserId} onValueChange={setSelectedCloserId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o closer" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os Closers</SelectItem>
+                    {closers.map(closer => (
+                      <SelectItem key={closer.id} value={closer.id}>
+                        {closer.full_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Today's summary */}
           <Card>
@@ -181,6 +226,12 @@ export default function AgendaPage() {
                                 <span className="truncate">{event.lead.company_name}</span>
                               </div>
                             )}
+                            {isAdmin() && event.user && (
+                              <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
+                                <User className="h-3 w-3 shrink-0" />
+                                <span className="truncate">{event.user.full_name}</span>
+                              </div>
+                            )}
                             {event.description && (
                               <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
                                 {event.description}
@@ -204,7 +255,7 @@ export default function AgendaPage() {
               <CardContent className="p-4">
                 <div className="grid grid-cols-7 gap-2">
                   {weekDays.map((day, index) => {
-                    const dayEvts = events.filter(e => isSameDay(new Date(e.start_time), day));
+                    const dayEvts = filteredEvents.filter(e => isSameDay(new Date(e.start_time), day));
                     const isToday = isSameDay(day, new Date());
                     const isSelected = isSameDay(day, selectedDate);
 

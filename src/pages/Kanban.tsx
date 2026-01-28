@@ -32,11 +32,13 @@ export default function KanbanPage() {
 
   // Filtra colunas baseado no papel do usuário
   const visibleColumns = KANBAN_COLUMNS.filter(col => {
+    // Colunas adminOnly só aparecem para admins
+    if (col.adminOnly && !isAdmin()) return false;
     // Admin vê todas as colunas
     if (isAdmin()) return true;
     // SDR vê apenas colunas de SDR
     if (isSDR() && col.role === 'sdr') return true;
-    // Closer vê apenas colunas de Closer
+    // Closer vê apenas colunas de Closer (exceto adminOnly)
     if (isCloser() && col.role === 'closer') return true;
     return false;
   });
