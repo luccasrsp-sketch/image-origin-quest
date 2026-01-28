@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Select,
   SelectContent,
@@ -17,9 +18,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Lead, LeadStatus, STATUS_LABELS, KANBAN_COLUMNS } from '@/types/crm';
-import { useLeads } from '@/hooks/useLeads';
+import { Lead, LeadStatus, STATUS_LABELS, KANBAN_COLUMNS, LeadActivity } from '@/types/crm';
 import { useTeam } from '@/hooks/useTeam';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 import { formatDistanceToNow, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { 
@@ -34,21 +37,49 @@ import {
   Tag,
   Globe,
   StickyNote,
+  History,
 } from 'lucide-react';
 
 interface LeadDetailDialogProps {
   lead: Lead | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onStatusChange?: (leadId: string, newStatus: LeadStatus, closerId?: string) => Promise<boolean>;
+  onAddNote?: (leadId: string, note: string) => Promise<boolean>;
 }
 
-export function LeadDetailDialog({ lead, open, onOpenChange }: LeadDetailDialogProps) {
-  const { updateLeadStatus, addNote } = useLeads();
-  const { getSDRs, getClosers } = useTeam();
-  const [notes, setNotes] = useState(lead?.notes || '');
+export function LeadDetailDialog({ lead, open, onOpenChange, onStatusChange, onAddNote }: LeadDetailDialogProps) {
+  const { getClosers } = useTeam();
+  const { toast } = useToast();
+  const { profile } = useAuth();
+  const [newNote, setNewNote] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<LeadStatus | ''>('');
   const [selectedCloser, setSelectedCloser] = useState<string>('');
   const [isSaving, setIsSaving] = useState(false);
+  const [activities, setActivities] = useState<LeadActivity[]>([]);
+  const [loadingActivities, setLoadingActivities] = useState(false);
+
+  // Buscar histórico de atividades quando o dialog abrir
+  useEffect(() => {
+    if (open && lead) {
+      fetchActivities();
+    }
+  }, [open, lead?.id]);
+
+  const fetchActivities = async () => {
+    if (!lead) return;
+    setLoadingActivities(true);
+    const { data, error } = await supabase
+      .from('lead_activities')
+      .select('*, user:profiles(*)')
+      .eq('lead_id', lead.id)
+      .order('created_at', { ascending: false });
+
+    if (!error && data) {
+      setActivities(data as LeadActivity[]);
+    }
+    setLoadingActivities(false);
+  };
 
   if (!lead) return null;
 
@@ -63,21 +94,30 @@ export function LeadDetailDialog({ lead, open, onOpenChange }: LeadDetailDialogP
   };
 
   const handleStatusChange = async () => {
-    if (!selectedStatus) return;
+    if (!selectedStatus || !onStatusChange) return;
     setIsSaving(true);
     
     // If moving to closer stage, require closer selection
     const closerStages: LeadStatus[] = ['qualificado', 'reuniao_marcada', 'envio_proposta', 'vendido'];
     const closerId = closerStages.includes(selectedStatus) ? selectedCloser : undefined;
     
-    await updateLeadStatus(lead.id, selectedStatus, closerId);
+    const success = await onStatusChange(lead.id, selectedStatus, closerId);
+    if (success) {
+      await fetchActivities(); // Atualiza o histórico
+    }
     setIsSaving(false);
-    onOpenChange(false);
+    setSelectedStatus('');
+    setSelectedCloser('');
   };
 
   const handleSaveNotes = async () => {
+    if (!newNote.trim() || !onAddNote) return;
     setIsSaving(true);
-    await addNote(lead.id, notes);
+    const success = await onAddNote(lead.id, newNote.trim());
+    if (success) {
+      setNewNote('');
+      await fetchActivities(); // Atualiza o histórico
+    }
     setIsSaving(false);
   };
 
@@ -189,26 +229,60 @@ export function LeadDetailDialog({ lead, open, onOpenChange }: LeadDetailDialogP
             )}
           </div>
 
-          {/* Notes */}
+          {/* Nova Observação */}
           <div className="space-y-2">
             <Label className="flex items-center gap-2">
               <StickyNote className="h-4 w-4" />
-              Observações
+              Nova Observação
             </Label>
             <Textarea
-              value={notes}
-              onChange={e => setNotes(e.target.value)}
-              placeholder="Adicione observações sobre este lead..."
+              value={newNote}
+              onChange={e => setNewNote(e.target.value)}
+              placeholder="Adicione uma observação sobre este lead..."
               rows={3}
             />
             <Button 
               variant="outline" 
               size="sm" 
               onClick={handleSaveNotes}
-              disabled={isSaving}
+              disabled={isSaving || !newNote.trim()}
             >
-              Salvar Observações
+              Salvar Observação
             </Button>
+          </div>
+
+          {/* Histórico de Atividades */}
+          <div className="space-y-2 border-t pt-4">
+            <Label className="flex items-center gap-2">
+              <History className="h-4 w-4" />
+              Histórico de Negociação
+            </Label>
+            <ScrollArea className="h-48 rounded-md border p-3">
+              {loadingActivities ? (
+                <p className="text-sm text-muted-foreground">Carregando...</p>
+              ) : activities.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhuma atividade registrada.</p>
+              ) : (
+                <div className="space-y-3">
+                  {activities.map((activity) => (
+                    <div key={activity.id} className="border-b pb-2 last:border-0">
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span>{activity.user?.full_name || 'Sistema'}</span>
+                        <span>{format(new Date(activity.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</span>
+                      </div>
+                      {activity.action === 'status_change' && (
+                        <p className="text-sm">
+                          Alterou status de <strong>{STATUS_LABELS[activity.old_status!] || '-'}</strong> para <strong>{STATUS_LABELS[activity.new_status!]}</strong>
+                        </p>
+                      )}
+                      {activity.action === 'note_added' && (
+                        <p className="text-sm bg-muted/50 p-2 rounded mt-1">{activity.notes}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </ScrollArea>
           </div>
 
           {/* Status change */}
