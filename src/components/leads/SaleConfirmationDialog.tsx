@@ -125,8 +125,8 @@ export function SaleConfirmationDialog({
       companyCnpj,
       adminEmail,
       paymentMethod,
-      entryValue: parseFloat(entryValue) || 0,
-      remainingValue: parseFloat(remainingValue) || 0,
+      entryValue: parseFloat(entryValue.replace(',', '.')) || 0,
+      remainingValue: parseFloat(remainingValue.replace(',', '.')) || 0,
       installments: parseInt(installments) || 0,
       firstCheckDate: firstCheckDate || null,
       observations,
@@ -158,8 +158,8 @@ export function SaleConfirmationDialog({
         companyCnpj,
         adminEmail,
         paymentMethod,
-        entryValue: parseFloat(entryValue) || 0,
-        remainingValue: parseFloat(remainingValue) || 0,
+        entryValue: parseFloat(entryValue.replace(',', '.')) || 0,
+        remainingValue: parseFloat(remainingValue.replace(',', '.')) || 0,
         installments: parseInt(installments) || 0,
         firstCheckDate: firstCheckDate || null,
         observations,
@@ -301,23 +301,39 @@ ${observations ? `📝 *Observações:* ${observations}` : ''}`;
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="entryValue">Valor de Entrada</Label>
-                  <Input
-                    id="entryValue"
-                    type="number"
-                    value={entryValue}
-                    onChange={(e) => setEntryValue(e.target.value)}
-                    placeholder="0,00"
-                  />
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">R$</span>
+                    <Input
+                      id="entryValue"
+                      type="text"
+                      inputMode="decimal"
+                      value={entryValue}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/[^\d,]/g, '');
+                        setEntryValue(value);
+                      }}
+                      placeholder="0,00"
+                      className="pl-10"
+                    />
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="remainingValue">Valor Restante</Label>
-                  <Input
-                    id="remainingValue"
-                    type="number"
-                    value={remainingValue}
-                    onChange={(e) => setRemainingValue(e.target.value)}
-                    placeholder="0,00"
-                  />
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">R$</span>
+                    <Input
+                      id="remainingValue"
+                      type="text"
+                      inputMode="decimal"
+                      value={remainingValue}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/[^\d,]/g, '');
+                        setRemainingValue(value);
+                      }}
+                      placeholder="0,00"
+                      className="pl-10"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -379,39 +395,6 @@ ${observations ? `📝 *Observações:* ${observations}` : ''}`;
                 />
               </div>
 
-              {/* Status do Contrato e Pagamento */}
-              <div className="grid grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg">
-                <div className="space-y-2">
-                  <Label>Contrato Enviado</Label>
-                  <Select 
-                    value={contractSent ? 'sim' : 'nao'} 
-                    onValueChange={(value) => setContractSent(value === 'sim')}
-                  >
-                    <SelectTrigger className="bg-background">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-background z-50">
-                      <SelectItem value="nao">Não</SelectItem>
-                      <SelectItem value="sim">Sim</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Pagamento Realizado</Label>
-                  <Select 
-                    value={paymentReceived ? 'sim' : 'nao'} 
-                    onValueChange={(value) => setPaymentReceived(value === 'sim')}
-                  >
-                    <SelectTrigger className="bg-background">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-background z-50">
-                      <SelectItem value="nao">Não</SelectItem>
-                      <SelectItem value="sim">Sim</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
             </div>
 
             <DialogFooter className="flex-col gap-2 sm:flex-row">
