@@ -1,4 +1,4 @@
-import { Phone, Mail, Building, Clock, MessageSquare, FileText, CalendarClock, CheckCircle2, Eye } from 'lucide-react';
+import { Phone, Mail, Building, Clock, MessageSquare, FileText, CalendarClock, CheckCircle2, Eye, FileCheck, Wallet } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -157,6 +157,18 @@ export function LeadCard({ lead, onClick, onViewSale, showActions = true, compac
                   ⏱️ Tempo de fechamento: <span className="font-medium">{daysToClose} dias</span>
                 </div>
               )}
+              
+              {/* Status do Contrato e Pagamento */}
+              <div className="flex flex-col gap-1 pt-1">
+                <div className={`flex items-center gap-1 text-xs ${lead.sale_contract_sent ? 'text-success-foreground' : 'text-warning'}`}>
+                  <FileCheck className="h-3 w-3" />
+                  <span>Contrato: {lead.sale_contract_sent ? 'Enviado ✓' : 'Pendente'}</span>
+                </div>
+                <div className={`flex items-center gap-1 text-xs ${lead.sale_payment_received ? 'text-success-foreground' : 'text-warning'}`}>
+                  <Wallet className="h-3 w-3" />
+                  <span>Pagamento: {lead.sale_payment_received ? 'Realizado ✓' : 'Pendente'}</span>
+                </div>
+              </div>
             </div>
           )}
         </CardContent>
