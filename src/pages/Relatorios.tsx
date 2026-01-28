@@ -1,5 +1,5 @@
 import { AppLayout } from '@/components/layout/AppLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useLeads } from '@/hooks/useLeads';
 import { useCalendar } from '@/hooks/useCalendar';
@@ -31,6 +31,8 @@ import {
   Clock,
   ArrowUpRight,
   ArrowDownRight,
+  XCircle,
+  MessageSquareWarning,
 } from 'lucide-react';
 import { format, subDays, startOfDay, eachDayOfInterval, isWithinInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -129,6 +131,69 @@ export default function RelatoriosPage() {
   ).map(([name, value]) => ({ name, value }))
   .sort((a, b) => b.value - a.value)
   .slice(0, 5);
+
+  // Lost leads analysis
+  const lostLeads = leads.filter(l => l.status === 'perdido' && l.loss_reason);
+  
+  // Extract and categorize loss reasons
+  const categorizeReason = (reason: string): string => {
+    const lowerReason = reason.toLowerCase();
+    
+    if (lowerReason.includes('orçamento') || lowerReason.includes('preço') || lowerReason.includes('caro') || lowerReason.includes('dinheiro') || lowerReason.includes('investimento') || lowerReason.includes('valor')) {
+      return 'Sem Orçamento';
+    }
+    if (lowerReason.includes('concorrente') || lowerReason.includes('concorrência') || lowerReason.includes('outra empresa') || lowerReason.includes('outro fornecedor')) {
+      return 'Optou por Concorrente';
+    }
+    if (lowerReason.includes('momento') || lowerReason.includes('timing') || lowerReason.includes('agora não') || lowerReason.includes('depois') || lowerReason.includes('adiou') || lowerReason.includes('adiar') || lowerReason.includes('futuro')) {
+      return 'Momento Inadequado';
+    }
+    if (lowerReason.includes('interesse') || lowerReason.includes('não quer') || lowerReason.includes('desistiu') || lowerReason.includes('não precisa')) {
+      return 'Sem Interesse';
+    }
+    if (lowerReason.includes('contato') || lowerReason.includes('não atende') || lowerReason.includes('sumiu') || lowerReason.includes('ghost') || lowerReason.includes('não responde')) {
+      return 'Sem Retorno';
+    }
+    if (lowerReason.includes('perfil') || lowerReason.includes('não se encaixa') || lowerReason.includes('não é pra') || lowerReason.includes('público')) {
+      return 'Fora do Perfil';
+    }
+    return 'Outros Motivos';
+  };
+
+  const lossReasonCounts = lostLeads.reduce((acc, lead) => {
+    const category = categorizeReason(lead.loss_reason || '');
+    acc[category] = (acc[category] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const lossReasonRanking = Object.entries(lossReasonCounts)
+    .map(([reason, count]) => ({ reason, count, percentage: ((count / lostLeads.length) * 100).toFixed(1) }))
+    .sort((a, b) => b.count - a.count);
+
+  // Word cloud data - extract common words from loss reasons
+  const extractWords = (reasons: string[]): { text: string; value: number }[] => {
+    const stopWords = new Set(['o', 'a', 'os', 'as', 'um', 'uma', 'uns', 'umas', 'de', 'da', 'do', 'das', 'dos', 'em', 'na', 'no', 'nas', 'nos', 'por', 'para', 'com', 'que', 'e', 'é', 'foi', 'ser', 'está', 'não', 'se', 'ele', 'ela', 'eles', 'elas', 'seu', 'sua', 'seus', 'suas', 'isso', 'este', 'esta', 'esse', 'essa', 'ao', 'à', 'às', 'aos', 'já', 'também', 'muito', 'mais', 'como', 'mas', 'ou', 'porque', 'quando', 'qual', 'até', 'sem', 'sobre', 'entre', 'depois', 'antes', 'ainda', 'agora', 'então', 'só', 'ter', 'tem', 'tinha', 'vai', 'vão', 'estava', 'era', 'eram']);
+    
+    const wordCounts: Record<string, number> = {};
+    
+    reasons.forEach(reason => {
+      const words = reason.toLowerCase()
+        .replace(/[^\wáàâãéèêíìîóòôõúùûç\s]/gi, '')
+        .split(/\s+/)
+        .filter(word => word.length > 2 && !stopWords.has(word));
+      
+      words.forEach(word => {
+        wordCounts[word] = (wordCounts[word] || 0) + 1;
+      });
+    });
+    
+    return Object.entries(wordCounts)
+      .map(([text, value]) => ({ text, value }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 30);
+  };
+
+  const wordCloudData = extractWords(lostLeads.map(l => l.loss_reason || ''));
 
   return (
     <AppLayout title="Relatórios">
@@ -378,6 +443,131 @@ export default function RelatoriosPage() {
               </ResponsiveContainer>
             </CardContent>
           </Card>
+        )}
+
+        {/* Loss Reason Analysis Section */}
+        {lostLeads.length > 0 && (
+          <>
+            <div className="flex items-center gap-2 pt-4">
+              <XCircle className="h-5 w-5 text-destructive" />
+              <h2 className="text-xl font-semibold">Análise de Leads Perdidos</h2>
+              <Badge variant="destructive">{lostLeads.length} leads perdidos</Badge>
+            </div>
+
+            <div className="grid gap-6 md:grid-cols-2">
+              {/* Ranking of Loss Reasons */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <MessageSquareWarning className="h-5 w-5" />
+                    Ranking de Motivos de Perda
+                  </CardTitle>
+                  <CardDescription>
+                    Motivos categorizados automaticamente com base nas respostas dos vendedores
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {lossReasonRanking.map((item, index) => (
+                      <div key={item.reason} className="flex items-center gap-3">
+                        <div className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${
+                          index === 0 ? 'bg-destructive text-destructive-foreground' :
+                          index === 1 ? 'bg-warning text-warning-foreground' :
+                          index === 2 ? 'bg-muted text-muted-foreground' :
+                          'bg-muted/50 text-muted-foreground'
+                        }`}>
+                          {index + 1}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium">{item.reason}</span>
+                            <span className="text-sm text-muted-foreground">
+                              {item.count} ({item.percentage}%)
+                            </span>
+                          </div>
+                          <div className="mt-1 h-2 w-full rounded-full bg-muted">
+                            <div 
+                              className="h-full rounded-full bg-destructive/70 transition-all"
+                              style={{ width: `${item.percentage}%` }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Word Cloud Visualization */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Nuvem de Palavras</CardTitle>
+                  <CardDescription>
+                    Palavras mais frequentes nos motivos de perda
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-2 justify-center items-center min-h-[200px]">
+                    {wordCloudData.map((word, index) => {
+                      const maxValue = wordCloudData[0]?.value || 1;
+                      const sizeRatio = word.value / maxValue;
+                      const fontSize = Math.max(12, Math.min(36, 12 + sizeRatio * 24));
+                      const opacity = 0.4 + sizeRatio * 0.6;
+                      
+                      return (
+                        <span 
+                          key={word.text}
+                          className="text-destructive transition-all hover:scale-110 cursor-default"
+                          style={{ 
+                            fontSize: `${fontSize}px`,
+                            opacity,
+                            fontWeight: sizeRatio > 0.5 ? 600 : 400,
+                          }}
+                          title={`"${word.text}" apareceu ${word.value} vezes`}
+                        >
+                          {word.text}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Recent Loss Reasons */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Últimos Motivos de Perda</CardTitle>
+                <CardDescription>
+                  Motivos registrados pelos vendedores (mais recentes primeiro)
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3 max-h-[300px] overflow-y-auto">
+                  {lostLeads
+                    .sort((a, b) => new Date(b.lost_at || b.updated_at).getTime() - new Date(a.lost_at || a.updated_at).getTime())
+                    .slice(0, 10)
+                    .map((lead) => (
+                      <div key={lead.id} className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                        <XCircle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-medium truncate">{lead.full_name}</span>
+                            <Badge variant="outline" className="shrink-0 text-xs">
+                              {categorizeReason(lead.loss_reason || '')}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground mt-1">{lead.loss_reason}</p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {lead.lost_at ? format(new Date(lead.lost_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }) : 'Data não registrada'}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </CardContent>
+            </Card>
+          </>
         )}
       </div>
     </AppLayout>

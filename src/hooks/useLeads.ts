@@ -370,6 +370,47 @@ export function useLeads() {
     return true;
   };
 
+  const markAsLost = async (leadId: string, reason: string) => {
+    const { error } = await supabase
+      .from('leads')
+      .update({
+        status: 'perdido',
+        loss_reason: reason,
+        lost_at: new Date().toISOString(),
+        last_contact_at: new Date().toISOString(),
+      })
+      .eq('id', leadId);
+
+    if (error) {
+      toast({
+        title: 'Erro ao marcar lead como perdido',
+        description: error.message,
+        variant: 'destructive',
+      });
+      return false;
+    }
+
+    // Log activity
+    if (profile?.id) {
+      await supabase.from('lead_activities').insert({
+        lead_id: leadId,
+        user_id: profile.id,
+        action: 'status_change',
+        old_status: leads.find(l => l.id === leadId)?.status,
+        new_status: 'perdido',
+        notes: `Lead marcado como perdido. Motivo: ${reason}`,
+      });
+    }
+
+    toast({
+      title: 'Lead marcado como perdido',
+      description: 'O motivo foi registrado para análise.',
+    });
+
+    fetchLeads();
+    return true;
+  };
+
   return {
     leads,
     loading,
@@ -382,6 +423,7 @@ export function useLeads() {
     saveProposal,
     saveSaleData,
     updateSaleStatus,
+    markAsLost,
     getNewLeads,
     getLeadsByStatus,
   };

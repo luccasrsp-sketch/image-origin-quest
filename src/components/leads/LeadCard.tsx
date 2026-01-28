@@ -1,4 +1,4 @@
-import { Phone, Mail, Building, Clock, MessageSquare, FileText, CalendarClock, CheckCircle2, Eye, FileCheck, Wallet } from 'lucide-react';
+import { Phone, Mail, Building, Clock, MessageSquare, FileText, CalendarClock, CheckCircle2, Eye, FileCheck, Wallet, XCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -18,11 +18,12 @@ interface LeadCardProps {
   onClick?: () => void;
   onViewSale?: () => void;
   onUpdateSaleStatus?: (leadId: string, field: 'contract' | 'payment', value: boolean) => void;
+  onMarkAsLost?: (lead: Lead) => void;
   showActions?: boolean;
   compact?: boolean;
 }
 
-export function LeadCard({ lead, onClick, onViewSale, onUpdateSaleStatus, showActions = true, compact = false }: LeadCardProps) {
+export function LeadCard({ lead, onClick, onViewSale, onUpdateSaleStatus, onMarkAsLost, showActions = true, compact = false }: LeadCardProps) {
   const timeSinceCreated = formatDistanceToNow(new Date(lead.created_at), {
     addSuffix: true,
     locale: ptBR,
@@ -72,12 +73,16 @@ export function LeadCard({ lead, onClick, onViewSale, onUpdateSaleStatus, showAc
       : null;
 
     const isVendido = lead.status === 'vendido';
+    const isPerdido = lead.status === 'perdido';
+    const canMarkAsLost = lead.status !== 'vendido' && lead.status !== 'perdido' && lead.status !== 'sem_atendimento';
 
     return (
       <Card 
         className={`cursor-pointer transition-all hover:shadow-md relative ${
           isVendido 
             ? 'bg-success/20 border-success hover:border-success/70' 
+            : isPerdido
+            ? 'bg-muted/50 border-muted-foreground/30 hover:border-muted-foreground/50'
             : 'hover:border-primary/50'
         }`}
         onClick={onClick}
@@ -118,6 +123,12 @@ export function LeadCard({ lead, onClick, onViewSale, onUpdateSaleStatus, showAc
               {productLabel || 'Vendido'}
             </Badge>
           )}
+          {isPerdido && (
+            <Badge variant="secondary" className="text-xs mb-1 flex items-center gap-1 w-fit bg-muted-foreground/20">
+              <XCircle className="h-3 w-3" />
+              Perdido
+            </Badge>
+          )}
           {lead.status === 'envio_proposta' && lead.proposal_product && lead.proposal_value && (
             <Badge className="bg-primary text-primary-foreground text-xs mb-1 flex items-center gap-1 w-fit">
               <FileText className="h-3 w-3" />
@@ -137,7 +148,7 @@ export function LeadCard({ lead, onClick, onViewSale, onUpdateSaleStatus, showAc
               );
             })()
           )}
-          <h3 className={`font-semibold truncate ${isVendido ? 'text-success-foreground' : 'text-foreground'}`}>{lead.full_name}</h3>
+          <h3 className={`font-semibold truncate ${isVendido ? 'text-success-foreground' : isPerdido ? 'text-muted-foreground' : 'text-foreground'}`}>{lead.full_name}</h3>
           <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
             <Building className="h-3.5 w-3.5 shrink-0" />
             <span className="truncate">{lead.company_name}</span>
@@ -230,6 +241,34 @@ ${lead.sale_observations ? `📝 *Observações:* ${lead.sale_observations}` : '
                   </Select>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Info para leads perdidos */}
+          {isPerdido && lead.loss_reason && (
+            <div className="pt-2 mt-2 border-t border-muted-foreground/20 space-y-1">
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Clock className="h-3 w-3" />
+                <span>Perdido em: {lead.lost_at ? format(new Date(lead.lost_at), "dd/MM/yyyy", { locale: ptBR }) : 'N/A'}</span>
+              </div>
+              <div className="text-xs text-muted-foreground">
+                <span className="font-medium">Motivo:</span> {lead.loss_reason}
+              </div>
+            </div>
+          )}
+
+          {/* Botão de marcar como perdido */}
+          {canMarkAsLost && onMarkAsLost && (
+            <div className="pt-2 mt-2 border-t border-border" onClick={(e) => e.stopPropagation()}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full h-7 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+                onClick={() => onMarkAsLost(lead)}
+              >
+                <XCircle className="h-3 w-3 mr-1" />
+                Marcar como Perdido
+              </Button>
             </div>
           )}
         </CardContent>

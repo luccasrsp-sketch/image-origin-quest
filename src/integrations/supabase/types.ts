@@ -141,6 +141,8 @@ export type Database = {
           funnel_type: Database["public"]["Enums"]["funnel_type"]
           id: string
           last_contact_at: string | null
+          loss_reason: string | null
+          lost_at: string | null
           monthly_revenue: number | null
           needs_scheduling: boolean | null
           notes: string | null
@@ -179,6 +181,8 @@ export type Database = {
           funnel_type?: Database["public"]["Enums"]["funnel_type"]
           id?: string
           last_contact_at?: string | null
+          loss_reason?: string | null
+          lost_at?: string | null
           monthly_revenue?: number | null
           needs_scheduling?: boolean | null
           notes?: string | null
@@ -217,6 +221,8 @@ export type Database = {
           funnel_type?: Database["public"]["Enums"]["funnel_type"]
           id?: string
           last_contact_at?: string | null
+          loss_reason?: string | null
+          lost_at?: string | null
           monthly_revenue?: number | null
           needs_scheduling?: boolean | null
           notes?: string | null
@@ -470,6 +476,7 @@ export type Database = {
         | "envio_proposta"
         | "vendido"
         | "recuperacao_sdr"
+        | "perdido"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -608,6 +615,7 @@ export const Constants = {
         "envio_proposta",
         "vendido",
         "recuperacao_sdr",
+        "perdido",
       ],
     },
   },
