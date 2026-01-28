@@ -194,6 +194,7 @@ export default function KanbanPage() {
         onOpenChange={(open) => !open && setSelectedLead(null)}
         onStatusChange={updateLeadStatus}
         onAddNote={addNote}
+        onMarkAsLost={(lead) => setLossLead(lead)}
       />
 
       {/* Schedule meeting dialog */}

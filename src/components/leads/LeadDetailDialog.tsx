@@ -38,6 +38,7 @@ import {
   Globe,
   StickyNote,
   History,
+  XCircle,
 } from 'lucide-react';
 
 interface LeadDetailDialogProps {
@@ -46,9 +47,10 @@ interface LeadDetailDialogProps {
   onOpenChange: (open: boolean) => void;
   onStatusChange?: (leadId: string, newStatus: LeadStatus, closerId?: string) => Promise<boolean>;
   onAddNote?: (leadId: string, note: string) => Promise<boolean>;
+  onMarkAsLost?: (lead: Lead) => void;
 }
 
-export function LeadDetailDialog({ lead, open, onOpenChange, onStatusChange, onAddNote }: LeadDetailDialogProps) {
+export function LeadDetailDialog({ lead, open, onOpenChange, onStatusChange, onAddNote, onMarkAsLost }: LeadDetailDialogProps) {
   const { getClosers } = useTeam();
   const { toast } = useToast();
   const { profile } = useAuth();
@@ -124,11 +126,28 @@ export function LeadDetailDialog({ lead, open, onOpenChange, onStatusChange, onA
   const closers = getClosers();
   const showCloserSelect = ['qualificado', 'reuniao_marcada', 'envio_proposta', 'vendido'].includes(selectedStatus);
 
+  const canMarkAsLost = lead.status !== 'vendido' && lead.status !== 'perdido' && lead.status !== 'sem_atendimento';
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+        <DialogHeader className="relative">
+          {/* Botão Marcar como Perdido no canto superior direito */}
+          {canMarkAsLost && onMarkAsLost && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="absolute top-0 right-0 h-7 px-2 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+              onClick={() => {
+                onMarkAsLost(lead);
+                onOpenChange(false);
+              }}
+            >
+              <XCircle className="h-3 w-3 mr-1" />
+              Perdido
+            </Button>
+          )}
+          <DialogTitle className="flex items-center gap-2 pr-20">
             <User className="h-5 w-5" />
             {lead.full_name}
           </DialogTitle>

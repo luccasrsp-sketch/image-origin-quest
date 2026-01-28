@@ -88,14 +88,16 @@ export function LeadCard({ lead, onClick, onViewSale, onUpdateSaleStatus, onMark
         onClick={onClick}
       >
         {/* Canto superior direito - ações contextuais */}
-        <div className="absolute top-2 right-2">
-          {lead.status === 'sem_atendimento' && (
+        {lead.status === 'sem_atendimento' && (
+          <div className="absolute top-2 right-2">
             <Badge variant="outline" className="text-xs bg-background/80 backdrop-blur-sm">
               <Clock className="h-3 w-3 mr-1" />
               {timeSinceCreated}
             </Badge>
-          )}
-          {isVendido && (
+          </div>
+        )}
+        {isVendido && (
+          <div className="absolute top-2 right-2">
             <Button
               variant="ghost"
               size="sm"
@@ -108,23 +110,9 @@ export function LeadCard({ lead, onClick, onViewSale, onUpdateSaleStatus, onMark
               <Eye className="h-3 w-3 mr-1" />
               Ver negociação
             </Button>
-          )}
-          {canMarkAsLost && onMarkAsLost && !isVendido && lead.status !== 'sem_atendimento' && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2 text-xs bg-background/80 backdrop-blur-sm hover:bg-background text-destructive hover:text-destructive"
-              onClick={(e) => {
-                e.stopPropagation();
-                onMarkAsLost(lead);
-              }}
-            >
-              <XCircle className="h-3 w-3 mr-1" />
-              Perdido
-            </Button>
-          )}
-        </div>
-        <CardContent className={`p-3 space-y-1.5 ${lead.status === 'sem_atendimento' || isVendido || canMarkAsLost ? 'pt-10' : 'pt-3'}`}>
+          </div>
+        )}
+        <CardContent className={`p-3 space-y-1.5 ${lead.status === 'sem_atendimento' || isVendido ? 'pt-10' : 'pt-3'}`}>
           {lead.needs_scheduling && (
             <Badge className="bg-destructive text-destructive-foreground text-xs mb-1">
               Precisa agendar call!
