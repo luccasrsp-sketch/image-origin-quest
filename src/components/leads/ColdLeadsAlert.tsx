@@ -27,7 +27,9 @@ export function ColdLeadsAlert({ leads, onDismiss, onLeadClick }: ColdLeadsAlert
 
   useEffect(() => {
     const checkColdLeads = () => {
+      // TESTE: Simulando horário 18:45 - REMOVER APÓS TESTE
       const now = new Date();
+      now.setHours(18, 45, 0, 0);
       const currentHour = now.getHours();
       
       // Only check between 9am and 7pm
