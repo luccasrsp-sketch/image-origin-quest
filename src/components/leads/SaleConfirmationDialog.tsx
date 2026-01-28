@@ -146,8 +146,39 @@ export function SaleConfirmationDialog({
     return `55${digits}`;
   };
 
-  const sendToWhatsApp = (type: 'juridico' | 'financeiro') => {
+  const sendToWhatsApp = async (type: 'juridico' | 'financeiro') => {
     if (!lead) return;
+
+    // Automatically save the sale when sending to WhatsApp
+    if (!isSubmitting) {
+      setIsSubmitting(true);
+      const saleData: SaleData = {
+        leadId: lead.id,
+        product,
+        companyCnpj,
+        adminEmail,
+        paymentMethod,
+        entryValue: parseFloat(entryValue) || 0,
+        remainingValue: parseFloat(remainingValue) || 0,
+        installments: parseInt(installments) || 0,
+        firstCheckDate: firstCheckDate || null,
+        observations,
+        contractSent: type === 'juridico' ? true : contractSent, // Mark contract as sent if requesting
+        paymentReceived,
+      };
+      
+      const success = await onConfirm(saleData);
+      setIsSubmitting(false);
+      
+      if (!success) {
+        return; // Don't send WhatsApp if save failed
+      }
+      
+      // Update local state if we just requested contract
+      if (type === 'juridico') {
+        setContractSent(true);
+      }
+    }
 
     const header = type === 'juridico' 
       ? '📋 *SOLICITAÇÃO DE EMISSÃO DE CONTRATO*' 
