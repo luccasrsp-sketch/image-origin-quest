@@ -1,9 +1,9 @@
-import { Phone, Mail, Building, Clock, MessageSquare, FileText } from 'lucide-react';
+import { Phone, Mail, Building, Clock, MessageSquare, FileText, CalendarClock } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Lead, STATUS_LABELS, PROPOSAL_PRODUCTS } from '@/types/crm';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, format, isBefore } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 interface LeadCardProps {
@@ -74,6 +74,19 @@ export function LeadCard({ lead, onClick, showActions = true, compact = false }:
               <FileText className="h-3 w-3" />
               {productLabel} • {formatCurrency(lead.proposal_value)}
             </Badge>
+          )}
+          {lead.status === 'envio_proposta' && lead.proposal_follow_up_at && (
+            (() => {
+              const followUpDate = new Date(lead.proposal_follow_up_at);
+              const isOverdue = isBefore(followUpDate, new Date());
+              return (
+                <div className={`flex items-center gap-1 text-xs ${isOverdue ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
+                  <CalendarClock className="h-3 w-3" />
+                  <span>Retorno: {format(followUpDate, "dd/MM 'às' HH:mm", { locale: ptBR })}</span>
+                  {isOverdue && <span className="text-destructive">(Atrasado)</span>}
+                </div>
+              );
+            })()
           )}
           <h3 className="font-semibold text-foreground truncate">{lead.full_name}</h3>
           <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
