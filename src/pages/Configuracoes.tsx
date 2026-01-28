@@ -2,28 +2,35 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTeam } from '@/hooks/useTeam';
+import { useInvites } from '@/hooks/useInvites';
+import { InviteUserDialog } from '@/components/team/InviteUserDialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
-  Settings as SettingsIcon, 
   User, 
   Users, 
   Shield,
   Link,
   Copy,
   Check,
+  UserPlus,
+  Clock,
+  Trash2,
+  CheckCircle2,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { AppRole } from '@/types/crm';
 
 export default function ConfiguracoesPage() {
   const { profile, roles, isAdmin } = useAuth();
-  const { team } = useTeam();
+  const { team, fetchTeam } = useTeam();
+  const { pendingInvites, acceptedInvites, createInvite, deleteInvite } = useInvites();
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
 
   const formUrl = `${window.location.origin}/cadastro`;
 
@@ -51,6 +58,28 @@ export default function ConfiguracoesPage() {
     if (userRoles.includes('closer')) return { label: 'Closer', variant: 'secondary' as const };
     if (userRoles.includes('sdr')) return { label: 'SDR', variant: 'outline' as const };
     return { label: 'Usuário', variant: 'outline' as const };
+  };
+
+  const getRoleBadgeByRole = (role: AppRole) => {
+    if (role === 'admin') return { label: 'Admin', variant: 'default' as const };
+    if (role === 'closer') return { label: 'Closer', variant: 'secondary' as const };
+    if (role === 'sdr') return { label: 'SDR', variant: 'outline' as const };
+    return { label: 'Usuário', variant: 'outline' as const };
+  };
+
+  const handleInvite = async (email: string, role: AppRole) => {
+    if (!profile) return { success: false, error: 'Usuário não autenticado' };
+    return await createInvite(email, role, profile.id);
+  };
+
+  const handleDeleteInvite = async (id: string, email: string) => {
+    const success = await deleteInvite(id);
+    if (success) {
+      toast({
+        title: 'Convite removido',
+        description: `O convite para ${email} foi cancelado.`,
+      });
+    }
   };
 
   return (
@@ -125,14 +154,22 @@ export default function ConfiguracoesPage() {
 
         {/* Team section */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Equipe
-            </CardTitle>
-            <CardDescription>
-              Membros do time com acesso ao CRM
-            </CardDescription>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Equipe
+              </CardTitle>
+              <CardDescription>
+                Membros do time com acesso ao CRM
+              </CardDescription>
+            </div>
+            {isAdmin() && (
+              <Button onClick={() => setInviteDialogOpen(true)} className="gap-2">
+                <UserPlus className="h-4 w-4" />
+                Convidar
+              </Button>
+            )}
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -152,7 +189,6 @@ export default function ConfiguracoesPage() {
                       </Avatar>
                       <div>
                         <p className="font-medium">{member.full_name}</p>
-                        <p className="text-sm text-muted-foreground">{member.email}</p>
                       </div>
                     </div>
                     <Badge variant={badge.variant}>{badge.label}</Badge>
@@ -166,20 +202,129 @@ export default function ConfiguracoesPage() {
                 </p>
               )}
             </div>
-
-            {isAdmin() && (
-              <div className="mt-4 p-3 rounded-lg bg-muted/50">
-                <div className="flex items-center gap-2 text-sm">
-                  <Shield className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">
-                    Para adicionar novos membros ou alterar permissões, acesse o backend.
-                  </span>
-                </div>
-              </div>
-            )}
           </CardContent>
         </Card>
+
+        {/* Pending Invites section */}
+        {isAdmin() && pendingInvites.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                Convites Pendentes
+              </CardTitle>
+              <CardDescription>
+                Aguardando o usuário criar conta
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {pendingInvites.map(invite => {
+                  const badge = getRoleBadgeByRole(invite.role);
+                  return (
+                    <div 
+                      key={invite.id} 
+                      className="flex items-center justify-between p-3 rounded-lg border border-dashed bg-muted/30"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarFallback className="bg-muted text-sm">
+                            <Clock className="h-4 w-4" />
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium text-muted-foreground">{invite.email}</p>
+                          <p className="text-xs text-muted-foreground">
+                            Convidado em {new Date(invite.created_at).toLocaleDateString('pt-BR')}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={badge.variant}>{badge.label}</Badge>
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          onClick={() => handleDeleteInvite(invite.id, invite.email)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Accepted Invites section */}
+        {isAdmin() && acceptedInvites.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CheckCircle2 className="h-5 w-5 text-success" />
+                Convites Aceitos
+              </CardTitle>
+              <CardDescription>
+                Usuários que criaram conta após convite
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {acceptedInvites.map(invite => {
+                  const badge = getRoleBadgeByRole(invite.role);
+                  return (
+                    <div 
+                      key={invite.id} 
+                      className="flex items-center justify-between p-3 rounded-lg border bg-success/5"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarFallback className="bg-success/20 text-success text-sm">
+                            <CheckCircle2 className="h-4 w-4" />
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium">{invite.email}</p>
+                          <p className="text-xs text-muted-foreground">
+                            Aceito em {new Date(invite.accepted_at!).toLocaleDateString('pt-BR')}
+                          </p>
+                        </div>
+                      </div>
+                      <Badge variant={badge.variant}>{badge.label}</Badge>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Admin info */}
+        {isAdmin() && (
+          <Card className="border-primary/20 bg-primary/5">
+            <CardContent className="pt-6">
+              <div className="flex items-start gap-3">
+                <Shield className="h-5 w-5 text-primary mt-0.5" />
+                <div>
+                  <p className="font-medium">Você é Administrador</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Como admin, você pode convidar novos usuários e atribuir papéis (SDR, Closer, Admin).
+                    Os usuários convidados receberão o papel automaticamente ao criar conta com o email cadastrado.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
+
+      {/* Invite Dialog */}
+      <InviteUserDialog
+        open={inviteDialogOpen}
+        onOpenChange={setInviteDialogOpen}
+        onInvite={handleInvite}
+      />
     </AppLayout>
   );
 }
