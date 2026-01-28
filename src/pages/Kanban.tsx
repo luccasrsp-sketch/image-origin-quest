@@ -6,10 +6,11 @@ import { LeadDetailDialog } from '@/components/leads/LeadDetailDialog';
 import { ScheduleMeetingDialog } from '@/components/calendar/ScheduleMeetingDialog';
 import { QualificationDialog } from '@/components/leads/QualificationDialog';
 import { ProposalDialog } from '@/components/leads/ProposalDialog';
+import { ColdLeadsAlert } from '@/components/leads/ColdLeadsAlert';
 import { useLeads } from '@/hooks/useLeads';
 import { useCalendar } from '@/hooks/useCalendar';
 import { useAuth } from '@/contexts/AuthContext';
-import { Lead, LeadStatus, KANBAN_COLUMNS, ProposalProduct } from '@/types/crm';
+import { Lead, LeadStatus, KANBAN_COLUMNS } from '@/types/crm';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -21,6 +22,7 @@ export default function KanbanPage() {
   const [schedulingLead, setSchedulingLead] = useState<Lead | null>(null);
   const [qualifyingLead, setQualifyingLead] = useState<Lead | null>(null);
   const [proposalLead, setProposalLead] = useState<Lead | null>(null);
+  const [coldAlertDismissed, setColdAlertDismissed] = useState(false);
 
   const getLeadsByStatus = (status: LeadStatus) => 
     leads.filter(l => l.status === status);
@@ -217,6 +219,18 @@ export default function KanbanPage() {
           return success;
         }}
       />
+
+      {/* Cold leads alert */}
+      {!coldAlertDismissed && (
+        <ColdLeadsAlert
+          leads={leads}
+          onDismiss={() => setColdAlertDismissed(true)}
+          onLeadClick={(lead) => {
+            setColdAlertDismissed(true);
+            setSelectedLead(lead);
+          }}
+        />
+      )}
     </AppLayout>
   );
 }
