@@ -94,14 +94,14 @@ export interface LeadActivity {
 
 // Kanban column configuration
 export const KANBAN_COLUMNS: { id: LeadStatus; title: string; color: string; role: 'sdr' | 'closer' }[] = [
-  { id: 'sem_atendimento', title: 'Sem Atendimento', color: 'bg-muted', role: 'sdr' },
-  { id: 'nao_atendeu', title: 'Não Atendeu', color: 'bg-warning/20', role: 'sdr' },
-  { id: 'em_contato', title: 'Em Contato', color: 'bg-info/20', role: 'sdr' },
-  { id: 'qualificado', title: 'Qualificado', color: 'bg-success/20', role: 'closer' },
-  { id: 'reuniao_marcada', title: 'Reunião Marcada', color: 'bg-primary/20', role: 'closer' },
-  { id: 'envio_proposta', title: 'Envio de Proposta', color: 'bg-info/20', role: 'closer' },
-  { id: 'vendido', title: 'Vendido', color: 'bg-success/30', role: 'closer' },
-  { id: 'recuperacao_sdr', title: 'Recuperação SDR', color: 'bg-destructive/20', role: 'sdr' },
+  { id: 'sem_atendimento', title: 'Sem Atendimento', color: 'bg-slate-100 dark:bg-slate-800/50', role: 'sdr' },
+  { id: 'nao_atendeu', title: 'Não Atendeu', color: 'bg-amber-50 dark:bg-amber-900/30', role: 'sdr' },
+  { id: 'em_contato', title: 'Em Contato', color: 'bg-sky-50 dark:bg-sky-900/30', role: 'sdr' },
+  { id: 'qualificado', title: 'Qualificado', color: 'bg-emerald-50 dark:bg-emerald-900/30', role: 'closer' },
+  { id: 'reuniao_marcada', title: 'Reunião Marcada', color: 'bg-violet-50 dark:bg-violet-900/30', role: 'closer' },
+  { id: 'envio_proposta', title: 'Envio de Proposta', color: 'bg-blue-50 dark:bg-blue-900/30', role: 'closer' },
+  { id: 'vendido', title: 'Vendido', color: 'bg-green-50 dark:bg-green-900/30', role: 'closer' },
+  { id: 'recuperacao_sdr', title: 'Recuperação SDR', color: 'bg-rose-50 dark:bg-rose-900/30', role: 'sdr' },
 ];
 
 export const STATUS_LABELS: Record<LeadStatus, string> = {
