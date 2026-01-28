@@ -4,15 +4,17 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { LeadCard } from '@/components/leads/LeadCard';
 import { LeadDetailDialog } from '@/components/leads/LeadDetailDialog';
 import { ScheduleMeetingDialog } from '@/components/calendar/ScheduleMeetingDialog';
+import { QualificationDialog } from '@/components/leads/QualificationDialog';
 import { useLeads } from '@/hooks/useLeads';
 import { Lead, LeadStatus, KANBAN_COLUMNS } from '@/types/crm';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function KanbanPage() {
-  const { leads, loading, updateLeadStatus, addNote } = useLeads();
+  const { leads, loading, updateLeadStatus, addNote, setNeedsScheduling, clearNeedsScheduling } = useLeads();
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [schedulingLead, setSchedulingLead] = useState<Lead | null>(null);
+  const [qualifyingLead, setQualifyingLead] = useState<Lead | null>(null);
 
   const getLeadsByStatus = (status: LeadStatus) => 
     leads.filter(l => l.status === status);
@@ -26,13 +28,26 @@ export default function KanbanPage() {
 
     if (!lead || lead.status === newStatus) return;
 
-    // Sempre atualiza o status ao arrastar - independente da coluna
-    await updateLeadStatus(leadId, newStatus);
-
-    // Se for para qualificado ou reuniao_marcada, abre o diálogo de agendamento após atualizar
-    if (newStatus === 'qualificado' || newStatus === 'reuniao_marcada') {
-      setSchedulingLead({ ...lead, status: newStatus } as Lead);
+    // Se for para qualificado, abre o diálogo de qualificação
+    if (newStatus === 'qualificado') {
+      await updateLeadStatus(leadId, newStatus);
+      setQualifyingLead({ ...lead, status: newStatus } as Lead);
+      return;
     }
+
+    // Se for para reuniao_marcada, abre o diálogo de agendamento
+    if (newStatus === 'reuniao_marcada') {
+      await updateLeadStatus(leadId, newStatus);
+      // Limpa a tag de needs_scheduling se existir
+      if (lead.needs_scheduling) {
+        await clearNeedsScheduling(leadId);
+      }
+      setSchedulingLead({ ...lead, status: newStatus } as Lead);
+      return;
+    }
+
+    // Para outras colunas, apenas atualiza o status
+    await updateLeadStatus(leadId, newStatus);
   };
 
   if (loading) {
@@ -145,9 +160,23 @@ export default function KanbanPage() {
         open={!!schedulingLead}
         onOpenChange={(open) => !open && setSchedulingLead(null)}
         onScheduled={() => {
-          // O status já foi atualizado ao arrastar, apenas fecha o diálogo
           setSchedulingLead(null);
         }}
+      />
+
+      {/* Qualification dialog */}
+      <QualificationDialog
+        lead={qualifyingLead}
+        open={!!qualifyingLead}
+        onOpenChange={(open) => !open && setQualifyingLead(null)}
+        onScheduleMeeting={(lead) => {
+          setQualifyingLead(null);
+          // Mover para reuniao_marcada e abrir dialog de agendamento
+          updateLeadStatus(lead.id, 'reuniao_marcada').then(() => {
+            setSchedulingLead(lead);
+          });
+        }}
+        onNeedScheduling={setNeedsScheduling}
       />
     </AppLayout>
   );

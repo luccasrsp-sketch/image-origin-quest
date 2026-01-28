@@ -176,6 +176,61 @@ export function useLeads() {
     return true;
   };
 
+  const setNeedsScheduling = async (leadId: string, reason: string) => {
+    const { error } = await supabase
+      .from('leads')
+      .update({ 
+        needs_scheduling: true,
+        scheduling_pending_reason: reason,
+      })
+      .eq('id', leadId);
+
+    if (error) {
+      toast({
+        title: 'Erro ao salvar',
+        description: error.message,
+        variant: 'destructive',
+      });
+      return false;
+    }
+
+    // Log activity
+    if (profile?.id) {
+      await supabase.from('lead_activities').insert({
+        lead_id: leadId,
+        user_id: profile.id,
+        action: 'note_added',
+        notes: `Motivo de não agendamento: ${reason}`,
+      });
+    }
+
+    toast({
+      title: 'Registro salvo',
+      description: 'Lead marcado como pendente de agendamento.',
+    });
+
+    fetchLeads();
+    return true;
+  };
+
+  const clearNeedsScheduling = async (leadId: string) => {
+    const { error } = await supabase
+      .from('leads')
+      .update({ 
+        needs_scheduling: false,
+        scheduling_pending_reason: null,
+      })
+      .eq('id', leadId);
+
+    if (error) {
+      console.error('Error clearing needs_scheduling:', error);
+      return false;
+    }
+
+    fetchLeads();
+    return true;
+  };
+
   const getNewLeads = () => leads.filter(l => l.status === 'sem_atendimento');
   
   const getLeadsByStatus = (status: LeadStatus) => leads.filter(l => l.status === status);
@@ -187,6 +242,8 @@ export function useLeads() {
     updateLeadStatus,
     assignLead,
     addNote,
+    setNeedsScheduling,
+    clearNeedsScheduling,
     getNewLeads,
     getLeadsByStatus,
   };
