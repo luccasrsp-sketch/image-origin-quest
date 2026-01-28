@@ -61,6 +61,15 @@ export function useLeads() {
     const lead = leads.find(l => l.id === leadId);
     const oldStatus = lead?.status;
 
+    // Optimistic update - atualiza o estado local imediatamente
+    setLeads(prevLeads => 
+      prevLeads.map(l => 
+        l.id === leadId 
+          ? { ...l, status: newStatus, last_contact_at: new Date().toISOString() }
+          : l
+      )
+    );
+
     const updateData: Record<string, unknown> = { 
       status: newStatus,
       last_contact_at: new Date().toISOString(),
@@ -77,6 +86,14 @@ export function useLeads() {
       .eq('id', leadId);
 
     if (error) {
+      // Reverte a mudança otimista em caso de erro
+      setLeads(prevLeads => 
+        prevLeads.map(l => 
+          l.id === leadId 
+            ? { ...l, status: oldStatus as LeadStatus }
+            : l
+        )
+      );
       toast({
         title: 'Erro ao atualizar lead',
         description: error.message,
