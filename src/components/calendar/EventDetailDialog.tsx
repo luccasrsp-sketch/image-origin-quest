@@ -87,10 +87,9 @@ export function EventDetailDialog({ event, open, onOpenChange }: EventDetailDial
     other: 'Outro',
   };
 
-  // Check if the event is a meeting and if it's in the past (can be marked as completed)
+  // Check if the event is a meeting (can be marked as completed)
   const isMeeting = event.event_type === 'meeting';
-  const eventDate = new Date(event.end_time);
-  const canMarkCompletion = isMeeting && isPast(eventDate);
+  const canMarkCompletion = isMeeting;
   const meetingCompleted = event.meeting_completed;
   const meetingNotCompletedReason = event.meeting_not_completed_reason;
 
