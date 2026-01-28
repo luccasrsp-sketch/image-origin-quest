@@ -138,11 +138,13 @@ export type Database = {
           sale_admin_email: string | null
           sale_company_cnpj: string | null
           sale_confirmed_at: string | null
+          sale_contract_sent: boolean | null
           sale_entry_value: number | null
           sale_first_check_date: string | null
           sale_installments: number | null
           sale_observations: string | null
           sale_payment_method: string | null
+          sale_payment_received: boolean | null
           sale_remaining_value: number | null
           scheduling_pending_reason: string | null
           status: Database["public"]["Enums"]["lead_status"]
@@ -174,11 +176,13 @@ export type Database = {
           sale_admin_email?: string | null
           sale_company_cnpj?: string | null
           sale_confirmed_at?: string | null
+          sale_contract_sent?: boolean | null
           sale_entry_value?: number | null
           sale_first_check_date?: string | null
           sale_installments?: number | null
           sale_observations?: string | null
           sale_payment_method?: string | null
+          sale_payment_received?: boolean | null
           sale_remaining_value?: number | null
           scheduling_pending_reason?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
@@ -210,11 +214,13 @@ export type Database = {
           sale_admin_email?: string | null
           sale_company_cnpj?: string | null
           sale_confirmed_at?: string | null
+          sale_contract_sent?: boolean | null
           sale_entry_value?: number | null
           sale_first_check_date?: string | null
           sale_installments?: number | null
           sale_observations?: string | null
           sale_payment_method?: string | null
+          sale_payment_received?: boolean | null
           sale_remaining_value?: number | null
           scheduling_pending_reason?: string | null
           status?: Database["public"]["Enums"]["lead_status"]

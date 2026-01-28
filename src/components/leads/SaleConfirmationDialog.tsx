@@ -55,6 +55,8 @@ export interface SaleData {
   installments: number;
   firstCheckDate: Date | null;
   observations: string;
+  contractSent: boolean;
+  paymentReceived: boolean;
 }
 
 export function SaleConfirmationDialog({
@@ -77,6 +79,8 @@ export function SaleConfirmationDialog({
   const [installments, setInstallments] = useState('');
   const [firstCheckDate, setFirstCheckDate] = useState<Date | undefined>();
   const [observations, setObservations] = useState('');
+  const [contractSent, setContractSent] = useState(false);
+  const [paymentReceived, setPaymentReceived] = useState(false);
 
   const showCheckDate = paymentMethod.toLowerCase().includes('cheque');
 
@@ -91,6 +95,8 @@ export function SaleConfirmationDialog({
     setInstallments('');
     setFirstCheckDate(undefined);
     setObservations('');
+    setContractSent(false);
+    setPaymentReceived(false);
   };
 
   const handleClose = (open: boolean) => {
@@ -124,6 +130,8 @@ export function SaleConfirmationDialog({
       installments: parseInt(installments) || 0,
       firstCheckDate: firstCheckDate || null,
       observations,
+      contractSent,
+      paymentReceived,
     });
     setIsSubmitting(false);
 
@@ -339,6 +347,40 @@ ${observations ? `📝 *Observações:* ${observations}` : ''}`;
                   rows={3}
                 />
               </div>
+
+              {/* Status do Contrato e Pagamento */}
+              <div className="grid grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg">
+                <div className="space-y-2">
+                  <Label>Contrato Enviado</Label>
+                  <Select 
+                    value={contractSent ? 'sim' : 'nao'} 
+                    onValueChange={(value) => setContractSent(value === 'sim')}
+                  >
+                    <SelectTrigger className="bg-background">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background z-50">
+                      <SelectItem value="nao">Não</SelectItem>
+                      <SelectItem value="sim">Sim</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Pagamento Realizado</Label>
+                  <Select 
+                    value={paymentReceived ? 'sim' : 'nao'} 
+                    onValueChange={(value) => setPaymentReceived(value === 'sim')}
+                  >
+                    <SelectTrigger className="bg-background">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background z-50">
+                      <SelectItem value="nao">Não</SelectItem>
+                      <SelectItem value="sim">Sim</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </div>
 
             <DialogFooter className="flex-col gap-2 sm:flex-row">
@@ -353,16 +395,18 @@ ${observations ? `📝 *Observações:* ${observations}` : ''}`;
                   <FileText className="h-4 w-4 mr-2" />
                   Solicitar Contrato
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => sendToWhatsApp('financeiro')}
-                  disabled={!product || !companyCnpj || !adminEmail || !paymentMethod}
-                  className="flex-1 sm:flex-none"
-                >
-                  <Wallet className="h-4 w-4 mr-2" />
-                  Enviar ao Financeiro
-                </Button>
+                {paymentReceived && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => sendToWhatsApp('financeiro')}
+                    disabled={!product || !companyCnpj || !adminEmail || !paymentMethod}
+                    className="flex-1 sm:flex-none"
+                  >
+                    <Wallet className="h-4 w-4 mr-2" />
+                    Enviar ao Financeiro
+                  </Button>
+                )}
               </div>
               <div className="flex gap-2 w-full sm:w-auto sm:ml-auto">
                 <Button
