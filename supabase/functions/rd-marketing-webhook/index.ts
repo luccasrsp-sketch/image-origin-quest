@@ -30,6 +30,32 @@ Deno.serve(async (req) => {
     const leadsArray = rawPayload.leads || [rawPayload]
     const results: { success: boolean; lead_id?: string; email?: string; error?: string }[] = []
 
+    // Buscar SDRs disponíveis para distribuição randômica
+    const { data: sdrs, error: sdrsError } = await supabase
+      .from('user_roles')
+      .select('user_id')
+      .eq('role', 'sdr')
+
+    if (sdrsError) {
+      console.error('Error fetching SDRs:', sdrsError)
+    }
+
+    // Mapear user_id para profile_id
+    let sdrProfileIds: string[] = []
+    if (sdrs && sdrs.length > 0) {
+      const userIds = sdrs.map(s => s.user_id)
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, user_id')
+        .in('user_id', userIds)
+      
+      if (profiles) {
+        sdrProfileIds = profiles.map(p => p.id)
+      }
+    }
+
+    console.log('SDRs disponíveis para distribuição:', sdrProfileIds.length)
+
     for (const leadData of leadsArray) {
       // Extract email from various possible locations
       const email = leadData.email || leadData.first_conversion?.content?.email_lead
@@ -84,6 +110,14 @@ Deno.serve(async (req) => {
       const utmMedium = conversionOrigin.medium || null
       const utmCampaign = conversionOrigin.campaign || null
 
+      // Selecionar SDR aleatório para atribuição automática
+      let assignedSdrId: string | null = null
+      if (sdrProfileIds.length > 0) {
+        const randomIndex = Math.floor(Math.random() * sdrProfileIds.length)
+        assignedSdrId = sdrProfileIds[randomIndex]
+        console.log('Lead atribuído ao SDR:', assignedSdrId)
+      }
+
       // Create lead in CRM
       const { data: newLead, error } = await supabase
         .from('leads')
@@ -98,6 +132,7 @@ Deno.serve(async (req) => {
           utm_source: utmSource,
           utm_medium: utmMedium,
           utm_campaign: utmCampaign,
+          assigned_sdr_id: assignedSdrId,
           notes: conversionIdentifier 
             ? `Origem: RD Marketing - ${conversionIdentifier}` 
             : 'Origem: RD Marketing',
@@ -111,7 +146,7 @@ Deno.serve(async (req) => {
         continue
       }
 
-      console.log('Lead created successfully:', newLead.id)
+      console.log('Lead created successfully:', newLead.id, 'assigned to SDR:', assignedSdrId)
       results.push({ success: true, lead_id: newLead.id, email })
     }
 
