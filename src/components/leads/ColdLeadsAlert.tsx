@@ -27,9 +27,7 @@ export function ColdLeadsAlert({ leads, onDismiss, onLeadClick }: ColdLeadsAlert
 
   useEffect(() => {
     const checkColdLeads = () => {
-      // TESTE: Simulando horário 18:45 - REMOVER APÓS TESTE
       const now = new Date();
-      now.setHours(18, 45, 0, 0);
       const currentHour = now.getHours();
       
       // Only check between 9am and 7pm
@@ -44,18 +42,13 @@ export function ColdLeadsAlert({ leads, onDismiss, onLeadClick }: ColdLeadsAlert
         if (lead.status !== 'sem_atendimento') return false;
         
         const createdAt = new Date(lead.created_at);
-        
-        // TESTE: Simulando que o lead foi criado às 18:30 do "horário simulado"
-        const simulatedCreatedAt = new Date();
-        simulatedCreatedAt.setHours(18, 30, 0, 0);
-        
-        const createdHour = 18; // Simulando horário comercial
+        const createdHour = createdAt.getHours();
         
         // Lead must have been created between 9am and 7pm
         if (createdHour < 9 || createdHour >= 19) return false;
         
-        // Lead must be older than 5 minutes (18:30 < 18:40)
-        return simulatedCreatedAt < fiveMinutesAgo;
+        // Lead must be older than 5 minutes
+        return createdAt < fiveMinutesAgo;
       });
 
       setColdLeads(cold);
