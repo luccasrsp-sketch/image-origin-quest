@@ -87,16 +87,15 @@ export function LeadCard({ lead, onClick, onViewSale, onUpdateSaleStatus, onMark
         }`}
         onClick={onClick}
       >
-        {lead.status === 'sem_atendimento' && (
-          <div className="absolute top-2 right-2">
+        {/* Canto superior direito - ações contextuais */}
+        <div className="absolute top-2 right-2">
+          {lead.status === 'sem_atendimento' && (
             <Badge variant="outline" className="text-xs bg-background/80 backdrop-blur-sm">
               <Clock className="h-3 w-3 mr-1" />
               {timeSinceCreated}
             </Badge>
-          </div>
-        )}
-        {isVendido && (
-          <div className="absolute top-2 right-2">
+          )}
+          {isVendido && (
             <Button
               variant="ghost"
               size="sm"
@@ -109,9 +108,23 @@ export function LeadCard({ lead, onClick, onViewSale, onUpdateSaleStatus, onMark
               <Eye className="h-3 w-3 mr-1" />
               Ver negociação
             </Button>
-          </div>
-        )}
-        <CardContent className={`p-3 space-y-1.5 ${lead.status === 'sem_atendimento' || isVendido ? 'pt-10' : 'pt-3'}`}>
+          )}
+          {canMarkAsLost && onMarkAsLost && !isVendido && lead.status !== 'sem_atendimento' && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs bg-background/80 backdrop-blur-sm hover:bg-background text-destructive hover:text-destructive"
+              onClick={(e) => {
+                e.stopPropagation();
+                onMarkAsLost(lead);
+              }}
+            >
+              <XCircle className="h-3 w-3 mr-1" />
+              Perdido
+            </Button>
+          )}
+        </div>
+        <CardContent className={`p-3 space-y-1.5 ${lead.status === 'sem_atendimento' || isVendido || canMarkAsLost ? 'pt-10' : 'pt-3'}`}>
           {lead.needs_scheduling && (
             <Badge className="bg-destructive text-destructive-foreground text-xs mb-1">
               Precisa agendar call!
@@ -128,20 +141,6 @@ export function LeadCard({ lead, onClick, onViewSale, onUpdateSaleStatus, onMark
               <XCircle className="h-3 w-3" />
               Perdido
             </Badge>
-          )}
-          {canMarkAsLost && onMarkAsLost && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-6 px-2 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
-              onClick={(e) => {
-                e.stopPropagation();
-                onMarkAsLost(lead);
-              }}
-            >
-              <XCircle className="h-3 w-3 mr-1" />
-              Marcar como Perdido
-            </Button>
           )}
           {lead.status === 'envio_proposta' && lead.proposal_product && lead.proposal_value && (
             <Badge className="bg-primary text-primary-foreground text-xs mb-1 flex items-center gap-1 w-fit">
