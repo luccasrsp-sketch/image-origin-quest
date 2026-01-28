@@ -73,6 +73,8 @@ export interface Lead {
   sale_first_check_date?: string;
   sale_observations?: string;
   sale_confirmed_at?: string;
+  sale_contract_sent?: boolean;
+  sale_payment_received?: boolean;
   // Joined fields
   assigned_sdr?: Profile;
   assigned_closer?: Profile;

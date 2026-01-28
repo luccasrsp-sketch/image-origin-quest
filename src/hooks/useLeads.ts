@@ -295,6 +295,8 @@ export function useLeads() {
         sale_observations: data.observations,
         sale_confirmed_at: new Date().toISOString(),
         proposal_product: data.product,
+        sale_contract_sent: data.contractSent,
+        sale_payment_received: data.paymentReceived,
       })
       .eq('id', data.leadId);
 
