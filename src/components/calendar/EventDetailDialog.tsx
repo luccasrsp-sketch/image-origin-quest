@@ -130,18 +130,6 @@ export function EventDetailDialog({ event, open, onOpenChange }: EventDetailDial
             <div className="p-3 rounded-lg border space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Reunião Realizada?</span>
-                {meetingCompleted === true && (
-                  <Badge className="bg-success text-success-foreground gap-1">
-                    <CheckCircle2 className="h-3 w-3" />
-                    Sim
-                  </Badge>
-                )}
-                {meetingCompleted === false && (
-                  <Badge variant="destructive" className="gap-1">
-                    <XCircle className="h-3 w-3" />
-                    Não
-                  </Badge>
-                )}
                 {meetingCompleted === null && (
                   <Badge variant="outline" className="gap-1 text-warning">
                     <AlertCircle className="h-3 w-3" />
@@ -157,7 +145,7 @@ export function EventDetailDialog({ event, open, onOpenChange }: EventDetailDial
                 </div>
               )}
 
-              {/* Buttons to mark completion */}
+              {/* Buttons to mark completion - only show if not yet marked */}
               {meetingCompleted === null && !showReasonInput && (
                 <div className="flex gap-2">
                   <Button
@@ -180,6 +168,14 @@ export function EventDetailDialog({ event, open, onOpenChange }: EventDetailDial
                     <XCircle className="h-4 w-4" />
                     Não
                   </Button>
+                </div>
+              )}
+
+              {/* Show only "Sim" marked when completed */}
+              {meetingCompleted === true && (
+                <div className="flex items-center justify-center gap-2 p-2 bg-success/10 rounded-md">
+                  <CheckCircle2 className="h-4 w-4 text-success" />
+                  <span className="text-sm font-medium text-success">Reunião realizada</span>
                 </div>
               )}
 
