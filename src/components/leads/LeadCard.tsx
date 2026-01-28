@@ -129,6 +129,20 @@ export function LeadCard({ lead, onClick, onViewSale, onUpdateSaleStatus, onMark
               Perdido
             </Badge>
           )}
+          {canMarkAsLost && onMarkAsLost && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 px-2 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+              onClick={(e) => {
+                e.stopPropagation();
+                onMarkAsLost(lead);
+              }}
+            >
+              <XCircle className="h-3 w-3 mr-1" />
+              Marcar como Perdido
+            </Button>
+          )}
           {lead.status === 'envio_proposta' && lead.proposal_product && lead.proposal_value && (
             <Badge className="bg-primary text-primary-foreground text-xs mb-1 flex items-center gap-1 w-fit">
               <FileText className="h-3 w-3" />
@@ -257,20 +271,6 @@ ${lead.sale_observations ? `📝 *Observações:* ${lead.sale_observations}` : '
             </div>
           )}
 
-          {/* Botão de marcar como perdido */}
-          {canMarkAsLost && onMarkAsLost && (
-            <div className="pt-2 mt-2 border-t border-border" onClick={(e) => e.stopPropagation()}>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full h-7 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
-                onClick={() => onMarkAsLost(lead)}
-              >
-                <XCircle className="h-3 w-3 mr-1" />
-                Marcar como Perdido
-              </Button>
-            </div>
-          )}
         </CardContent>
       </Card>
     );
