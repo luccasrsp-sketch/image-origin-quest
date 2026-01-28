@@ -22,6 +22,8 @@ export type Database = {
           event_type: string
           id: string
           lead_id: string | null
+          meeting_completed: boolean | null
+          meeting_not_completed_reason: string | null
           start_time: string
           title: string
           updated_at: string
@@ -34,6 +36,8 @@ export type Database = {
           event_type?: string
           id?: string
           lead_id?: string | null
+          meeting_completed?: boolean | null
+          meeting_not_completed_reason?: string | null
           start_time: string
           title: string
           updated_at?: string
@@ -46,6 +50,8 @@ export type Database = {
           event_type?: string
           id?: string
           lead_id?: string | null
+          meeting_completed?: boolean | null
+          meeting_not_completed_reason?: string | null
           start_time?: string
           title?: string
           updated_at?: string

@@ -93,6 +93,8 @@ export interface CalendarEvent {
   start_time: string;
   end_time: string;
   event_type: string;
+  meeting_completed?: boolean | null;
+  meeting_not_completed_reason?: string | null;
   created_at: string;
   updated_at: string;
   // Joined fields

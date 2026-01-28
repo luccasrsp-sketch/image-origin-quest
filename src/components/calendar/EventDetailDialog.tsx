@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -7,9 +8,11 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { CalendarEvent } from '@/types/crm';
 import { useCalendar } from '@/hooks/useCalendar';
-import { format } from 'date-fns';
+import { format, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { 
   Calendar, 
@@ -18,6 +21,9 @@ import {
   Building, 
   Trash2,
   MessageSquare,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
 } from 'lucide-react';
 
 interface EventDetailDialogProps {
@@ -27,7 +33,10 @@ interface EventDetailDialogProps {
 }
 
 export function EventDetailDialog({ event, open, onOpenChange }: EventDetailDialogProps) {
-  const { deleteEvent } = useCalendar();
+  const { deleteEvent, updateEvent } = useCalendar();
+  const [showReasonInput, setShowReasonInput] = useState(false);
+  const [notCompletedReason, setNotCompletedReason] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   if (!event) return null;
 
@@ -36,6 +45,33 @@ export function EventDetailDialog({ event, open, onOpenChange }: EventDetailDial
       await deleteEvent(event.id);
       onOpenChange(false);
     }
+  };
+
+  const handleMarkAsCompleted = async (completed: boolean) => {
+    if (!completed) {
+      setShowReasonInput(true);
+      return;
+    }
+
+    setIsSaving(true);
+    await updateEvent(event.id, {
+      meeting_completed: true,
+      meeting_not_completed_reason: null,
+    });
+    setIsSaving(false);
+  };
+
+  const handleSaveNotCompletedReason = async () => {
+    if (!notCompletedReason.trim()) return;
+
+    setIsSaving(true);
+    await updateEvent(event.id, {
+      meeting_completed: false,
+      meeting_not_completed_reason: notCompletedReason.trim(),
+    });
+    setShowReasonInput(false);
+    setNotCompletedReason('');
+    setIsSaving(false);
   };
 
   const formatPhone = (phone?: string) => {
@@ -50,6 +86,13 @@ export function EventDetailDialog({ event, open, onOpenChange }: EventDetailDial
     followup: 'Follow-up',
     other: 'Outro',
   };
+
+  // Check if the event is a meeting and if it's in the past (can be marked as completed)
+  const isMeeting = event.event_type === 'meeting';
+  const eventDate = new Date(event.end_time);
+  const canMarkCompletion = isMeeting && isPast(eventDate);
+  const meetingCompleted = event.meeting_completed;
+  const meetingNotCompletedReason = event.meeting_not_completed_reason;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -82,6 +125,99 @@ export function EventDetailDialog({ event, open, onOpenChange }: EventDetailDial
               {eventTypeLabels[event.event_type] || event.event_type}
             </Badge>
           </div>
+
+          {/* Meeting completion status */}
+          {canMarkCompletion && (
+            <div className="p-3 rounded-lg border space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Reunião Realizada?</span>
+                {meetingCompleted === true && (
+                  <Badge className="bg-success text-success-foreground gap-1">
+                    <CheckCircle2 className="h-3 w-3" />
+                    Sim
+                  </Badge>
+                )}
+                {meetingCompleted === false && (
+                  <Badge variant="destructive" className="gap-1">
+                    <XCircle className="h-3 w-3" />
+                    Não
+                  </Badge>
+                )}
+                {meetingCompleted === null && (
+                  <Badge variant="outline" className="gap-1 text-warning">
+                    <AlertCircle className="h-3 w-3" />
+                    Pendente
+                  </Badge>
+                )}
+              </div>
+
+              {/* Show reason if not completed */}
+              {meetingCompleted === false && meetingNotCompletedReason && (
+                <div className="text-sm text-muted-foreground bg-muted/50 p-2 rounded">
+                  <span className="font-medium">Motivo:</span> {meetingNotCompletedReason}
+                </div>
+              )}
+
+              {/* Buttons to mark completion */}
+              {meetingCompleted === null && !showReasonInput && (
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 gap-1 text-success hover:text-success hover:bg-success/10 border-success/50"
+                    onClick={() => handleMarkAsCompleted(true)}
+                    disabled={isSaving}
+                  >
+                    <CheckCircle2 className="h-4 w-4" />
+                    Sim
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 gap-1 text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/50"
+                    onClick={() => handleMarkAsCompleted(false)}
+                    disabled={isSaving}
+                  >
+                    <XCircle className="h-4 w-4" />
+                    Não
+                  </Button>
+                </div>
+              )}
+
+              {/* Reason input when "No" is selected */}
+              {showReasonInput && (
+                <div className="space-y-2">
+                  <Label className="text-sm">Por que a reunião não foi realizada?</Label>
+                  <Textarea
+                    value={notCompletedReason}
+                    onChange={(e) => setNotCompletedReason(e.target.value)}
+                    placeholder="Descreva o motivo..."
+                    rows={3}
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setShowReasonInput(false);
+                        setNotCompletedReason('');
+                      }}
+                      disabled={isSaving}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={handleSaveNotCompletedReason}
+                      disabled={isSaving || !notCompletedReason.trim()}
+                    >
+                      Salvar
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Responsible user */}
           {event.user && (
