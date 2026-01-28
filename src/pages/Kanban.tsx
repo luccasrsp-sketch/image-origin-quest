@@ -26,13 +26,13 @@ export default function KanbanPage() {
 
     if (!lead || lead.status === newStatus) return;
 
-    // If moving to qualificado, show schedule meeting dialog
+    // Sempre atualiza o status ao arrastar - independente da coluna
+    await updateLeadStatus(leadId, newStatus);
+
+    // Se for para qualificado ou reuniao_marcada, abre o diálogo de agendamento após atualizar
     if (newStatus === 'qualificado' || newStatus === 'reuniao_marcada') {
       setSchedulingLead({ ...lead, status: newStatus } as Lead);
-      return;
     }
-
-    await updateLeadStatus(leadId, newStatus);
   };
 
   if (loading) {
@@ -143,9 +143,7 @@ export default function KanbanPage() {
         open={!!schedulingLead}
         onOpenChange={(open) => !open && setSchedulingLead(null)}
         onScheduled={() => {
-          if (schedulingLead) {
-            updateLeadStatus(schedulingLead.id, schedulingLead.status);
-          }
+          // O status já foi atualizado ao arrastar, apenas fecha o diálogo
           setSchedulingLead(null);
         }}
       />
