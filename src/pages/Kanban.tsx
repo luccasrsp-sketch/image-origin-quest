@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function KanbanPage() {
-  const { leads, loading, updateLeadStatus } = useLeads();
+  const { leads, loading, updateLeadStatus, addNote } = useLeads();
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [schedulingLead, setSchedulingLead] = useState<Lead | null>(null);
 
@@ -135,6 +135,8 @@ export default function KanbanPage() {
         lead={selectedLead}
         open={!!selectedLead}
         onOpenChange={(open) => !open && setSelectedLead(null)}
+        onStatusChange={updateLeadStatus}
+        onAddNote={addNote}
       />
 
       {/* Schedule meeting dialog */}
