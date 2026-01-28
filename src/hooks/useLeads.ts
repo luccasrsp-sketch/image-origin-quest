@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Lead, LeadStatus, ProposalProduct } from '@/types/crm';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { SaleData } from '@/components/leads/SaleConfirmationDialog';
 
 export function useLeads() {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -280,6 +281,51 @@ export function useLeads() {
   
   const getLeadsByStatus = (status: LeadStatus) => leads.filter(l => l.status === status);
 
+  const saveSaleData = async (data: SaleData) => {
+    const { error } = await supabase
+      .from('leads')
+      .update({
+        sale_company_cnpj: data.companyCnpj,
+        sale_admin_email: data.adminEmail,
+        sale_payment_method: data.paymentMethod,
+        sale_entry_value: data.entryValue,
+        sale_remaining_value: data.remainingValue,
+        sale_installments: data.installments,
+        sale_first_check_date: data.firstCheckDate?.toISOString().split('T')[0] || null,
+        sale_observations: data.observations,
+        sale_confirmed_at: new Date().toISOString(),
+        proposal_product: data.product,
+      })
+      .eq('id', data.leadId);
+
+    if (error) {
+      toast({
+        title: 'Erro ao salvar dados da venda',
+        description: error.message,
+        variant: 'destructive',
+      });
+      return false;
+    }
+
+    // Log activity
+    if (profile?.id) {
+      await supabase.from('lead_activities').insert({
+        lead_id: data.leadId,
+        user_id: profile.id,
+        action: 'note_added',
+        notes: `Venda confirmada: ${data.product} - R$ ${(data.entryValue + data.remainingValue).toLocaleString('pt-BR')} - ${data.paymentMethod}`,
+      });
+    }
+
+    toast({
+      title: 'Venda registrada',
+      description: 'Dados da venda salvos com sucesso.',
+    });
+
+    fetchLeads();
+    return true;
+  };
+
   return {
     leads,
     loading,
@@ -290,6 +336,7 @@ export function useLeads() {
     setNeedsScheduling,
     clearNeedsScheduling,
     saveProposal,
+    saveSaleData,
     getNewLeads,
     getLeadsByStatus,
   };
