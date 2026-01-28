@@ -84,8 +84,8 @@ export default function KanbanPage() {
                       {...provided.droppableProps}
                       className={`min-h-[500px] space-y-3 rounded-b-lg border border-t-0 p-3 transition-colors ${
                         snapshot.isDraggingOver 
-                          ? 'bg-primary/5 border-primary/50' 
-                          : 'bg-card'
+                          ? 'bg-slate-200 border-primary/50' 
+                          : 'bg-white'
                       }`}
                     >
                       {columnLeads.map((lead, index) => (
