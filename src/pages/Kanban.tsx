@@ -19,7 +19,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function KanbanPage() {
   const { leads, loading, updateLeadStatus, addNote, setNeedsScheduling, clearNeedsScheduling, saveProposal, saveSaleData, updateSaleStatus } = useLeads();
   const { createEvent } = useCalendar();
-  const { profile } = useAuth();
+  const { profile, isAdmin, isSDR, isCloser } = useAuth();
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [schedulingLead, setSchedulingLead] = useState<Lead | null>(null);
   const [qualifyingLead, setQualifyingLead] = useState<Lead | null>(null);
@@ -27,6 +27,17 @@ export default function KanbanPage() {
   const [saleLead, setSaleLead] = useState<Lead | null>(null);
   const [saleDetailsLead, setSaleDetailsLead] = useState<Lead | null>(null);
   const [coldAlertDismissed, setColdAlertDismissed] = useState(false);
+
+  // Filtra colunas baseado no papel do usuário
+  const visibleColumns = KANBAN_COLUMNS.filter(col => {
+    // Admin vê todas as colunas
+    if (isAdmin()) return true;
+    // SDR vê apenas colunas de SDR
+    if (isSDR() && col.role === 'sdr') return true;
+    // Closer vê apenas colunas de Closer
+    if (isCloser() && col.role === 'closer') return true;
+    return false;
+  });
 
   const getLeadsByStatus = (status: LeadStatus) => 
     leads.filter(l => l.status === status);
@@ -80,7 +91,7 @@ export default function KanbanPage() {
     return (
       <AppLayout title="Kanban">
         <div className="flex gap-4 overflow-x-auto pb-4">
-          {KANBAN_COLUMNS.map(col => (
+          {visibleColumns.map(col => (
             <div key={col.id} className="min-w-[300px] space-y-3">
               <Skeleton className="h-10 w-full" />
               <Skeleton className="h-40 w-full" />
@@ -96,7 +107,7 @@ export default function KanbanPage() {
     <AppLayout title="Kanban">
       <DragDropContext onDragEnd={handleDragEnd}>
         <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin">
-          {KANBAN_COLUMNS.map(column => {
+          {visibleColumns.map(column => {
             const columnLeads = getLeadsByStatus(column.id);
             
             return (
