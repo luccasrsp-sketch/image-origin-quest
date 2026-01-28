@@ -21,7 +21,7 @@ export function LeadCard({ lead, onClick, showActions = true, compact = false }:
 
   const formatPhone = (phone: string) => {
     const digits = phone.replace(/\D/g, '');
-    return `https://wa.me/55${digits}`;
+    return `https://api.whatsapp.com/send/?phone=55${digits}`;
   };
 
   const formatCurrency = (value?: number) => {
