@@ -60,10 +60,18 @@ export function LeadCard({ lead, onClick, showActions = true, compact = false }:
 
     return (
       <Card 
-        className="cursor-pointer transition-all hover:shadow-md hover:border-primary/50"
+        className="cursor-pointer transition-all hover:shadow-md hover:border-primary/50 relative"
         onClick={onClick}
       >
-        <CardContent className="p-3 space-y-1.5">
+        {lead.status === 'sem_atendimento' && (
+          <div className="absolute top-2 right-2">
+            <Badge variant="outline" className="text-xs bg-background/80 backdrop-blur-sm">
+              <Clock className="h-3 w-3 mr-1" />
+              {timeSinceCreated}
+            </Badge>
+          </div>
+        )}
+        <CardContent className="p-3 space-y-1.5 pt-8">
           {lead.needs_scheduling && (
             <Badge className="bg-destructive text-destructive-foreground text-xs mb-1">
               Precisa agendar call!
