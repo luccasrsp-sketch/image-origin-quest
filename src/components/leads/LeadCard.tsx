@@ -60,6 +60,11 @@ export function LeadCard({ lead, onClick, showActions = true, compact = false }:
         onClick={onClick}
       >
         <CardContent className="p-3 space-y-1.5">
+          {lead.needs_scheduling && (
+            <Badge className="bg-destructive text-destructive-foreground text-xs mb-1">
+              Precisa agendar call!
+            </Badge>
+          )}
           <h3 className="font-semibold text-foreground truncate">{lead.full_name}</h3>
           <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
             <Building className="h-3.5 w-3.5 shrink-0" />

@@ -128,8 +128,10 @@ export type Database = {
           id: string
           last_contact_at: string | null
           monthly_revenue: number | null
+          needs_scheduling: boolean | null
           notes: string | null
           phone: string
+          scheduling_pending_reason: string | null
           status: Database["public"]["Enums"]["lead_status"]
           updated_at: string
           utm_campaign: string | null
@@ -149,8 +151,10 @@ export type Database = {
           id?: string
           last_contact_at?: string | null
           monthly_revenue?: number | null
+          needs_scheduling?: boolean | null
           notes?: string | null
           phone: string
+          scheduling_pending_reason?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
           updated_at?: string
           utm_campaign?: string | null
@@ -170,8 +174,10 @@ export type Database = {
           id?: string
           last_contact_at?: string | null
           monthly_revenue?: number | null
+          needs_scheduling?: boolean | null
           notes?: string | null
           phone?: string
+          scheduling_pending_reason?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
           updated_at?: string
           utm_campaign?: string | null
