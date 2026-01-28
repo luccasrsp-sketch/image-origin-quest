@@ -5,29 +5,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-interface RDMarketingLead {
-  // Campos padrão do RD Marketing
-  email?: string
-  nome?: string
-  name?: string
-  telefone?: string
-  phone?: string
-  empresa?: string
-  company?: string
-  cf_faturamento_mensal?: string
-  cf_monthly_revenue?: string
-  // UTMs
-  traffic_source?: string
-  traffic_medium?: string
-  traffic_campaign?: string
-  traffic_value?: string
-  // Metadados
-  conversion_identifier?: string
-  created_at?: string
-  // Campos customizados podem vir como cf_*
-  [key: string]: unknown
-}
-
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -44,99 +21,111 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    // Parse webhook payload
-    const payload: RDMarketingLead = await req.json()
+    // Parse webhook payload - RD Marketing sends data inside a "leads" array
+    const rawPayload = await req.json()
     
-    console.log('RD Marketing webhook received:', JSON.stringify(payload, null, 2))
+    console.log('RD Marketing webhook received:', JSON.stringify(rawPayload, null, 2))
 
-    // Validate required fields
-    const email = payload.email
-    if (!email) {
-      console.error('Missing email in webhook payload')
-      return new Response(
-        JSON.stringify({ error: 'Email é obrigatório' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
+    // Handle RD Marketing format: { leads: [...] }
+    const leadsArray = rawPayload.leads || [rawPayload]
+    const results: { success: boolean; lead_id?: string; email?: string; error?: string }[] = []
 
-    // Check if lead already exists
-    const { data: existingLead } = await supabase
-      .from('leads')
-      .select('id')
-      .eq('email', email)
-      .maybeSingle()
-
-    if (existingLead) {
-      console.log('Lead already exists:', existingLead.id)
-      return new Response(
-        JSON.stringify({ 
-          success: true, 
-          message: 'Lead já existe no CRM',
-          lead_id: existingLead.id 
-        }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
-
-    // Map RD Marketing fields to CRM fields
-    const fullName = payload.nome || payload.name || email.split('@')[0]
-    const phone = payload.telefone || payload.phone || ''
-    const companyName = payload.empresa || payload.company || 'Não informado'
-    
-    // Parse monthly revenue if provided
-    let monthlyRevenue: number | null = null
-    const revenueStr = payload.cf_faturamento_mensal || payload.cf_monthly_revenue
-    if (revenueStr) {
-      const numericValue = parseFloat(revenueStr.replace(/[^\d.,]/g, '').replace(',', '.'))
-      if (!isNaN(numericValue)) {
-        monthlyRevenue = numericValue
+    for (const leadData of leadsArray) {
+      // Extract email from various possible locations
+      const email = leadData.email || leadData.first_conversion?.content?.email_lead
+      
+      if (!email) {
+        console.error('Missing email in lead data:', leadData)
+        results.push({ success: false, error: 'Email não encontrado' })
+        continue
       }
+
+      // Check if lead already exists
+      const { data: existingLead } = await supabase
+        .from('leads')
+        .select('id')
+        .eq('email', email)
+        .maybeSingle()
+
+      if (existingLead) {
+        console.log('Lead already exists:', existingLead.id)
+        results.push({ success: true, lead_id: existingLead.id, email })
+        continue
+      }
+
+      // Extract data from RD Marketing structure
+      const conversionContent = leadData.first_conversion?.content || {}
+      const conversionOrigin = leadData.first_conversion?.conversion_origin || {}
+      
+      // Map fields - check multiple possible locations
+      const fullName = leadData.name || conversionContent.Nome || email.split('@')[0]
+      const phone = leadData.personal_phone || leadData.phone || conversionContent.Telefone || ''
+      const companyName = leadData.company || conversionContent.Empresa || 'Não informado'
+      
+      // Parse monthly revenue if provided
+      let monthlyRevenue: number | null = null
+      const revenueStr = leadData.custom_fields?.['Faturamento Mensal'] || 
+                        conversionContent.cf_faturamento_mensal
+      if (revenueStr) {
+        const numericValue = parseFloat(String(revenueStr).replace(/[^\d.,]/g, '').replace(',', '.'))
+        if (!isNaN(numericValue)) {
+          monthlyRevenue = numericValue
+        }
+      }
+
+      // Determine funnel type based on conversion identifier
+      const conversionIdentifier = conversionContent.conversion_identifier || ''
+      const funnelType = conversionIdentifier.toLowerCase().includes('franquia') 
+        ? 'franquia' 
+        : 'padrao'
+      
+      // Extract UTM data from conversion origin
+      const utmSource = conversionOrigin.source || null
+      const utmMedium = conversionOrigin.medium || null
+      const utmCampaign = conversionOrigin.campaign || null
+
+      // Create lead in CRM
+      const { data: newLead, error } = await supabase
+        .from('leads')
+        .insert({
+          full_name: fullName,
+          email: email,
+          phone: phone,
+          company_name: companyName,
+          monthly_revenue: monthlyRevenue,
+          funnel_type: funnelType,
+          status: 'sem_atendimento',
+          utm_source: utmSource,
+          utm_medium: utmMedium,
+          utm_campaign: utmCampaign,
+          notes: conversionIdentifier 
+            ? `Origem: RD Marketing - ${conversionIdentifier}` 
+            : 'Origem: RD Marketing',
+        })
+        .select('id')
+        .single()
+
+      if (error) {
+        console.error('Error creating lead:', error)
+        results.push({ success: false, email, error: error.message })
+        continue
+      }
+
+      console.log('Lead created successfully:', newLead.id)
+      results.push({ success: true, lead_id: newLead.id, email })
     }
 
-    // Determine funnel type based on conversion or custom field
-    const funnelType = payload.conversion_identifier?.toLowerCase().includes('franquia') 
-      ? 'franquia' 
-      : 'padrao'
-
-    // Create lead in CRM
-    const { data: newLead, error } = await supabase
-      .from('leads')
-      .insert({
-        full_name: fullName,
-        email: email,
-        phone: phone,
-        company_name: companyName,
-        monthly_revenue: monthlyRevenue,
-        funnel_type: funnelType,
-        status: 'sem_atendimento',
-        utm_source: payload.traffic_source || null,
-        utm_medium: payload.traffic_medium || null,
-        utm_campaign: payload.traffic_campaign || null,
-        utm_content: payload.traffic_value || null,
-        notes: payload.conversion_identifier 
-          ? `Origem: RD Marketing - ${payload.conversion_identifier}` 
-          : 'Origem: RD Marketing',
-      })
-      .select('id')
-      .single()
-
-    if (error) {
-      console.error('Error creating lead:', error)
-      return new Response(
-        JSON.stringify({ error: 'Erro ao criar lead', details: error.message }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
-
-    console.log('Lead created successfully:', newLead.id)
+    // Return summary of all processed leads
+    const successCount = results.filter(r => r.success).length
+    const failCount = results.filter(r => !r.success).length
 
     return new Response(
       JSON.stringify({ 
-        success: true, 
-        message: 'Lead criado com sucesso',
-        lead_id: newLead.id 
+        success: failCount === 0,
+        message: `${successCount} lead(s) processado(s), ${failCount} erro(s)`,
+        results
       }),
-      { status: 201, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: failCount === 0 ? 201 : 207, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
 
   } catch (error: unknown) {
