@@ -9,9 +9,9 @@ export function useTeam() {
   const fetchTeam = async () => {
     setLoading(true);
     
-    // Fetch all profiles
+    // Fetch all profiles using public view (doesn't expose email)
     const { data: profiles, error: profilesError } = await supabase
-      .from('profiles')
+      .from('profiles_public')
       .select('*')
       .order('full_name');
 
