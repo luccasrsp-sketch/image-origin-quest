@@ -5,16 +5,22 @@ import { LeadCard } from '@/components/leads/LeadCard';
 import { LeadDetailDialog } from '@/components/leads/LeadDetailDialog';
 import { ScheduleMeetingDialog } from '@/components/calendar/ScheduleMeetingDialog';
 import { QualificationDialog } from '@/components/leads/QualificationDialog';
+import { ProposalDialog } from '@/components/leads/ProposalDialog';
 import { useLeads } from '@/hooks/useLeads';
-import { Lead, LeadStatus, KANBAN_COLUMNS } from '@/types/crm';
+import { useCalendar } from '@/hooks/useCalendar';
+import { useAuth } from '@/contexts/AuthContext';
+import { Lead, LeadStatus, KANBAN_COLUMNS, ProposalProduct } from '@/types/crm';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function KanbanPage() {
-  const { leads, loading, updateLeadStatus, addNote, setNeedsScheduling, clearNeedsScheduling } = useLeads();
+  const { leads, loading, updateLeadStatus, addNote, setNeedsScheduling, clearNeedsScheduling, saveProposal } = useLeads();
+  const { createEvent } = useCalendar();
+  const { profile } = useAuth();
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [schedulingLead, setSchedulingLead] = useState<Lead | null>(null);
   const [qualifyingLead, setQualifyingLead] = useState<Lead | null>(null);
+  const [proposalLead, setProposalLead] = useState<Lead | null>(null);
 
   const getLeadsByStatus = (status: LeadStatus) => 
     leads.filter(l => l.status === status);
@@ -43,6 +49,13 @@ export default function KanbanPage() {
         await clearNeedsScheduling(leadId);
       }
       setSchedulingLead({ ...lead, status: newStatus } as Lead);
+      return;
+    }
+
+    // Se for para envio_proposta, abre o diálogo de proposta
+    if (newStatus === 'envio_proposta') {
+      await updateLeadStatus(leadId, newStatus);
+      setProposalLead({ ...lead, status: newStatus } as Lead);
       return;
     }
 
@@ -177,6 +190,32 @@ export default function KanbanPage() {
           });
         }}
         onNeedScheduling={setNeedsScheduling}
+      />
+
+      {/* Proposal dialog */}
+      <ProposalDialog
+        lead={proposalLead}
+        open={!!proposalLead}
+        onOpenChange={(open) => !open && setProposalLead(null)}
+        onSubmit={async (data) => {
+          const success = await saveProposal(data);
+          if (success && profile?.id) {
+            // Cria evento de lembrete na agenda do vendedor
+            const followUpEnd = new Date(data.followUpAt);
+            followUpEnd.setMinutes(followUpEnd.getMinutes() + 30);
+            
+            await createEvent({
+              title: `Retorno: ${proposalLead?.full_name} - ${proposalLead?.company_name}`,
+              description: `Cobrar posicionamento sobre proposta ${data.product.toUpperCase()} - R$ ${data.value.toLocaleString('pt-BR')}\nForma de pagamento: ${data.paymentMethod}`,
+              lead_id: data.leadId,
+              user_id: profile.id,
+              start_time: data.followUpAt.toISOString(),
+              end_time: followUpEnd.toISOString(),
+              event_type: 'follow_up',
+            });
+          }
+          return success;
+        }}
       />
     </AppLayout>
   );
