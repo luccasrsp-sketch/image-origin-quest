@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Lead, LeadStatus } from '@/types/crm';
+import { Lead, LeadStatus, ProposalProduct } from '@/types/crm';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -231,6 +231,51 @@ export function useLeads() {
     return true;
   };
 
+  const saveProposal = async (data: {
+    leadId: string;
+    product: ProposalProduct;
+    value: number;
+    paymentMethod: string;
+    followUpAt: Date;
+  }) => {
+    const { error } = await supabase
+      .from('leads')
+      .update({
+        proposal_product: data.product,
+        proposal_value: data.value,
+        proposal_payment_method: data.paymentMethod,
+        proposal_follow_up_at: data.followUpAt.toISOString(),
+      })
+      .eq('id', data.leadId);
+
+    if (error) {
+      toast({
+        title: 'Erro ao salvar proposta',
+        description: error.message,
+        variant: 'destructive',
+      });
+      return false;
+    }
+
+    // Log activity
+    if (profile?.id) {
+      await supabase.from('lead_activities').insert({
+        lead_id: data.leadId,
+        user_id: profile.id,
+        action: 'note_added',
+        notes: `Proposta enviada: ${data.product.toUpperCase()} - R$ ${data.value.toLocaleString('pt-BR')} - ${data.paymentMethod}`,
+      });
+    }
+
+    toast({
+      title: 'Proposta registrada',
+      description: 'Detalhes da proposta salvos com sucesso.',
+    });
+
+    fetchLeads();
+    return true;
+  };
+
   const getNewLeads = () => leads.filter(l => l.status === 'sem_atendimento');
   
   const getLeadsByStatus = (status: LeadStatus) => leads.filter(l => l.status === status);
@@ -244,6 +289,7 @@ export function useLeads() {
     addNote,
     setNeedsScheduling,
     clearNeedsScheduling,
+    saveProposal,
     getNewLeads,
     getLeadsByStatus,
   };

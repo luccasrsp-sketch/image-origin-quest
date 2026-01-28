@@ -28,6 +28,15 @@ export interface UserRole {
   role: AppRole;
 }
 
+export type ProposalProduct = 'start' | 'sales' | 'scale' | 'business';
+
+export const PROPOSAL_PRODUCTS: { id: ProposalProduct; label: string }[] = [
+  { id: 'start', label: 'Start' },
+  { id: 'sales', label: 'Sales' },
+  { id: 'scale', label: 'Scale' },
+  { id: 'business', label: 'Business' },
+];
+
 export interface Lead {
   id: string;
   full_name: string;
@@ -50,6 +59,10 @@ export interface Lead {
   last_contact_at?: string;
   needs_scheduling?: boolean;
   scheduling_pending_reason?: string;
+  proposal_product?: ProposalProduct;
+  proposal_value?: number;
+  proposal_payment_method?: string;
+  proposal_follow_up_at?: string;
   // Joined fields
   assigned_sdr?: Profile;
   assigned_closer?: Profile;

@@ -131,6 +131,10 @@ export type Database = {
           needs_scheduling: boolean | null
           notes: string | null
           phone: string
+          proposal_follow_up_at: string | null
+          proposal_payment_method: string | null
+          proposal_product: string | null
+          proposal_value: number | null
           scheduling_pending_reason: string | null
           status: Database["public"]["Enums"]["lead_status"]
           updated_at: string
@@ -154,6 +158,10 @@ export type Database = {
           needs_scheduling?: boolean | null
           notes?: string | null
           phone: string
+          proposal_follow_up_at?: string | null
+          proposal_payment_method?: string | null
+          proposal_product?: string | null
+          proposal_value?: number | null
           scheduling_pending_reason?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
           updated_at?: string
@@ -177,6 +185,10 @@ export type Database = {
           needs_scheduling?: boolean | null
           notes?: string | null
           phone?: string
+          proposal_follow_up_at?: string | null
+          proposal_payment_method?: string | null
+          proposal_product?: string | null
+          proposal_value?: number | null
           scheduling_pending_reason?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
           updated_at?: string
