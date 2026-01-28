@@ -328,6 +328,48 @@ export function useLeads() {
     return true;
   };
 
+  const updateSaleStatus = async (leadId: string, field: 'contract' | 'payment', value: boolean) => {
+    const updateField = field === 'contract' ? 'sale_contract_sent' : 'sale_payment_received';
+    
+    // Optimistic update
+    setLeads(prevLeads => 
+      prevLeads.map(l => 
+        l.id === leadId 
+          ? { ...l, [updateField]: value }
+          : l
+      )
+    );
+
+    const { error } = await supabase
+      .from('leads')
+      .update({ [updateField]: value })
+      .eq('id', leadId);
+
+    if (error) {
+      // Revert on error
+      setLeads(prevLeads => 
+        prevLeads.map(l => 
+          l.id === leadId 
+            ? { ...l, [updateField]: !value }
+            : l
+        )
+      );
+      toast({
+        title: 'Erro ao atualizar',
+        description: error.message,
+        variant: 'destructive',
+      });
+      return false;
+    }
+
+    toast({
+      title: 'Status atualizado',
+      description: field === 'contract' ? 'Status do contrato atualizado.' : 'Status do pagamento atualizado.',
+    });
+
+    return true;
+  };
+
   return {
     leads,
     loading,
@@ -339,6 +381,7 @@ export function useLeads() {
     clearNeedsScheduling,
     saveProposal,
     saveSaleData,
+    updateSaleStatus,
     getNewLeads,
     getLeadsByStatus,
   };

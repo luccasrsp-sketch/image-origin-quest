@@ -17,7 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function KanbanPage() {
-  const { leads, loading, updateLeadStatus, addNote, setNeedsScheduling, clearNeedsScheduling, saveProposal, saveSaleData } = useLeads();
+  const { leads, loading, updateLeadStatus, addNote, setNeedsScheduling, clearNeedsScheduling, saveProposal, saveSaleData, updateSaleStatus } = useLeads();
   const { createEvent } = useCalendar();
   const { profile } = useAuth();
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
@@ -148,6 +148,7 @@ export default function KanbanPage() {
                                 lead={lead}
                                 onClick={() => setSelectedLead(lead)}
                                 onViewSale={() => setSaleDetailsLead(lead)}
+                                onUpdateSaleStatus={updateSaleStatus}
                                 compact
                               />
                             </div>

@@ -2,6 +2,13 @@ import { Phone, Mail, Building, Clock, MessageSquare, FileText, CalendarClock, C
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Lead, STATUS_LABELS, PROPOSAL_PRODUCTS } from '@/types/crm';
 import { formatDistanceToNow, format, isBefore, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -10,11 +17,12 @@ interface LeadCardProps {
   lead: Lead;
   onClick?: () => void;
   onViewSale?: () => void;
+  onUpdateSaleStatus?: (leadId: string, field: 'contract' | 'payment', value: boolean) => void;
   showActions?: boolean;
   compact?: boolean;
 }
 
-export function LeadCard({ lead, onClick, onViewSale, showActions = true, compact = false }: LeadCardProps) {
+export function LeadCard({ lead, onClick, onViewSale, onUpdateSaleStatus, showActions = true, compact = false }: LeadCardProps) {
   const timeSinceCreated = formatDistanceToNow(new Date(lead.created_at), {
     addSuffix: true,
     locale: ptBR,
@@ -158,15 +166,43 @@ export function LeadCard({ lead, onClick, onViewSale, showActions = true, compac
                 </div>
               )}
               
-              {/* Status do Contrato e Pagamento */}
-              <div className="flex flex-col gap-1 pt-1">
-                <div className={`flex items-center gap-1 text-xs ${lead.sale_contract_sent ? 'text-success-foreground' : 'text-warning'}`}>
-                  <FileCheck className="h-3 w-3" />
-                  <span>Contrato: {lead.sale_contract_sent ? 'Enviado ✓' : 'Pendente'}</span>
+              {/* Status do Contrato e Pagamento - Editável */}
+              <div className="flex flex-col gap-2 pt-2" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <FileCheck className="h-3 w-3" />
+                    <span>Contrato:</span>
+                  </div>
+                  <Select 
+                    value={lead.sale_contract_sent ? 'sim' : 'nao'} 
+                    onValueChange={(value) => onUpdateSaleStatus?.(lead.id, 'contract', value === 'sim')}
+                  >
+                    <SelectTrigger className={`h-6 w-24 text-xs ${lead.sale_contract_sent ? 'border-success text-success-foreground' : 'border-warning text-warning'}`}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="nao">Pendente</SelectItem>
+                      <SelectItem value="sim">Enviado ✓</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-                <div className={`flex items-center gap-1 text-xs ${lead.sale_payment_received ? 'text-success-foreground' : 'text-warning'}`}>
-                  <Wallet className="h-3 w-3" />
-                  <span>Pagamento: {lead.sale_payment_received ? 'Realizado ✓' : 'Pendente'}</span>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Wallet className="h-3 w-3" />
+                    <span>Pagamento:</span>
+                  </div>
+                  <Select 
+                    value={lead.sale_payment_received ? 'sim' : 'nao'} 
+                    onValueChange={(value) => onUpdateSaleStatus?.(lead.id, 'payment', value === 'sim')}
+                  >
+                    <SelectTrigger className={`h-6 w-24 text-xs ${lead.sale_payment_received ? 'border-success text-success-foreground' : 'border-warning text-warning'}`}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="nao">Pendente</SelectItem>
+                      <SelectItem value="sim">Realizado ✓</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </div>
