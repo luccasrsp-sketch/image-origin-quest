@@ -6,8 +6,6 @@ import {
   BarChart3, 
   Settings,
   LogOut,
-  Bell,
-  UserCircle
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
@@ -27,6 +25,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import logoEscolaFranchising from '@/assets/logo-escola-franchising.svg';
 
 const mainNavItems = [
   { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
@@ -65,15 +64,11 @@ export function AppSidebar() {
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       <SidebarHeader className="p-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
-            <span className="text-lg font-bold text-primary-foreground">C</span>
-          </div>
-          {!collapsed && (
-            <div className="flex flex-col">
-              <span className="text-lg font-bold text-sidebar-foreground">CRM</span>
-              <span className="text-xs text-muted-foreground">Gestão de Leads</span>
-            </div>
-          )}
+          <img 
+            src={logoEscolaFranchising} 
+            alt="Escola do Franchising" 
+            className={collapsed ? "h-10 w-10 object-contain" : "h-12 w-auto max-w-[180px] object-contain"}
+          />
         </div>
       </SidebarHeader>
 
