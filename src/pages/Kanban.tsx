@@ -7,6 +7,7 @@ import { ScheduleMeetingDialog } from '@/components/calendar/ScheduleMeetingDial
 import { QualificationDialog } from '@/components/leads/QualificationDialog';
 import { ProposalDialog } from '@/components/leads/ProposalDialog';
 import { SaleConfirmationDialog } from '@/components/leads/SaleConfirmationDialog';
+import { SaleDetailsDialog } from '@/components/leads/SaleDetailsDialog';
 import { ColdLeadsAlert } from '@/components/leads/ColdLeadsAlert';
 import { useLeads } from '@/hooks/useLeads';
 import { useCalendar } from '@/hooks/useCalendar';
@@ -24,6 +25,7 @@ export default function KanbanPage() {
   const [qualifyingLead, setQualifyingLead] = useState<Lead | null>(null);
   const [proposalLead, setProposalLead] = useState<Lead | null>(null);
   const [saleLead, setSaleLead] = useState<Lead | null>(null);
+  const [saleDetailsLead, setSaleDetailsLead] = useState<Lead | null>(null);
   const [coldAlertDismissed, setColdAlertDismissed] = useState(false);
 
   const getLeadsByStatus = (status: LeadStatus) => 
@@ -145,6 +147,7 @@ export default function KanbanPage() {
                               <LeadCard
                                 lead={lead}
                                 onClick={() => setSelectedLead(lead)}
+                                onViewSale={() => setSaleDetailsLead(lead)}
                                 compact
                               />
                             </div>
@@ -250,6 +253,13 @@ export default function KanbanPage() {
           }
           setSaleLead(null);
         }}
+      />
+
+      {/* Sale details dialog */}
+      <SaleDetailsDialog
+        lead={saleDetailsLead}
+        open={!!saleDetailsLead}
+        onOpenChange={(open) => !open && setSaleDetailsLead(null)}
       />
 
       {/* Cold leads alert */}

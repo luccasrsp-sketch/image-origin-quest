@@ -59,10 +59,20 @@ export interface Lead {
   last_contact_at?: string;
   needs_scheduling?: boolean;
   scheduling_pending_reason?: string;
-  proposal_product?: ProposalProduct;
+  proposal_product?: ProposalProduct | string;
   proposal_value?: number;
   proposal_payment_method?: string;
   proposal_follow_up_at?: string;
+  // Sale fields
+  sale_company_cnpj?: string;
+  sale_admin_email?: string;
+  sale_payment_method?: string;
+  sale_entry_value?: number;
+  sale_remaining_value?: number;
+  sale_installments?: number;
+  sale_first_check_date?: string;
+  sale_observations?: string;
+  sale_confirmed_at?: string;
   // Joined fields
   assigned_sdr?: Profile;
   assigned_closer?: Profile;

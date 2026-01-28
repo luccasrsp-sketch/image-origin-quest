@@ -1,19 +1,20 @@
-import { Phone, Mail, Building, Clock, MessageSquare, FileText, CalendarClock } from 'lucide-react';
+import { Phone, Mail, Building, Clock, MessageSquare, FileText, CalendarClock, CheckCircle2, Eye } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Lead, STATUS_LABELS, PROPOSAL_PRODUCTS } from '@/types/crm';
-import { formatDistanceToNow, format, isBefore } from 'date-fns';
+import { formatDistanceToNow, format, isBefore, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 interface LeadCardProps {
   lead: Lead;
   onClick?: () => void;
+  onViewSale?: () => void;
   showActions?: boolean;
   compact?: boolean;
 }
 
-export function LeadCard({ lead, onClick, showActions = true, compact = false }: LeadCardProps) {
+export function LeadCard({ lead, onClick, onViewSale, showActions = true, compact = false }: LeadCardProps) {
   const timeSinceCreated = formatDistanceToNow(new Date(lead.created_at), {
     addSuffix: true,
     locale: ptBR,
@@ -24,10 +25,14 @@ export function LeadCard({ lead, onClick, showActions = true, compact = false }:
     return "https://api.whatsapp.com/send/?phone=55" + digits;
   };
 
-  const formatCurrency = (value?: number) => {
+  const formatCurrency = (value?: number | null) => {
     if (!value) return 'Não informado';
     return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   };
+
+  const closingDate = lead.sale_confirmed_at ? new Date(lead.sale_confirmed_at) : null;
+  const createdDate = new Date(lead.created_at);
+  const daysToClose = closingDate ? differenceInDays(closingDate, createdDate) : null;
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -58,9 +63,15 @@ export function LeadCard({ lead, onClick, showActions = true, compact = false }:
       ? PROPOSAL_PRODUCTS.find(p => p.id === lead.proposal_product)?.label 
       : null;
 
+    const isVendido = lead.status === 'vendido';
+
     return (
       <Card 
-        className="cursor-pointer transition-all hover:shadow-md hover:border-primary/50 relative"
+        className={`cursor-pointer transition-all hover:shadow-md relative ${
+          isVendido 
+            ? 'bg-success/20 border-success hover:border-success/70' 
+            : 'hover:border-primary/50'
+        }`}
         onClick={onClick}
       >
         {lead.status === 'sem_atendimento' && (
@@ -71,10 +82,32 @@ export function LeadCard({ lead, onClick, showActions = true, compact = false }:
             </Badge>
           </div>
         )}
-        <CardContent className="p-3 space-y-1.5 pt-8">
+        {isVendido && (
+          <div className="absolute top-2 right-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs bg-background/80 backdrop-blur-sm hover:bg-background"
+              onClick={(e) => {
+                e.stopPropagation();
+                onViewSale?.();
+              }}
+            >
+              <Eye className="h-3 w-3 mr-1" />
+              Ver negociação
+            </Button>
+          </div>
+        )}
+        <CardContent className={`p-3 space-y-1.5 ${lead.status === 'sem_atendimento' || isVendido ? 'pt-10' : 'pt-3'}`}>
           {lead.needs_scheduling && (
             <Badge className="bg-destructive text-destructive-foreground text-xs mb-1">
               Precisa agendar call!
+            </Badge>
+          )}
+          {isVendido && (
+            <Badge className="bg-success text-success-foreground text-xs mb-1 flex items-center gap-1 w-fit">
+              <CheckCircle2 className="h-3 w-3" />
+              {productLabel || 'Vendido'}
             </Badge>
           )}
           {lead.status === 'envio_proposta' && lead.proposal_product && lead.proposal_value && (
@@ -96,7 +129,7 @@ export function LeadCard({ lead, onClick, showActions = true, compact = false }:
               );
             })()
           )}
-          <h3 className="font-semibold text-foreground truncate">{lead.full_name}</h3>
+          <h3 className={`font-semibold truncate ${isVendido ? 'text-success-foreground' : 'text-foreground'}`}>{lead.full_name}</h3>
           <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
             <Building className="h-3.5 w-3.5 shrink-0" />
             <span className="truncate">{lead.company_name}</span>
@@ -105,6 +138,27 @@ export function LeadCard({ lead, onClick, showActions = true, compact = false }:
             <Phone className="h-3.5 w-3.5 shrink-0" />
             <span>{lead.phone}</span>
           </div>
+          
+          {/* Datas para leads vendidos */}
+          {isVendido && (
+            <div className="pt-2 mt-2 border-t border-success/30 space-y-1">
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Clock className="h-3 w-3" />
+                <span>Cadastro: {format(createdDate, "dd/MM/yyyy", { locale: ptBR })}</span>
+              </div>
+              {closingDate && (
+                <div className="flex items-center gap-1 text-xs text-success-foreground font-medium">
+                  <CheckCircle2 className="h-3 w-3" />
+                  <span>Fechamento: {format(closingDate, "dd/MM/yyyy", { locale: ptBR })}</span>
+                </div>
+              )}
+              {daysToClose !== null && (
+                <div className="text-xs text-muted-foreground">
+                  ⏱️ Tempo de fechamento: <span className="font-medium">{daysToClose} dias</span>
+                </div>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
     );
