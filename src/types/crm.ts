@@ -8,7 +8,8 @@ export type LeadStatus =
   | 'reuniao_marcada'
   | 'envio_proposta'
   | 'vendido'
-  | 'recuperacao_sdr';
+  | 'recuperacao_sdr'
+  | 'perdido';
 
 export type FunnelType = 'padrao' | 'franquia';
 
@@ -75,6 +76,9 @@ export interface Lead {
   sale_confirmed_at?: string;
   sale_contract_sent?: boolean;
   sale_payment_received?: boolean;
+  // Loss fields
+  loss_reason?: string;
+  lost_at?: string;
   // Joined fields
   assigned_sdr?: Profile;
   assigned_closer?: Profile;
@@ -128,6 +132,7 @@ export const KANBAN_COLUMNS: { id: LeadStatus; title: string; color: string; rol
   { id: 'reuniao_marcada', title: 'Reunião Marcada', color: 'bg-violet-100 text-violet-900', role: 'closer' },
   { id: 'envio_proposta', title: 'Envio de Proposta', color: 'bg-blue-100 text-blue-900', role: 'closer' },
   { id: 'vendido', title: 'Vendido', color: 'bg-green-100 text-green-900', role: 'closer' },
+  { id: 'perdido', title: 'Perdido', color: 'bg-gray-200 text-gray-700', role: 'closer' },
   { id: 'recuperacao_sdr', title: 'Recuperação SDR', color: 'bg-rose-100 text-rose-900', role: 'sdr' },
 ];
 
@@ -139,5 +144,6 @@ export const STATUS_LABELS: Record<LeadStatus, string> = {
   reuniao_marcada: 'Reunião Marcada',
   envio_proposta: 'Envio de Proposta',
   vendido: 'Vendido',
+  perdido: 'Perdido',
   recuperacao_sdr: 'Recuperação SDR',
 };

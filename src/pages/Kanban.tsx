@@ -9,6 +9,7 @@ import { ProposalDialog } from '@/components/leads/ProposalDialog';
 import { SaleConfirmationDialog } from '@/components/leads/SaleConfirmationDialog';
 import { SaleDetailsDialog } from '@/components/leads/SaleDetailsDialog';
 import { ColdLeadsAlert } from '@/components/leads/ColdLeadsAlert';
+import { LossReasonDialog } from '@/components/leads/LossReasonDialog';
 import { useLeads } from '@/hooks/useLeads';
 import { useCalendar } from '@/hooks/useCalendar';
 import { useAuth } from '@/contexts/AuthContext';
@@ -17,7 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function KanbanPage() {
-  const { leads, loading, updateLeadStatus, addNote, setNeedsScheduling, clearNeedsScheduling, saveProposal, saveSaleData, updateSaleStatus } = useLeads();
+  const { leads, loading, updateLeadStatus, addNote, setNeedsScheduling, clearNeedsScheduling, saveProposal, saveSaleData, updateSaleStatus, markAsLost } = useLeads();
   const { createEvent } = useCalendar();
   const { profile, isAdmin, isSDR, isCloser } = useAuth();
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
@@ -26,6 +27,7 @@ export default function KanbanPage() {
   const [proposalLead, setProposalLead] = useState<Lead | null>(null);
   const [saleLead, setSaleLead] = useState<Lead | null>(null);
   const [saleDetailsLead, setSaleDetailsLead] = useState<Lead | null>(null);
+  const [lossLead, setLossLead] = useState<Lead | null>(null);
   const [coldAlertDismissed, setColdAlertDismissed] = useState(false);
 
   // Filtra colunas baseado no papel do usuário
@@ -160,6 +162,7 @@ export default function KanbanPage() {
                                 onClick={() => setSelectedLead(lead)}
                                 onViewSale={() => setSaleDetailsLead(lead)}
                                 onUpdateSaleStatus={updateSaleStatus}
+                                onMarkAsLost={setLossLead}
                                 compact
                               />
                             </div>
@@ -272,6 +275,14 @@ export default function KanbanPage() {
         lead={saleDetailsLead}
         open={!!saleDetailsLead}
         onOpenChange={(open) => !open && setSaleDetailsLead(null)}
+      />
+
+      {/* Loss reason dialog */}
+      <LossReasonDialog
+        lead={lossLead}
+        open={!!lossLead}
+        onOpenChange={(open) => !open && setLossLead(null)}
+        onConfirm={markAsLost}
       />
 
       {/* Cold leads alert */}
