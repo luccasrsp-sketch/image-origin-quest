@@ -25,6 +25,7 @@ import { CalendarIcon, FileText, Wallet } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { formatCurrencyInput, parseCurrency } from '@/utils/currency';
 
 const PRODUCTS = ['Start', 'Sales', 'Scale', 'Business'];
 
@@ -125,8 +126,8 @@ export function SaleConfirmationDialog({
       companyCnpj,
       adminEmail,
       paymentMethod,
-      entryValue: parseFloat(entryValue.replace(',', '.')) || 0,
-      remainingValue: parseFloat(remainingValue.replace(',', '.')) || 0,
+      entryValue: parseCurrency(entryValue),
+      remainingValue: parseCurrency(remainingValue),
       installments: parseInt(installments) || 0,
       firstCheckDate: firstCheckDate || null,
       observations,
@@ -158,8 +159,8 @@ export function SaleConfirmationDialog({
         companyCnpj,
         adminEmail,
         paymentMethod,
-        entryValue: parseFloat(entryValue.replace(',', '.')) || 0,
-        remainingValue: parseFloat(remainingValue.replace(',', '.')) || 0,
+        entryValue: parseCurrency(entryValue),
+        remainingValue: parseCurrency(remainingValue),
         installments: parseInt(installments) || 0,
         firstCheckDate: firstCheckDate || null,
         observations,
@@ -194,8 +195,8 @@ export function SaleConfirmationDialog({
 
 📦 *Produto:* ${product}
 💳 *Forma de Pagamento:* ${paymentMethod}
-💵 *Valor de Entrada:* R$ ${parseFloat(entryValue || '0').toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-💰 *Valor Restante:* R$ ${parseFloat(remainingValue || '0').toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+💵 *Valor de Entrada:* R$ ${entryValue || '0,00'}
+💰 *Valor Restante:* R$ ${remainingValue || '0,00'}
 🔢 *Parcelas:* ${installments || 'N/A'}
 ${showCheckDate && firstCheckDate ? `📅 *Vencimento 1º Cheque:* ${format(firstCheckDate, 'dd/MM/yyyy')}` : ''}
 ${observations ? `📝 *Observações:* ${observations}` : ''}`;
@@ -306,12 +307,9 @@ ${observations ? `📝 *Observações:* ${observations}` : ''}`;
                     <Input
                       id="entryValue"
                       type="text"
-                      inputMode="decimal"
+                      inputMode="numeric"
                       value={entryValue}
-                      onChange={(e) => {
-                        const value = e.target.value.replace(/[^\d,]/g, '');
-                        setEntryValue(value);
-                      }}
+                      onChange={(e) => setEntryValue(formatCurrencyInput(e.target.value))}
                       placeholder="0,00"
                       className="pl-10"
                     />
@@ -324,12 +322,9 @@ ${observations ? `📝 *Observações:* ${observations}` : ''}`;
                     <Input
                       id="remainingValue"
                       type="text"
-                      inputMode="decimal"
+                      inputMode="numeric"
                       value={remainingValue}
-                      onChange={(e) => {
-                        const value = e.target.value.replace(/[^\d,]/g, '');
-                        setRemainingValue(value);
-                      }}
+                      onChange={(e) => setRemainingValue(formatCurrencyInput(e.target.value))}
                       placeholder="0,00"
                       className="pl-10"
                     />
