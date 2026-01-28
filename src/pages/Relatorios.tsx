@@ -33,6 +33,8 @@ import {
   ArrowDownRight,
   XCircle,
   MessageSquareWarning,
+  CalendarCheck,
+  CalendarX,
 } from 'lucide-react';
 import { format, subDays, startOfDay, eachDayOfInterval, isWithinInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -444,6 +446,232 @@ export default function RelatoriosPage() {
             </CardContent>
           </Card>
         )}
+
+        {/* Meeting Metrics Section */}
+        {(() => {
+          // Filter only meetings (not calls, followups, etc.)
+          const meetingEvents = events.filter(e => e.event_type === 'meeting');
+          const pastMeetings = meetingEvents.filter(e => new Date(e.end_time) < new Date());
+          const completedMeetings = pastMeetings.filter(e => e.meeting_completed === true);
+          const notCompletedMeetings = pastMeetings.filter(e => e.meeting_completed === false);
+          const pendingMeetings = pastMeetings.filter(e => e.meeting_completed === null || e.meeting_completed === undefined);
+          
+          const completionRate = pastMeetings.length > 0 
+            ? ((completedMeetings.length / pastMeetings.length) * 100).toFixed(1) 
+            : '0';
+
+          // Metrics per closer
+          const closers = getClosers();
+          const closerMeetingMetrics = closers.map(closer => {
+            const closerMeetings = pastMeetings.filter(e => e.user_id === closer.id);
+            const closerCompleted = closerMeetings.filter(e => e.meeting_completed === true);
+            const closerNotCompleted = closerMeetings.filter(e => e.meeting_completed === false);
+            const closerPending = closerMeetings.filter(e => e.meeting_completed === null || e.meeting_completed === undefined);
+            
+            return {
+              name: closer.full_name?.split(' ')[0] || 'N/A',
+              fullName: closer.full_name || 'N/A',
+              agendadas: closerMeetings.length,
+              realizadas: closerCompleted.length,
+              naoRealizadas: closerNotCompleted.length,
+              pendentes: closerPending.length,
+              taxa: closerMeetings.length > 0 
+                ? ((closerCompleted.length / closerMeetings.length) * 100).toFixed(1) 
+                : '0',
+            };
+          }).filter(c => c.agendadas > 0);
+
+          // Extract reasons for not completed meetings
+          const notCompletedReasons = notCompletedMeetings
+            .filter(m => m.meeting_not_completed_reason)
+            .map(m => ({
+              reason: m.meeting_not_completed_reason || '',
+              title: m.title,
+              date: m.start_time,
+              user: m.user?.full_name || 'N/A',
+            }));
+
+          return pastMeetings.length > 0 && (
+            <>
+              <div className="flex items-center gap-2 pt-4">
+                <CalendarCheck className="h-5 w-5 text-primary" />
+                <h2 className="text-xl font-semibold">Métricas de Reuniões</h2>
+                <Badge variant="secondary">{pastMeetings.length} reuniões passadas</Badge>
+              </div>
+
+              {/* KPI Cards for Meetings */}
+              <div className="grid gap-4 md:grid-cols-4">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <CardTitle className="text-sm font-medium">Reuniões Agendadas</CardTitle>
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{pastMeetings.length}</div>
+                    <p className="text-xs text-muted-foreground">
+                      Total de reuniões passadas
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <CardTitle className="text-sm font-medium">Reuniões Realizadas</CardTitle>
+                    <CalendarCheck className="h-4 w-4 text-success" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-success">{completedMeetings.length}</div>
+                    <p className="text-xs text-muted-foreground">
+                      {completionRate}% de taxa de realização
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <CardTitle className="text-sm font-medium">Não Realizadas</CardTitle>
+                    <CalendarX className="h-4 w-4 text-destructive" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-destructive">{notCompletedMeetings.length}</div>
+                    <p className="text-xs text-muted-foreground">
+                      {pastMeetings.length > 0 ? ((notCompletedMeetings.length / pastMeetings.length) * 100).toFixed(1) : '0'}% não realizadas
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <CardTitle className="text-sm font-medium">Pendentes</CardTitle>
+                    <Clock className="h-4 w-4 text-warning" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-warning">{pendingMeetings.length}</div>
+                    <p className="text-xs text-muted-foreground">
+                      Aguardando confirmação
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Per Closer Metrics */}
+              {closerMeetingMetrics.length > 0 && (
+                <div className="grid gap-6 md:grid-cols-2">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Reuniões por Closer</CardTitle>
+                      <CardDescription>
+                        Agendadas vs Realizadas por membro da equipe
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={250}>
+                        <BarChart data={closerMeetingMetrics}>
+                          <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                          <XAxis dataKey="name" className="text-xs" />
+                          <YAxis className="text-xs" />
+                          <Tooltip 
+                            contentStyle={{ 
+                              backgroundColor: 'hsl(var(--card))', 
+                              border: '1px solid hsl(var(--border))',
+                              borderRadius: 'var(--radius)',
+                            }} 
+                          />
+                          <Legend />
+                          <Bar dataKey="agendadas" name="Agendadas" fill="hsl(var(--muted-foreground))" radius={[4, 4, 0, 0]} />
+                          <Bar dataKey="realizadas" name="Realizadas" fill="hsl(var(--success))" radius={[4, 4, 0, 0]} />
+                          <Bar dataKey="naoRealizadas" name="Não Realizadas" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Taxa de Realização por Closer</CardTitle>
+                      <CardDescription>
+                        Porcentagem de reuniões efetivamente realizadas
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {closerMeetingMetrics
+                          .sort((a, b) => parseFloat(b.taxa) - parseFloat(a.taxa))
+                          .map((closer, index) => (
+                            <div key={closer.fullName} className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <div className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
+                                    index === 0 ? 'bg-success text-success-foreground' :
+                                    index === 1 ? 'bg-primary text-primary-foreground' :
+                                    'bg-muted text-muted-foreground'
+                                  }`}>
+                                    {index + 1}
+                                  </div>
+                                  <span className="font-medium">{closer.fullName}</span>
+                                </div>
+                                <div className="text-right">
+                                  <span className="font-bold">{closer.taxa}%</span>
+                                  <span className="text-xs text-muted-foreground ml-2">
+                                    ({closer.realizadas}/{closer.agendadas})
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="h-2 w-full rounded-full bg-muted">
+                                <div 
+                                  className="h-full rounded-full bg-success transition-all"
+                                  style={{ width: `${closer.taxa}%` }}
+                                />
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {/* Reasons for not completed meetings */}
+              {notCompletedReasons.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <CalendarX className="h-5 w-5 text-destructive" />
+                      Motivos de Reuniões Não Realizadas
+                    </CardTitle>
+                    <CardDescription>
+                      Últimos motivos informados pelos vendedores
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3 max-h-[250px] overflow-y-auto">
+                      {notCompletedReasons
+                        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                        .slice(0, 10)
+                        .map((item, index) => (
+                          <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                            <CalendarX className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="font-medium truncate">{item.title}</span>
+                                <Badge variant="outline" className="shrink-0 text-xs">
+                                  {item.user}
+                                </Badge>
+                              </div>
+                              <p className="text-sm text-muted-foreground mt-1">{item.reason}</p>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {format(new Date(item.date), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </>
+          );
+        })()}
 
         {/* Loss Reason Analysis Section */}
         {lostLeads.length > 0 && (
