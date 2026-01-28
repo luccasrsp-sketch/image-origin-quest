@@ -193,7 +193,32 @@ export function LeadCard({ lead, onClick, onViewSale, onUpdateSaleStatus, showAc
                   </div>
                   <Select 
                     value={lead.sale_payment_received ? 'sim' : 'nao'} 
-                    onValueChange={(value) => onUpdateSaleStatus?.(lead.id, 'payment', value === 'sim')}
+                    onValueChange={(value) => {
+                      const isReceived = value === 'sim';
+                      onUpdateSaleStatus?.(lead.id, 'payment', isReceived);
+                      
+                      // Se marcou como realizado, envia mensagem para o financeiro
+                      if (isReceived) {
+                        const productLabel = lead.proposal_product || 'N/A';
+                        const message = `💰 *NOVA VENDA REALIZADA*
+
+👤 *Cliente:* ${lead.full_name}
+🏢 *Empresa:* ${lead.company_name}
+📞 *Telefone:* ${lead.phone}
+📧 *E-mail Administrador:* ${lead.sale_admin_email || 'N/A'}
+🔢 *CNPJ:* ${lead.sale_company_cnpj || 'N/A'}
+
+📦 *Produto:* ${productLabel}
+💳 *Forma de Pagamento:* ${lead.sale_payment_method || 'N/A'}
+💵 *Valor de Entrada:* R$ ${(lead.sale_entry_value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+💰 *Valor Restante:* R$ ${(lead.sale_remaining_value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+🔢 *Parcelas:* ${lead.sale_installments || 'N/A'}
+${lead.sale_observations ? `📝 *Observações:* ${lead.sale_observations}` : ''}`;
+
+                        const encodedMessage = encodeURIComponent(message);
+                        window.open(`https://api.whatsapp.com/send/?phone=5535991190980&text=${encodedMessage}`, '_blank');
+                      }
+                    }}
                   >
                     <SelectTrigger className={`h-6 w-24 text-xs ${lead.sale_payment_received ? 'border-success text-success-foreground' : 'border-warning text-warning'}`}>
                       <SelectValue />
