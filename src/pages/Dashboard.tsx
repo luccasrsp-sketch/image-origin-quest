@@ -1,13 +1,14 @@
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Users, TrendingUp, Calendar, Clock, DollarSign, Target } from 'lucide-react';
+import { Users, TrendingUp, Calendar, Clock, DollarSign, Target, AlertCircle, Phone } from 'lucide-react';
 import { useLeads } from '@/hooks/useLeads';
 import { useCalendar } from '@/hooks/useCalendar';
 import { useAuth } from '@/contexts/AuthContext';
-import { formatDistanceToNow } from 'date-fns';
+import { format, formatDistanceToNow, isAfter, isBefore, addHours } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { STATUS_LABELS } from '@/types/crm';
+import { STATUS_LABELS, PROPOSAL_PRODUCTS } from '@/types/crm';
+import { Button } from '@/components/ui/button';
 import {
   BarChart,
   Bar,
@@ -218,6 +219,84 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Follow-ups Pendentes */}
+        <Card className="border-warning/50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-warning">
+              <AlertCircle className="h-5 w-5" />
+              Follow-ups Pendentes
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {leads
+                .filter(l => l.proposal_follow_up_at && l.status === 'envio_proposta')
+                .sort((a, b) => new Date(a.proposal_follow_up_at!).getTime() - new Date(b.proposal_follow_up_at!).getTime())
+                .slice(0, 5)
+                .map(lead => {
+                  const followUpDate = new Date(lead.proposal_follow_up_at!);
+                  const now = new Date();
+                  const isOverdue = isBefore(followUpDate, now);
+                  const isUrgent = !isOverdue && isBefore(followUpDate, addHours(now, 24));
+                  const productLabel = lead.proposal_product 
+                    ? PROPOSAL_PRODUCTS.find(p => p.id === lead.proposal_product)?.label 
+                    : null;
+
+                  return (
+                    <div 
+                      key={lead.id} 
+                      className={`flex items-center justify-between rounded-lg border p-3 ${
+                        isOverdue 
+                          ? 'border-destructive bg-destructive/10' 
+                          : isUrgent 
+                            ? 'border-warning bg-warning/10' 
+                            : 'border-border'
+                      }`}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium truncate">{lead.full_name}</p>
+                          {isOverdue && (
+                            <Badge variant="destructive" className="text-xs">Atrasado</Badge>
+                          )}
+                          {isUrgent && !isOverdue && (
+                            <Badge className="bg-warning text-warning-foreground text-xs">Hoje</Badge>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground truncate">{lead.company_name}</p>
+                        {productLabel && lead.proposal_value && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {productLabel} • {lead.proposal_value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                          </p>
+                        )}
+                      </div>
+                      <div className="text-right ml-3 shrink-0">
+                        <p className={`text-sm font-medium ${isOverdue ? 'text-destructive' : ''}`}>
+                          {format(followUpDate, "dd/MM 'às' HH:mm", { locale: ptBR })}
+                        </p>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="mt-1 h-7 text-xs gap-1"
+                          onClick={() => {
+                            const digits = lead.phone.replace(/\D/g, '');
+                            window.open(`https://api.whatsapp.com/send/?phone=55${digits}`, '_blank');
+                          }}
+                        >
+                          <Phone className="h-3 w-3" />
+                          WhatsApp
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              {leads.filter(l => l.proposal_follow_up_at && l.status === 'envio_proposta').length === 0 && (
+                <p className="text-center text-muted-foreground py-4">Nenhum follow-up pendente</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Recent leads and upcoming events */}
         <div className="grid gap-6 md:grid-cols-2">
