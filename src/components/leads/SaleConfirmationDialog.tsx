@@ -162,8 +162,7 @@ ${showCheckDate && firstCheckDate ? `📅 *Vencimento 1º Cheque:* ${format(firs
 ${observations ? `📝 *Observações:* ${observations}` : ''}`;
 
     const encodedMessage = encodeURIComponent(message);
-    // Note: Replace with actual department phone numbers
-    const phone = type === 'juridico' ? '5511999999999' : '5511888888888';
+    const phone = type === 'juridico' ? '5535999749585' : '5535991190980';
     window.open(`https://api.whatsapp.com/send/?phone=${phone}&text=${encodedMessage}`, '_blank');
   };
 
