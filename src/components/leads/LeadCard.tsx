@@ -1,8 +1,8 @@
-import { Phone, Mail, Building, Clock, MessageSquare } from 'lucide-react';
+import { Phone, Mail, Building, Clock, MessageSquare, FileText } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Lead, STATUS_LABELS } from '@/types/crm';
+import { Lead, STATUS_LABELS, PROPOSAL_PRODUCTS } from '@/types/crm';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -54,6 +54,10 @@ export function LeadCard({ lead, onClick, showActions = true, compact = false }:
 
   // Compact mode for Kanban
   if (compact) {
+    const productLabel = lead.proposal_product 
+      ? PROPOSAL_PRODUCTS.find(p => p.id === lead.proposal_product)?.label 
+      : null;
+
     return (
       <Card 
         className="cursor-pointer transition-all hover:shadow-md hover:border-primary/50"
@@ -63,6 +67,12 @@ export function LeadCard({ lead, onClick, showActions = true, compact = false }:
           {lead.needs_scheduling && (
             <Badge className="bg-destructive text-destructive-foreground text-xs mb-1">
               Precisa agendar call!
+            </Badge>
+          )}
+          {lead.status === 'envio_proposta' && lead.proposal_product && lead.proposal_value && (
+            <Badge className="bg-primary text-primary-foreground text-xs mb-1 flex items-center gap-1 w-fit">
+              <FileText className="h-3 w-3" />
+              {productLabel} • {formatCurrency(lead.proposal_value)}
             </Badge>
           )}
           <h3 className="font-semibold text-foreground truncate">{lead.full_name}</h3>
