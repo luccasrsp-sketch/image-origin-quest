@@ -6,6 +6,7 @@ import { LeadDetailDialog } from '@/components/leads/LeadDetailDialog';
 import { ScheduleMeetingDialog } from '@/components/calendar/ScheduleMeetingDialog';
 import { QualificationDialog } from '@/components/leads/QualificationDialog';
 import { ProposalDialog } from '@/components/leads/ProposalDialog';
+import { SaleConfirmationDialog } from '@/components/leads/SaleConfirmationDialog';
 import { ColdLeadsAlert } from '@/components/leads/ColdLeadsAlert';
 import { useLeads } from '@/hooks/useLeads';
 import { useCalendar } from '@/hooks/useCalendar';
@@ -15,13 +16,14 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function KanbanPage() {
-  const { leads, loading, updateLeadStatus, addNote, setNeedsScheduling, clearNeedsScheduling, saveProposal } = useLeads();
+  const { leads, loading, updateLeadStatus, addNote, setNeedsScheduling, clearNeedsScheduling, saveProposal, saveSaleData } = useLeads();
   const { createEvent } = useCalendar();
   const { profile } = useAuth();
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [schedulingLead, setSchedulingLead] = useState<Lead | null>(null);
   const [qualifyingLead, setQualifyingLead] = useState<Lead | null>(null);
   const [proposalLead, setProposalLead] = useState<Lead | null>(null);
+  const [saleLead, setSaleLead] = useState<Lead | null>(null);
   const [coldAlertDismissed, setColdAlertDismissed] = useState(false);
 
   const getLeadsByStatus = (status: LeadStatus) => 
@@ -58,6 +60,13 @@ export default function KanbanPage() {
     if (newStatus === 'envio_proposta') {
       await updateLeadStatus(leadId, newStatus);
       setProposalLead({ ...lead, status: newStatus } as Lead);
+      return;
+    }
+
+    // Se for para vendido, abre o diálogo de confirmação de venda
+    if (newStatus === 'vendido') {
+      // Não atualiza o status ainda, espera confirmação
+      setSaleLead(lead);
       return;
     }
 
@@ -217,6 +226,29 @@ export default function KanbanPage() {
             });
           }
           return success;
+        }}
+      />
+
+      {/* Sale confirmation dialog */}
+      <SaleConfirmationDialog
+        lead={saleLead}
+        open={!!saleLead}
+        onOpenChange={(open) => !open && setSaleLead(null)}
+        onConfirm={async (data) => {
+          // Primeiro atualiza o status para vendido
+          const statusUpdated = await updateLeadStatus(data.leadId, 'vendido');
+          if (statusUpdated) {
+            // Depois salva os dados da venda
+            return await saveSaleData(data);
+          }
+          return false;
+        }}
+        onCancel={() => {
+          // Volta o lead para envio_proposta se estava em outra coluna
+          if (saleLead && saleLead.status !== 'envio_proposta') {
+            updateLeadStatus(saleLead.id, 'envio_proposta');
+          }
+          setSaleLead(null);
         }}
       />
 

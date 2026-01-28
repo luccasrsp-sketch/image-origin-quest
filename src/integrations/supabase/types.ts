@@ -135,6 +135,15 @@ export type Database = {
           proposal_payment_method: string | null
           proposal_product: string | null
           proposal_value: number | null
+          sale_admin_email: string | null
+          sale_company_cnpj: string | null
+          sale_confirmed_at: string | null
+          sale_entry_value: number | null
+          sale_first_check_date: string | null
+          sale_installments: number | null
+          sale_observations: string | null
+          sale_payment_method: string | null
+          sale_remaining_value: number | null
           scheduling_pending_reason: string | null
           status: Database["public"]["Enums"]["lead_status"]
           updated_at: string
@@ -162,6 +171,15 @@ export type Database = {
           proposal_payment_method?: string | null
           proposal_product?: string | null
           proposal_value?: number | null
+          sale_admin_email?: string | null
+          sale_company_cnpj?: string | null
+          sale_confirmed_at?: string | null
+          sale_entry_value?: number | null
+          sale_first_check_date?: string | null
+          sale_installments?: number | null
+          sale_observations?: string | null
+          sale_payment_method?: string | null
+          sale_remaining_value?: number | null
           scheduling_pending_reason?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
           updated_at?: string
@@ -189,6 +207,15 @@ export type Database = {
           proposal_payment_method?: string | null
           proposal_product?: string | null
           proposal_value?: number | null
+          sale_admin_email?: string | null
+          sale_company_cnpj?: string | null
+          sale_confirmed_at?: string | null
+          sale_entry_value?: number | null
+          sale_first_check_date?: string | null
+          sale_installments?: number | null
+          sale_observations?: string | null
+          sale_payment_method?: string | null
+          sale_remaining_value?: number | null
           scheduling_pending_reason?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
           updated_at?: string
