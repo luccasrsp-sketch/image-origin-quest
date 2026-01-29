@@ -9,10 +9,13 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { FileText, Users, UserCheck, Calendar, Send, DollarSign, Trophy, Copy, Check } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, startOfWeek, endOfWeek } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+
+type ReportPeriod = 'daily' | 'weekly';
 
 interface ReportData {
   totalLeads: number;
@@ -32,6 +35,7 @@ interface DailyReportDialogProps {
 export function DailyReportDialog({ open, onOpenChange }: DailyReportDialogProps) {
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [period, setPeriod] = useState<ReportPeriod>('daily');
   const [report, setReport] = useState<ReportData>({
     totalLeads: 0,
     qualifiedLeads: 0,
@@ -46,31 +50,50 @@ export function DailyReportDialog({ open, onOpenChange }: DailyReportDialogProps
     if (open) {
       fetchReportData();
     }
-  }, [open]);
+  }, [open, period]);
+
+  const getDateRange = () => {
+    const today = new Date();
+    
+    if (period === 'daily') {
+      const start = new Date(today);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(today);
+      end.setHours(23, 59, 59, 999);
+      return { start, end };
+    } else {
+      // Weekly: Monday to Sunday
+      const start = startOfWeek(today, { weekStartsOn: 1 }); // 1 = Monday
+      start.setHours(0, 0, 0, 0);
+      const end = endOfWeek(today, { weekStartsOn: 1 });
+      end.setHours(23, 59, 59, 999);
+      return { start, end };
+    }
+  };
 
   const fetchReportData = async () => {
     setLoading(true);
     
-    const today = new Date();
-    const startOfDay = new Date(today.setHours(0, 0, 0, 0)).toISOString();
-    const endOfDay = new Date(today.setHours(23, 59, 59, 999)).toISOString();
+    const { start, end } = getDateRange();
+    const startOfPeriod = start.toISOString();
+    const endOfPeriod = end.toISOString();
 
     try {
-      // Total leads do dia
+      // Total leads do período
       const { count: totalLeads } = await supabase
         .from('leads')
         .select('*', { count: 'exact', head: true })
-        .gte('created_at', startOfDay)
-        .lte('created_at', endOfDay);
+        .gte('created_at', startOfPeriod)
+        .lte('created_at', endOfPeriod);
 
-      // Leads qualificados do dia
+      // Leads qualificados do período
       const { data: qualifiedData } = await supabase
         .from('lead_activities')
         .select('lead_id, user_id')
         .eq('action', 'status_change')
         .eq('new_status', 'qualificado')
-        .gte('created_at', startOfDay)
-        .lte('created_at', endOfDay);
+        .gte('created_at', startOfPeriod)
+        .lte('created_at', endOfPeriod);
 
       // Buscar perfis para contar por SDR
       const { data: profiles } = await supabase
@@ -109,30 +132,30 @@ export function DailyReportDialog({ open, onOpenChange }: DailyReportDialogProps
         return { name: profile?.full_name || 'Desconhecido', count };
       }).sort((a, b) => b.count - a.count);
 
-      // Reuniões realizadas hoje
+      // Reuniões realizadas no período
       const { count: meetingsCompleted } = await supabase
         .from('calendar_events')
         .select('*', { count: 'exact', head: true })
         .eq('meeting_completed', true)
-        .gte('start_time', startOfDay)
-        .lte('start_time', endOfDay);
+        .gte('start_time', startOfPeriod)
+        .lte('start_time', endOfPeriod);
 
-      // Propostas enviadas hoje
+      // Propostas enviadas no período
       const { data: proposalsData } = await supabase
         .from('lead_activities')
         .select('id')
         .eq('action', 'status_change')
         .eq('new_status', 'envio_proposta')
-        .gte('created_at', startOfDay)
-        .lte('created_at', endOfDay);
+        .gte('created_at', startOfPeriod)
+        .lte('created_at', endOfPeriod);
 
-      // Vendas do dia
+      // Vendas do período
       const { count: sales } = await supabase
         .from('leads')
         .select('*', { count: 'exact', head: true })
         .eq('status', 'vendido')
-        .gte('sale_confirmed_at', startOfDay)
-        .lte('sale_confirmed_at', endOfDay);
+        .gte('sale_confirmed_at', startOfPeriod)
+        .lte('sale_confirmed_at', endOfPeriod);
 
       setReport({
         totalLeads: totalLeads || 0,
@@ -151,8 +174,12 @@ export function DailyReportDialog({ open, onOpenChange }: DailyReportDialogProps
   };
 
   const generateTextReport = () => {
-    const today = format(new Date(), "dd/MM/yyyy", { locale: ptBR });
-    let text = `📊 RELATÓRIO DIÁRIO - ${today}\n\n`;
+    const { start, end } = getDateRange();
+    const periodLabel = period === 'daily' 
+      ? format(new Date(), "dd/MM/yyyy", { locale: ptBR })
+      : `${format(start, "dd/MM", { locale: ptBR })} a ${format(end, "dd/MM/yyyy", { locale: ptBR })}`;
+    
+    let text = `📊 RELATÓRIO ${period === 'daily' ? 'DIÁRIO' : 'SEMANAL'} - ${periodLabel}\n\n`;
     text += `👥 Leads novos: ${report.totalLeads}\n`;
     text += `✅ Leads qualificados: ${report.qualifiedLeads}\n`;
     if (report.topSDR) {
@@ -174,7 +201,10 @@ export function DailyReportDialog({ open, onOpenChange }: DailyReportDialogProps
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const today = format(new Date(), "dd 'de' MMMM", { locale: ptBR });
+  const { start, end } = getDateRange();
+  const periodLabel = period === 'daily' 
+    ? format(new Date(), "dd 'de' MMMM", { locale: ptBR })
+    : `${format(start, "dd/MM", { locale: ptBR })} a ${format(end, "dd/MM", { locale: ptBR })}`;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -182,12 +212,19 @@ export function DailyReportDialog({ open, onOpenChange }: DailyReportDialogProps
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5 text-primary" />
-            Relatório Diário
+            Relatório {period === 'daily' ? 'Diário' : 'Semanal'}
           </DialogTitle>
           <DialogDescription>
-            Resumo do dia {today}
+            {period === 'daily' ? `Resumo do dia ${periodLabel}` : `Semana de ${periodLabel}`}
           </DialogDescription>
         </DialogHeader>
+
+        <Tabs value={period} onValueChange={(v) => setPeriod(v as ReportPeriod)} className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="daily">Diário</TabsTrigger>
+            <TabsTrigger value="weekly">Semanal</TabsTrigger>
+          </TabsList>
+        </Tabs>
 
         {loading ? (
           <div className="flex items-center justify-center py-8">
