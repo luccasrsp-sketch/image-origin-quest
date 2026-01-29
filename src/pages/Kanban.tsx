@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { LeadCard } from '@/components/leads/LeadCard';
@@ -10,6 +10,7 @@ import { SaleConfirmationDialog } from '@/components/leads/SaleConfirmationDialo
 import { SaleDetailsDialog } from '@/components/leads/SaleDetailsDialog';
 import { ColdLeadsAlert } from '@/components/leads/ColdLeadsAlert';
 import { LossReasonDialog } from '@/components/leads/LossReasonDialog';
+import { KanbanScrollbar } from '@/components/kanban/KanbanScrollbar';
 import { useLeads } from '@/hooks/useLeads';
 import { useCalendar } from '@/hooks/useCalendar';
 import { useAuth } from '@/contexts/AuthContext';
@@ -29,6 +30,7 @@ export default function KanbanPage() {
   const [saleDetailsLead, setSaleDetailsLead] = useState<Lead | null>(null);
   const [lossLead, setLossLead] = useState<Lead | null>(null);
   const [coldAlertDismissed, setColdAlertDismissed] = useState(false);
+  const kanbanContainerRef = useRef<HTMLDivElement>(null);
 
   // Filtra colunas baseado no papel do usuário ou do membro sendo visualizado
   const visibleColumns = KANBAN_COLUMNS.filter(col => {
@@ -128,7 +130,13 @@ export default function KanbanPage() {
   return (
     <AppLayout title="Kanban">
       <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin">
+        {/* Top scrollbar */}
+        <KanbanScrollbar containerRef={kanbanContainerRef} />
+        
+        <div 
+          ref={kanbanContainerRef}
+          className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin"
+        >
           {visibleColumns.map(column => {
             const columnLeads = getLeadsByStatus(column.id);
             
