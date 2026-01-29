@@ -14,6 +14,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { FileText, Users, UserCheck, Calendar, Send, DollarSign, Trophy, Copy, Check } from 'lucide-react';
 import { format, startOfWeek, endOfWeek } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useCompany } from '@/contexts/CompanyContext';
+import { COMPANY_LABELS } from '@/types/crm';
 
 type ReportPeriod = 'daily' | 'weekly';
 
@@ -36,6 +38,7 @@ export function DailyReportDialog({ open, onOpenChange }: DailyReportDialogProps
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [period, setPeriod] = useState<ReportPeriod>('daily');
+  const { selectedCompany } = useCompany();
   const [report, setReport] = useState<ReportData>({
     totalLeads: 0,
     qualifiedLeads: 0,
@@ -50,7 +53,7 @@ export function DailyReportDialog({ open, onOpenChange }: DailyReportDialogProps
     if (open) {
       fetchReportData();
     }
-  }, [open, period]);
+  }, [open, period, selectedCompany]);
 
   const getDateRange = () => {
     const today = new Date();
@@ -79,19 +82,28 @@ export function DailyReportDialog({ open, onOpenChange }: DailyReportDialogProps
     const endOfPeriod = end.toISOString();
 
     try {
-      // Total leads do período
+      // Total leads do período - filtrado por empresa
       const { count: totalLeads } = await supabase
         .from('leads')
         .select('*', { count: 'exact', head: true })
+        .eq('company', selectedCompany)
         .gte('created_at', startOfPeriod)
         .lte('created_at', endOfPeriod);
 
-      // Leads qualificados do período
+      // Leads qualificados do período - buscar leads da empresa primeiro
+      const { data: companyLeads } = await supabase
+        .from('leads')
+        .select('id')
+        .eq('company', selectedCompany);
+      
+      const companyLeadIds = companyLeads?.map(l => l.id) || [];
+      
       const { data: qualifiedData } = await supabase
         .from('lead_activities')
         .select('lead_id, user_id')
         .eq('action', 'status_change')
         .eq('new_status', 'qualificado')
+        .in('lead_id', companyLeadIds)
         .gte('created_at', startOfPeriod)
         .lte('created_at', endOfPeriod);
 
@@ -114,10 +126,11 @@ export function DailyReportDialog({ open, onOpenChange }: DailyReportDialogProps
 
       const topSDR = Object.values(sdrCounts).sort((a, b) => b.count - a.count)[0] || null;
 
-      // Leads por closer (todos os leads atribuídos)
+      // Leads por closer (todos os leads atribuídos) - filtrado por empresa
       const { data: leadsByCloserData } = await supabase
         .from('leads')
         .select('assigned_closer_id')
+        .eq('company', selectedCompany)
         .not('assigned_closer_id', 'is', null);
 
       const closerCounts: Record<string, number> = {};
@@ -140,19 +153,21 @@ export function DailyReportDialog({ open, onOpenChange }: DailyReportDialogProps
         .gte('start_time', startOfPeriod)
         .lte('start_time', endOfPeriod);
 
-      // Propostas enviadas no período
+      // Propostas enviadas no período - filtrado por empresa
       const { data: proposalsData } = await supabase
         .from('lead_activities')
         .select('id')
         .eq('action', 'status_change')
         .eq('new_status', 'envio_proposta')
+        .in('lead_id', companyLeadIds)
         .gte('created_at', startOfPeriod)
         .lte('created_at', endOfPeriod);
 
-      // Vendas do período
+      // Vendas do período - filtrado por empresa
       const { count: sales } = await supabase
         .from('leads')
         .select('*', { count: 'exact', head: true })
+        .eq('company', selectedCompany)
         .eq('status', 'vendido')
         .gte('sale_confirmed_at', startOfPeriod)
         .lte('sale_confirmed_at', endOfPeriod);
@@ -179,7 +194,8 @@ export function DailyReportDialog({ open, onOpenChange }: DailyReportDialogProps
       ? format(new Date(), "dd/MM/yyyy", { locale: ptBR })
       : `${format(start, "dd/MM", { locale: ptBR })} a ${format(end, "dd/MM/yyyy", { locale: ptBR })}`;
     
-    let text = `📊 RELATÓRIO ${period === 'daily' ? 'DIÁRIO' : 'SEMANAL'} - ${periodLabel}\n\n`;
+    const companyName = COMPANY_LABELS[selectedCompany];
+    let text = `📊 RELATÓRIO ${period === 'daily' ? 'DIÁRIO' : 'SEMANAL'} - ${companyName}\n📅 ${periodLabel}\n\n`;
     text += `👥 Leads novos: ${report.totalLeads}\n`;
     text += `✅ Leads qualificados: ${report.qualifiedLeads}\n`;
     if (report.topSDR) {
