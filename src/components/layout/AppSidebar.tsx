@@ -27,7 +27,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import logoEscolaFranchising from '@/assets/logo-escola-franchising.svg';
+import logoEvidia from '@/assets/logo-evidia.png';
 import { CompanySelector } from './CompanySelector';
+import { useCompany } from '@/contexts/CompanyContext';
 
 const mainNavItems = [
   { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
@@ -45,7 +47,11 @@ const settingsItems = [
 export function AppSidebar() {
   const { profile, signOut, roles } = useAuth();
   const { state } = useSidebar();
+  const { selectedCompany } = useCompany();
   const collapsed = state === 'collapsed';
+
+  const logo = selectedCompany === 'evidia' ? logoEvidia : logoEscolaFranchising;
+  const altText = selectedCompany === 'evidia' ? 'Evidia' : 'Escola do Franchising';
 
   const getInitials = (name: string) => {
     return name
@@ -68,8 +74,8 @@ export function AppSidebar() {
       <SidebarHeader className="p-4 space-y-3">
         <div className="flex items-center gap-3">
           <img 
-            src={logoEscolaFranchising} 
-            alt="Escola do Franchising" 
+            src={logo} 
+            alt={altText} 
             className={collapsed ? "h-10 w-10 object-contain" : "h-12 w-auto max-w-[180px] object-contain"}
           />
         </div>
