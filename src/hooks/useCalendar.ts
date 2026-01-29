@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { CalendarEvent } from '@/types/crm';
 import { useToast } from '@/hooks/use-toast';
@@ -25,13 +25,16 @@ export function useCalendar() {
   }, [events, selectedCompany]);
 
   // Retorna eventos filtrados baseado no viewingAs (já filtrados por empresa)
-  const getFilteredEvents = () => {
+  const getFilteredEvents = useCallback(() => {
     if (!viewingAs) return companyFilteredEvents; // Admin vê tudo da empresa
     return companyFilteredEvents.filter(event => event.user_id === viewingAs.id);
-  };
+  }, [companyFilteredEvents, viewingAs]);
 
-  const fetchEvents = async () => {
-    if (!profile?.id) return;
+  const fetchEvents = useCallback(async () => {
+    if (!profile?.id) {
+      setLoading(false);
+      return;
+    }
     
     setLoading(true);
     const { data, error } = await supabase
@@ -53,11 +56,11 @@ export function useCalendar() {
       setEvents(data as CalendarEvent[]);
     }
     setLoading(false);
-  };
+  }, [profile?.id, toast]);
 
   useEffect(() => {
     fetchEvents();
-  }, [profile?.id]);
+  }, [fetchEvents]);
 
   const createEvent = async (event: {
     title: string;
