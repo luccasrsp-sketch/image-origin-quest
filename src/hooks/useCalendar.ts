@@ -8,7 +8,13 @@ export function useCalendar() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const { profile } = useAuth();
+  const { profile, viewingAs } = useAuth();
+
+  // Retorna eventos filtrados baseado no viewingAs
+  const getFilteredEvents = () => {
+    if (!viewingAs) return events; // Admin vê tudo
+    return events.filter(event => event.user_id === viewingAs.id);
+  };
 
   const fetchEvents = async () => {
     if (!profile?.id) return;
@@ -143,6 +149,7 @@ export function useCalendar() {
 
   return {
     events,
+    filteredEvents: getFilteredEvents(),
     loading,
     fetchEvents,
     createEvent,

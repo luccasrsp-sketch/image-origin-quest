@@ -25,9 +25,9 @@ import {
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--success))', 'hsl(var(--info))', 'hsl(var(--warning))', 'hsl(var(--destructive))'];
 
 export default function Dashboard() {
-  const { leads } = useLeads();
-  const { events } = useCalendar();
-  const { profile } = useAuth();
+  const { filteredLeads: leads } = useLeads();
+  const { filteredEvents: events } = useCalendar();
+  const { profile, viewingAs } = useAuth();
 
   // Calculate metrics
   const newLeadsToday = leads.filter(l => {
@@ -86,10 +86,16 @@ export default function Dashboard() {
         {/* Welcome message */}
         <div>
           <h2 className="text-2xl font-bold text-foreground">
-            Olá, {profile?.full_name?.split(' ')[0]}! 👋
+            {viewingAs 
+              ? `Painel de ${viewingAs.full_name}` 
+              : `Olá, ${profile?.full_name?.split(' ')[0]}! 👋`
+            }
           </h2>
           <p className="text-muted-foreground">
-            Aqui está o resumo do seu CRM hoje.
+            {viewingAs 
+              ? `Visualizando como ${viewingAs.roles.includes('sdr') ? 'SDR' : 'Closer'}` 
+              : 'Aqui está o resumo do seu CRM hoje.'
+            }
           </p>
         </div>
 

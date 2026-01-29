@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { Profile, UserRole, AppRole } from '@/types/crm';
+import { Profile, AppRole, TeamMember } from '@/types/crm';
 
 interface AuthContextType {
   user: User | null;
@@ -16,6 +16,11 @@ interface AuthContextType {
   isAdmin: () => boolean;
   isSDR: () => boolean;
   isCloser: () => boolean;
+  // View as functionality for admins
+  viewingAs: TeamMember | null;
+  setViewingAs: (member: TeamMember | null) => void;
+  getEffectiveProfileId: () => string | null;
+  getEffectiveRoles: () => AppRole[];
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,6 +31,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [loading, setLoading] = useState(true);
+  const [viewingAs, setViewingAs] = useState<TeamMember | null>(null);
 
   const fetchProfile = async (userId: string) => {
     const { data } = await supabase
@@ -66,6 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } else {
           setProfile(null);
           setRoles([]);
+          setViewingAs(null);
         }
         
         setLoading(false);
@@ -118,12 +125,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setSession(null);
     setProfile(null);
     setRoles([]);
+    setViewingAs(null);
   };
 
   const hasRole = (role: AppRole) => roles.includes(role);
   const isAdmin = () => hasRole('admin');
   const isSDR = () => hasRole('sdr');
   const isCloser = () => hasRole('closer');
+
+  // Returns the profile ID to use for filtering (viewingAs or self)
+  const getEffectiveProfileId = (): string | null => {
+    if (viewingAs) return viewingAs.id;
+    return profile?.id ?? null;
+  };
+
+  // Returns the roles to simulate (viewingAs or self)
+  const getEffectiveRoles = (): AppRole[] => {
+    if (viewingAs) return viewingAs.roles;
+    return roles;
+  };
 
   return (
     <AuthContext.Provider value={{
@@ -139,6 +159,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isAdmin,
       isSDR,
       isCloser,
+      viewingAs,
+      setViewingAs,
+      getEffectiveProfileId,
+      getEffectiveRoles,
     }}>
       {children}
     </AuthContext.Provider>
