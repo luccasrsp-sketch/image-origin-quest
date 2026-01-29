@@ -11,7 +11,19 @@ export type LeadStatus =
   | 'recuperacao_sdr'
   | 'perdido';
 
-export type FunnelType = 'padrao' | 'franquia';
+export type FunnelType = 'padrao' | 'franquia' | 'formatacao';
+
+export const FUNNEL_LABELS: Record<FunnelType, string> = {
+  padrao: 'Padrão',
+  franquia: 'Franquia',
+  formatacao: 'Formatação',
+};
+
+export const FUNNEL_COLORS: Record<FunnelType, string> = {
+  padrao: '',
+  franquia: 'bg-violet-100 text-violet-800 border-violet-300',
+  formatacao: 'bg-amber-100 text-amber-800 border-amber-300',
+};
 
 export interface Profile {
   id: string;

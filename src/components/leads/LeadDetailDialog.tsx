@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Lead, LeadStatus, STATUS_LABELS, KANBAN_COLUMNS, LeadActivity } from '@/types/crm';
+import { Lead, LeadStatus, STATUS_LABELS, KANBAN_COLUMNS, LeadActivity, FUNNEL_LABELS, FUNNEL_COLORS, FunnelType } from '@/types/crm';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -184,9 +184,19 @@ export function LeadDetailDialog({ lead, open, onOpenChange, onStatusChange, onA
             </div>
             <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50">
               <Tag className="h-4 w-4 text-muted-foreground shrink-0" />
-              <div className="min-w-0">
-                <p className="text-xs text-muted-foreground">Funil</p>
-                <p className="text-sm">{lead.funnel_type === 'franquia' ? 'Franquia' : 'Padrão'}</p>
+              <div className="min-w-0 flex items-center gap-2">
+                <div>
+                  <p className="text-xs text-muted-foreground">Funil</p>
+                  <p className="text-sm">{FUNNEL_LABELS[lead.funnel_type as FunnelType] || 'Padrão'}</p>
+                </div>
+                {lead.funnel_type !== 'padrao' && (
+                  <Badge 
+                    variant="outline" 
+                    className={`text-xs ${FUNNEL_COLORS[lead.funnel_type as FunnelType]}`}
+                  >
+                    {FUNNEL_LABELS[lead.funnel_type as FunnelType]}
+                  </Badge>
+                )}
               </div>
             </div>
           </div>

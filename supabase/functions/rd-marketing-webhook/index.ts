@@ -101,9 +101,12 @@ Deno.serve(async (req) => {
 
       // Determine funnel type based on conversion identifier
       const conversionIdentifier = conversionContent.conversion_identifier || ''
-      const funnelType = conversionIdentifier.toLowerCase().includes('franquia') 
-        ? 'franquia' 
-        : 'padrao'
+      let funnelType = 'padrao'
+      if (conversionIdentifier.toLowerCase().includes('franquia')) {
+        funnelType = 'franquia'
+      } else if (conversionIdentifier.toLowerCase().includes('formata')) {
+        funnelType = 'formatacao'
+      }
       
       // Extract UTM data from conversion origin
       const utmSource = conversionOrigin.source || null
