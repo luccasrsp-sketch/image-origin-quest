@@ -43,16 +43,16 @@ export function AppHeader({ title }: AppHeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-border bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex items-center gap-4">
-        <SidebarTrigger className="h-9 w-9">
+    <header className="sticky top-0 z-40 flex h-14 md:h-16 items-center justify-between border-b border-border bg-background/95 px-3 md:px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="flex items-center gap-2 md:gap-4 min-w-0">
+        <SidebarTrigger className="h-10 w-10 md:h-9 md:w-9 touch-manipulation">
           <Menu className="h-5 w-5" />
         </SidebarTrigger>
-        <h1 className="text-xl font-semibold text-foreground">{title}</h1>
+        <h1 className="text-base md:text-xl font-semibold text-foreground truncate">{title}</h1>
         
-        {/* Viewing As indicator */}
+        {/* Viewing As indicator - hidden on mobile, shown in dropdown instead */}
         {viewingAs && (
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-warning/10 border border-warning/30 rounded-full">
+          <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-warning/10 border border-warning/30 rounded-full">
             <Eye className="h-4 w-4 text-warning" />
             <span className="text-sm font-medium text-warning">
               Visualizando como: {viewingAs.full_name}
@@ -69,14 +69,25 @@ export function AppHeader({ title }: AppHeaderProps) {
         )}
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1 md:gap-2">
+        {/* Mobile viewing as indicator */}
+        {viewingAs && (
+          <Badge variant="outline" className="md:hidden text-xs border-warning text-warning max-w-[100px] truncate">
+            {viewingAs.full_name.split(' ')[0]}
+          </Badge>
+        )}
+        
         {/* View As selector for admins */}
         {isAdmin() && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground">
-                <Eye className="h-4 w-4" />
-                Visualizar como
+              <Button 
+                variant="outline" 
+                size="icon"
+                className="h-10 w-10 md:h-9 md:w-auto md:px-3 border-primary text-primary hover:bg-primary hover:text-primary-foreground touch-manipulation"
+              >
+                <Eye className="h-4 w-4 md:mr-2" />
+                <span className="hidden md:inline">Visualizar como</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-64">
@@ -84,7 +95,7 @@ export function AppHeader({ title }: AppHeaderProps) {
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => setViewingAs(null)}
-                className={!viewingAs ? 'bg-muted' : ''}
+                className={`min-h-[44px] ${!viewingAs ? 'bg-muted' : ''}`}
               >
                 <div className="flex items-center gap-2">
                   <Avatar className="h-6 w-6">
@@ -100,7 +111,7 @@ export function AppHeader({ title }: AppHeaderProps) {
                   <DropdownMenuItem
                     key={member.id}
                     onClick={() => setViewingAs(member)}
-                    className={viewingAs?.id === member.id ? 'bg-muted' : ''}
+                    className={`min-h-[44px] ${viewingAs?.id === member.id ? 'bg-muted' : ''}`}
                   >
                     <div className="flex items-center justify-between w-full">
                       <div className="flex items-center gap-2">
@@ -125,7 +136,7 @@ export function AppHeader({ title }: AppHeaderProps) {
         {/* Notifications */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative">
+            <Button variant="ghost" size="icon" className="relative h-10 w-10 md:h-9 md:w-9 touch-manipulation">
               <Bell className="h-5 w-5" />
               {unreadCount > 0 && (
                 <Badge 

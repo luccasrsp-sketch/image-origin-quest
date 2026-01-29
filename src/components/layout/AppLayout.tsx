@@ -49,7 +49,7 @@ export function AppLayout({ children, title }: AppLayoutProps) {
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
         <AppSidebar />
-        <div className="flex flex-1 flex-col">
+        <div className="flex flex-1 flex-col min-w-0">
           <GoalProgressBar 
             currentValue={salesTotal} 
             goalValue={MONTHLY_GOAL} 
@@ -57,7 +57,7 @@ export function AppLayout({ children, title }: AppLayoutProps) {
             label="Meta Janeiro"
           />
           <AppHeader title={title} />
-          <main className="flex-1 overflow-auto p-6">
+          <main className="flex-1 overflow-auto p-3 md:p-6">
             {children}
           </main>
         </div>
