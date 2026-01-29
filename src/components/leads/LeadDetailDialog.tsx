@@ -19,7 +19,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Lead, LeadStatus, STATUS_LABELS, KANBAN_COLUMNS, LeadActivity } from '@/types/crm';
-import { useTeam } from '@/hooks/useTeam';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -51,12 +50,10 @@ interface LeadDetailDialogProps {
 }
 
 export function LeadDetailDialog({ lead, open, onOpenChange, onStatusChange, onAddNote, onMarkAsLost }: LeadDetailDialogProps) {
-  const { getClosers } = useTeam();
   const { toast } = useToast();
   const { profile } = useAuth();
   const [newNote, setNewNote] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<LeadStatus | ''>('');
-  const [selectedCloser, setSelectedCloser] = useState<string>('');
   const [isSaving, setIsSaving] = useState(false);
   const [activities, setActivities] = useState<LeadActivity[]>([]);
   const [loadingActivities, setLoadingActivities] = useState(false);
@@ -99,17 +96,13 @@ export function LeadDetailDialog({ lead, open, onOpenChange, onStatusChange, onA
     if (!selectedStatus || !onStatusChange) return;
     setIsSaving(true);
     
-    // If moving to closer stage, require closer selection
-    const closerStages: LeadStatus[] = ['qualificado', 'reuniao_marcada', 'envio_proposta', 'vendido'];
-    const closerId = closerStages.includes(selectedStatus) ? selectedCloser : undefined;
-    
-    const success = await onStatusChange(lead.id, selectedStatus, closerId);
+    // O closer é atribuído automaticamente pelo sistema via round-robin
+    const success = await onStatusChange(lead.id, selectedStatus);
     if (success) {
       await fetchActivities(); // Atualiza o histórico
     }
     setIsSaving(false);
     setSelectedStatus('');
-    setSelectedCloser('');
   };
 
   const handleSaveNotes = async () => {
@@ -122,9 +115,6 @@ export function LeadDetailDialog({ lead, open, onOpenChange, onStatusChange, onA
     }
     setIsSaving(false);
   };
-
-  const closers = getClosers();
-  const showCloserSelect = ['qualificado', 'reuniao_marcada', 'envio_proposta', 'vendido'].includes(selectedStatus);
 
   const canMarkAsLost = lead.status !== 'vendido' && lead.status !== 'perdido' && lead.status !== 'sem_atendimento';
 
@@ -321,28 +311,16 @@ export function LeadDetailDialog({ lead, open, onOpenChange, onStatusChange, onA
                 </SelectContent>
               </Select>
 
-              {showCloserSelect && (
-                <Select value={selectedCloser} onValueChange={setSelectedCloser}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Selecionar Closer" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {closers.map(closer => (
-                      <SelectItem key={closer.id} value={closer.id}>
-                        {closer.full_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-
               <Button 
                 onClick={handleStatusChange}
-                disabled={!selectedStatus || (showCloserSelect && !selectedCloser) || isSaving}
+                disabled={!selectedStatus || isSaving}
               >
                 Atualizar
               </Button>
             </div>
+            <p className="text-xs text-muted-foreground">
+              Ao mover para "Qualificado", o Closer será atribuído automaticamente pelo sistema.
+            </p>
           </div>
 
           {/* WhatsApp button */}
