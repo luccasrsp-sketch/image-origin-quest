@@ -81,6 +81,27 @@ export type Database = {
           },
         ]
       }
+      distribution_config: {
+        Row: {
+          config_key: string
+          config_value: number
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          config_key: string
+          config_value?: number
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          config_key?: string
+          config_value?: number
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       lead_activities: {
         Row: {
           action: string
@@ -462,6 +483,7 @@ export type Database = {
     }
     Functions: {
       get_current_profile_id: { Args: never; Returns: string }
+      get_next_closer: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
