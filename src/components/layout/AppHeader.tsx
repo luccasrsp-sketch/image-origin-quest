@@ -74,7 +74,7 @@ export function AppHeader({ title }: AppHeaderProps) {
         {isAdmin() && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="secondary" size="sm" className="gap-2">
+              <Button variant="outline" size="sm" className="gap-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground">
                 <Eye className="h-4 w-4" />
                 Visualizar como
               </Button>
