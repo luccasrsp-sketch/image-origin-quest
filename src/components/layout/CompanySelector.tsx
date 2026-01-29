@@ -34,7 +34,7 @@ export function CompanySelector() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" className="gap-2 h-9">
+        <Button variant="outline" className="gap-2 h-9 border-primary text-primary hover:bg-primary hover:text-primary-foreground">
           <Building2 className="h-4 w-4" />
           <span className="hidden sm:inline">{companyLabel}</span>
           <Badge 
