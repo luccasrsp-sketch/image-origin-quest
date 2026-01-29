@@ -161,6 +161,7 @@ export type Database = {
         Row: {
           assigned_closer_id: string | null
           assigned_sdr_id: string | null
+          city_state: string | null
           company: Database["public"]["Enums"]["company"]
           company_name: string
           created_at: string
@@ -191,6 +192,7 @@ export type Database = {
           sale_payment_received: boolean | null
           sale_remaining_value: number | null
           scheduling_pending_reason: string | null
+          specialty: string | null
           status: Database["public"]["Enums"]["lead_status"]
           updated_at: string
           utm_campaign: string | null
@@ -202,6 +204,7 @@ export type Database = {
         Insert: {
           assigned_closer_id?: string | null
           assigned_sdr_id?: string | null
+          city_state?: string | null
           company?: Database["public"]["Enums"]["company"]
           company_name: string
           created_at?: string
@@ -232,6 +235,7 @@ export type Database = {
           sale_payment_received?: boolean | null
           sale_remaining_value?: number | null
           scheduling_pending_reason?: string | null
+          specialty?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
           updated_at?: string
           utm_campaign?: string | null
@@ -243,6 +247,7 @@ export type Database = {
         Update: {
           assigned_closer_id?: string | null
           assigned_sdr_id?: string | null
+          city_state?: string | null
           company?: Database["public"]["Enums"]["company"]
           company_name?: string
           created_at?: string
@@ -273,6 +278,7 @@ export type Database = {
           sale_payment_received?: boolean | null
           sale_remaining_value?: number | null
           scheduling_pending_reason?: string | null
+          specialty?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
           updated_at?: string
           utm_campaign?: string | null
