@@ -68,8 +68,14 @@ export default function KanbanPage() {
     // Se for para qualificado, usa moveToQualified com round-robin de closer
     if (newStatus === 'qualificado') {
       const result = await moveToQualified(leadId);
-      if (result.success) {
-        setQualifyingLead({ ...lead, status: newStatus, assigned_closer_id: result.closerId } as Lead);
+      if (result.success && result.closerId) {
+        // Buscar dados do closer para incluir no lead
+        const updatedLead = { 
+          ...lead, 
+          status: newStatus, 
+          assigned_closer_id: result.closerId 
+        } as Lead;
+        setQualifyingLead(updatedLead);
       }
       return;
     }

@@ -11,17 +11,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Lead } from '@/types/crm';
 import { useCalendar } from '@/hooks/useCalendar';
+import { useTeam } from '@/hooks/useTeam';
 import { Calendar, Clock, AlertCircle } from 'lucide-react';
-import { getAvailableSlots, TimeSlot } from '@/utils/scheduleSlots';
+import { getAvailableSlots } from '@/utils/scheduleSlots';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface ScheduleMeetingDialogProps {
@@ -38,6 +32,7 @@ export function ScheduleMeetingDialog({
   onScheduled 
 }: ScheduleMeetingDialogProps) {
   const { createEvent, events } = useCalendar();
+  const { team } = useTeam();
   const [isLoading, setIsLoading] = useState(false);
   
   const [formData, setFormData] = useState({
@@ -49,6 +44,14 @@ export function ScheduleMeetingDialog({
 
   // O closer já está atribuído ao lead automaticamente pelo sistema
   const closerId = lead?.assigned_closer_id || '';
+  
+  // Buscar nome do closer da lista de team members
+  const closerMember = useMemo(() => {
+    if (!closerId) return null;
+    return team.find(t => t.id === closerId);
+  }, [closerId, team]);
+  
+  const closerName = closerMember?.full_name || lead?.assigned_closer?.full_name || '';
 
   // Get available slots for the assigned closer and selected date
   const availableSlots = useMemo(() => {
@@ -113,7 +116,6 @@ export function ScheduleMeetingDialog({
   if (!lead) return null;
 
   const showNoSlotsWarning = closerId && formData.date && availableSlots.length === 0;
-  const closerName = lead.assigned_closer?.full_name || 'Closer não atribuído';
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -141,12 +143,14 @@ export function ScheduleMeetingDialog({
 
           <div className="space-y-2">
             <Label>Closer Responsável</Label>
-            <div className="p-3 rounded-md border bg-muted/50 text-sm">
-              {closerName}
+            <div className="p-3 rounded-md border bg-muted/50 text-sm font-medium">
+              {closerName || (closerId ? 'Carregando...' : 'Aguardando atribuição...')}
             </div>
-            <p className="text-xs text-muted-foreground">
-              O Closer foi atribuído automaticamente pelo sistema.
-            </p>
+            {closerName && (
+              <p className="text-xs text-muted-foreground">
+                O Closer foi atribuído automaticamente pelo sistema.
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
