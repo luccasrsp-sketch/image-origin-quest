@@ -1,9 +1,11 @@
-import { TrendingUp, Banknote, Calendar, CalendarDays, CalendarRange } from 'lucide-react';
+import { Banknote, Calendar, CalendarDays, CalendarRange } from 'lucide-react';
 
 interface GoalProgressBarProps {
   currentValue: number;
   goalValue: number;
   moneyOnTable: number;
+  dailySales?: number;
+  weeklySales?: number;
   label?: string;
 }
 
@@ -18,7 +20,7 @@ function MiniProgressBar({
   label: string; 
   icon: React.ElementType;
 }) {
-  const percentage = Math.min((current / goal) * 100, 100);
+  const percentage = goal > 0 ? Math.min((current / goal) * 100, 100) : 0;
   const isGoalMet = current >= goal;
 
   const formatCurrency = (value: number) => {
@@ -67,6 +69,8 @@ export function GoalProgressBar({
   currentValue, 
   goalValue, 
   moneyOnTable,
+  dailySales = 0,
+  weeklySales = 0,
 }: GoalProgressBarProps) {
   // Calculate goals based on monthly
   const now = new Date();
@@ -75,14 +79,6 @@ export function GoalProgressBar({
   
   const dailyGoal = goalValue / daysInMonth;
   const weeklyGoal = goalValue / weeksInMonth;
-  
-  // Calculate current day and week of month for proportional target
-  const currentDay = now.getDate();
-  const currentWeek = Math.ceil(currentDay / 7);
-  
-  // Expected values based on time elapsed
-  const expectedDaily = dailyGoal; // Today's target
-  const expectedWeekly = weeklyGoal; // This week's target
   
   const formatCurrency = (value: number) => {
     if (value >= 1000000) {
@@ -100,13 +96,13 @@ export function GoalProgressBar({
         {/* Three progress bars */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6">
           <MiniProgressBar 
-            current={currentValue / daysInMonth * Math.min(currentDay, 1)} 
+            current={dailySales} 
             goal={dailyGoal}
             label="Meta Diária"
             icon={Calendar}
           />
           <MiniProgressBar 
-            current={currentValue / weeksInMonth * Math.min(currentWeek, 1)} 
+            current={weeklySales} 
             goal={weeklyGoal}
             label="Meta Semanal"
             icon={CalendarDays}
