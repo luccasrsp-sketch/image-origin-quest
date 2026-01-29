@@ -1,19 +1,33 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { CalendarEvent } from '@/types/crm';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCompany } from '@/contexts/CompanyContext';
 
 export function useCalendar() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { profile, viewingAs } = useAuth();
+  const { selectedCompany } = useCompany();
 
-  // Retorna eventos filtrados baseado no viewingAs
+  // Filtra eventos por empresa selecionada
+  const companyFilteredEvents = useMemo(() => {
+    return events.filter(event => {
+      // Se o evento tem lead, filtra pela empresa do lead
+      if (event.lead) {
+        return event.lead.company === selectedCompany;
+      }
+      // Se não tem lead (evento avulso), mostra em todas as empresas
+      return true;
+    });
+  }, [events, selectedCompany]);
+
+  // Retorna eventos filtrados baseado no viewingAs (já filtrados por empresa)
   const getFilteredEvents = () => {
-    if (!viewingAs) return events; // Admin vê tudo
-    return events.filter(event => event.user_id === viewingAs.id);
+    if (!viewingAs) return companyFilteredEvents; // Admin vê tudo da empresa
+    return companyFilteredEvents.filter(event => event.user_id === viewingAs.id);
   };
 
   const fetchEvents = async () => {
@@ -136,7 +150,7 @@ export function useCalendar() {
   };
 
   const getEventsForDate = (date: Date) => {
-    return events.filter(event => {
+    return companyFilteredEvents.filter(event => {
       const eventDate = new Date(event.start_time);
       return eventDate.toDateString() === date.toDateString();
     });
@@ -144,11 +158,11 @@ export function useCalendar() {
 
   const getMyEvents = () => {
     if (!profile?.id) return [];
-    return events.filter(event => event.user_id === profile.id);
+    return companyFilteredEvents.filter(event => event.user_id === profile.id);
   };
 
   return {
-    events,
+    events: companyFilteredEvents,
     filteredEvents: getFilteredEvents(),
     loading,
     fetchEvents,
