@@ -12,6 +12,7 @@ import Agenda from "./pages/Agenda";
 import Relatorios from "./pages/Relatorios";
 import Configuracoes from "./pages/Configuracoes";
 import LeadForm from "./pages/LeadForm";
+import ImportLeads from "./pages/ImportLeads";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -58,6 +59,7 @@ function AppRoutes() {
       <Route path="/kanban" element={<ProtectedRoute><Kanban /></ProtectedRoute>} />
       <Route path="/agenda" element={<ProtectedRoute><Agenda /></ProtectedRoute>} />
       <Route path="/relatorios" element={<ProtectedRoute><Relatorios /></ProtectedRoute>} />
+      <Route path="/importar" element={<ProtectedRoute><ImportLeads /></ProtectedRoute>} />
       <Route path="/configuracoes" element={<ProtectedRoute><Configuracoes /></ProtectedRoute>} />
       
       <Route path="*" element={<NotFound />} />

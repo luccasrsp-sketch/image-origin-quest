@@ -6,6 +6,7 @@ import {
   BarChart3, 
   Settings,
   LogOut,
+  Upload,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
@@ -36,6 +37,7 @@ const mainNavItems = [
 ];
 
 const settingsItems = [
+  { title: 'Importar Leads', url: '/importar', icon: Upload },
   { title: 'Configurações', url: '/configuracoes', icon: Settings },
 ];
 
