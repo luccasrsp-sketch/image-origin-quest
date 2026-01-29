@@ -547,6 +547,15 @@ export type Database = {
           weekly_sales: number
         }[]
       }
+      get_team_sales_totals_by_company: {
+        Args: { target_company?: string }
+        Returns: {
+          daily_sales: number
+          money_on_table: number
+          sales_total: number
+          weekly_sales: number
+        }[]
+      }
       get_user_push_subscriptions: {
         Args: { target_user_id: string }
         Returns: {
