@@ -556,14 +556,6 @@ export type Database = {
           weekly_sales: number
         }[]
       }
-      get_user_push_subscriptions: {
-        Args: { target_user_id: string }
-        Returns: {
-          auth: string
-          endpoint: string
-          p256dh: string
-        }[]
-      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
