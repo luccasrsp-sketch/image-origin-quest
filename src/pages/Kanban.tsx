@@ -309,7 +309,7 @@ export default function KanbanPage() {
       {/* Cold leads alert */}
       {!coldAlertDismissed && (
         <ColdLeadsAlert
-          leads={leads}
+          leads={filteredLeads}
           onDismiss={() => setColdAlertDismissed(true)}
           onLeadClick={(lead) => {
             setColdAlertDismissed(true);
