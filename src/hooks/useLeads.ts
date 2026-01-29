@@ -383,9 +383,11 @@ export function useLeads() {
     return true;
   };
 
-  const getNewLeads = () => leads.filter(l => l.status === 'sem_atendimento');
+  // Leads novos filtrados por empresa
+  const getNewLeads = () => companyFilteredLeads.filter(l => l.status === 'sem_atendimento');
   
-  const getLeadsByStatus = (status: LeadStatus) => leads.filter(l => l.status === status);
+  // Leads por status filtrados por empresa
+  const getLeadsByStatus = (status: LeadStatus) => companyFilteredLeads.filter(l => l.status === status);
 
   const saveSaleData = async (data: SaleData) => {
     const { error } = await supabase
