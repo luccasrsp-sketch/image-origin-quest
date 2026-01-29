@@ -112,6 +112,9 @@ export default function Dashboard() {
           </Button>
         </div>
 
+        {/* Daily Verse */}
+        <DailyVerse />
+
         {/* Stats cards */}
         <div className="grid gap-3 md:gap-4 grid-cols-2 lg:grid-cols-4">
           <Card className="touch-manipulation active:scale-[0.98] transition-transform">
@@ -171,9 +174,6 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
-
-        {/* Daily Verse */}
-        <DailyVerse />
 
         {/* Charts - stack on mobile */}
         <div className="grid gap-4 md:gap-6 grid-cols-1 md:grid-cols-2">
