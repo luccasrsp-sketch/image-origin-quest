@@ -11,6 +11,7 @@ import { ptBR } from 'date-fns/locale';
 import { STATUS_LABELS, PROPOSAL_PRODUCTS } from '@/types/crm';
 import { Button } from '@/components/ui/button';
 import { DailyReportDialog } from '@/components/reports/DailyReportDialog';
+import { DailyVerse } from '@/components/dashboard/DailyVerse';
 import {
   BarChart,
   Bar,
@@ -170,6 +171,9 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Daily Verse */}
+        <DailyVerse />
 
         {/* Charts - stack on mobile */}
         <div className="grid gap-4 md:gap-6 grid-cols-1 md:grid-cols-2">
