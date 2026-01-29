@@ -484,6 +484,13 @@ export type Database = {
     Functions: {
       get_current_profile_id: { Args: never; Returns: string }
       get_next_closer: { Args: never; Returns: string }
+      get_team_sales_totals: {
+        Args: never
+        Returns: {
+          money_on_table: number
+          sales_total: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
