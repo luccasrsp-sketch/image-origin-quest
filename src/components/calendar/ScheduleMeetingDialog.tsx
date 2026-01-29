@@ -20,8 +20,7 @@ import {
 } from '@/components/ui/select';
 import { Lead } from '@/types/crm';
 import { useCalendar } from '@/hooks/useCalendar';
-import { useTeam } from '@/hooks/useTeam';
-import { Calendar, Clock, User, AlertCircle } from 'lucide-react';
+import { Calendar, Clock, AlertCircle } from 'lucide-react';
 import { getAvailableSlots, TimeSlot } from '@/utils/scheduleSlots';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
@@ -39,32 +38,31 @@ export function ScheduleMeetingDialog({
   onScheduled 
 }: ScheduleMeetingDialogProps) {
   const { createEvent, events } = useCalendar();
-  const { getClosers } = useTeam();
   const [isLoading, setIsLoading] = useState(false);
   
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    closerId: '',
     date: '',
     selectedSlot: '',
   });
 
-  const closers = getClosers();
+  // O closer já está atribuído ao lead automaticamente pelo sistema
+  const closerId = lead?.assigned_closer_id || '';
 
-  // Get available slots for selected closer and date
+  // Get available slots for the assigned closer and selected date
   const availableSlots = useMemo(() => {
-    if (!formData.closerId || !formData.date) {
+    if (!closerId || !formData.date) {
       return [];
     }
     
-    return getAvailableSlots(formData.date, events, formData.closerId);
-  }, [formData.closerId, formData.date, events]);
+    return getAvailableSlots(formData.date, events, closerId);
+  }, [closerId, formData.date, events]);
 
-  // Reset slot selection when closer or date changes
+  // Reset slot selection when date changes
   useEffect(() => {
     setFormData(prev => ({ ...prev, selectedSlot: '' }));
-  }, [formData.closerId, formData.date]);
+  }, [formData.date]);
 
   const selectedSlotData = useMemo(() => {
     if (!formData.selectedSlot) return null;
@@ -73,7 +71,7 @@ export function ScheduleMeetingDialog({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!lead || !formData.closerId || !formData.date || !selectedSlotData) return;
+    if (!lead || !closerId || !formData.date || !selectedSlotData) return;
 
     setIsLoading(true);
 
@@ -86,7 +84,7 @@ export function ScheduleMeetingDialog({
       title,
       description: formData.description || `Reunião de apresentação - ${lead.company_name}`,
       lead_id: lead.id,
-      user_id: formData.closerId,
+      user_id: closerId,
       start_time: startDateTime.toISOString(),
       end_time: endDateTime.toISOString(),
       event_type: 'meeting',
@@ -96,7 +94,6 @@ export function ScheduleMeetingDialog({
     setFormData({
       title: '',
       description: '',
-      closerId: '',
       date: '',
       selectedSlot: '',
     });
@@ -107,7 +104,6 @@ export function ScheduleMeetingDialog({
     setFormData({
       title: '',
       description: '',
-      closerId: '',
       date: '',
       selectedSlot: '',
     });
@@ -116,7 +112,8 @@ export function ScheduleMeetingDialog({
 
   if (!lead) return null;
 
-  const showNoSlotsWarning = formData.closerId && formData.date && availableSlots.length === 0;
+  const showNoSlotsWarning = closerId && formData.date && availableSlots.length === 0;
+  const closerName = lead.assigned_closer?.full_name || 'Closer não atribuído';
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -143,25 +140,13 @@ export function ScheduleMeetingDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="closer">Closer Responsável</Label>
-            <Select 
-              value={formData.closerId} 
-              onValueChange={v => setFormData(d => ({ ...d, closerId: v }))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecionar closer" />
-              </SelectTrigger>
-              <SelectContent>
-                {closers.map(closer => (
-                  <SelectItem key={closer.id} value={closer.id}>
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4" />
-                      {closer.full_name}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label>Closer Responsável</Label>
+            <div className="p-3 rounded-md border bg-muted/50 text-sm">
+              {closerName}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              O Closer foi atribuído automaticamente pelo sistema.
+            </p>
           </div>
 
           <div className="space-y-2">
@@ -175,7 +160,7 @@ export function ScheduleMeetingDialog({
             />
           </div>
 
-          {formData.closerId && formData.date && (
+          {closerId && formData.date && (
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
                 <Clock className="h-4 w-4" />
@@ -225,7 +210,7 @@ export function ScheduleMeetingDialog({
             </Button>
             <Button 
               type="submit" 
-              disabled={!formData.closerId || !formData.date || !formData.selectedSlot || isLoading}
+              disabled={!closerId || !formData.date || !formData.selectedSlot || isLoading}
             >
               {isLoading ? 'Agendando...' : 'Agendar Reunião'}
             </Button>
