@@ -306,10 +306,10 @@ export default function KanbanPage() {
         onConfirm={markAsLost}
       />
 
-      {/* Cold leads alert */}
-      {!coldAlertDismissed && (
+      {/* Cold leads alert - only for SDRs with their assigned leads */}
+      {!coldAlertDismissed && isSDR() && profile?.id && (
         <ColdLeadsAlert
-          leads={filteredLeads}
+          leads={filteredLeads.filter(l => l.assigned_sdr_id === profile.id)}
           onDismiss={() => setColdAlertDismissed(true)}
           onLeadClick={(lead) => {
             setColdAlertDismissed(true);
