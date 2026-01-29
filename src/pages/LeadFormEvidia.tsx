@@ -4,19 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
-import { FunnelType } from '@/types/crm';
 import { CheckCircle, ArrowRight, Building, User, Phone, Mail, DollarSign } from 'lucide-react';
 
 const leadSchema = z.object({
@@ -25,10 +15,9 @@ const leadSchema = z.object({
   phone: z.string().min(10, 'Telefone inválido').max(20),
   company_name: z.string().min(2, 'Nome da empresa é obrigatório').max(100),
   monthly_revenue: z.string().optional(),
-  funnel_type: z.enum(['padrao', 'franquia', 'formatacao']),
 });
 
-export default function LeadFormPage() {
+export default function LeadFormEvidiaPage() {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -42,7 +31,6 @@ export default function LeadFormPage() {
     phone: '',
     company_name: '',
     monthly_revenue: '',
-    funnel_type: 'padrao' as FunnelType,
   });
 
   // Capture UTM parameters from URL
@@ -86,8 +74,8 @@ export default function LeadFormPage() {
       phone: formData.phone,
       company_name: formData.company_name,
       monthly_revenue: monthlyRevenue,
-      funnel_type: formData.funnel_type,
-      company: 'escola_franchising',
+      funnel_type: 'padrao',
+      company: 'evidia',
       status: 'sem_atendimento',
       ...utmParams,
     });
@@ -115,17 +103,17 @@ export default function LeadFormPage() {
 
   if (isSubmitted) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="w-full max-w-md text-center">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan-950 via-slate-900 to-slate-950 p-4">
+        <Card className="w-full max-w-md text-center border-cyan-800/50 bg-slate-900/80">
           <CardContent className="pt-10 pb-10">
-            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-success/20">
-              <CheckCircle className="h-8 w-8 text-success" />
+            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-cyan-500/20">
+              <CheckCircle className="h-8 w-8 text-cyan-400" />
             </div>
-            <h2 className="text-2xl font-bold mb-2">Cadastro Realizado!</h2>
-            <p className="text-muted-foreground mb-6">
+            <h2 className="text-2xl font-bold mb-2 text-white">Cadastro Realizado!</h2>
+            <p className="text-slate-400 mb-6">
               Recebemos seus dados com sucesso. Nossa equipe entrará em contato em breve.
             </p>
-            <Button onClick={() => navigate('/')} variant="outline">
+            <Button onClick={() => navigate('/')} variant="outline" className="border-cyan-700 text-cyan-400 hover:bg-cyan-950">
               Voltar ao Início
             </Button>
           </CardContent>
@@ -135,14 +123,14 @@ export default function LeadFormPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4">
-      <Card className="w-full max-w-lg">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan-950 via-slate-900 to-slate-950 p-4">
+      <Card className="w-full max-w-lg border-cyan-800/50 bg-slate-900/80">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-primary">
-            <span className="text-2xl font-bold text-primary-foreground">C</span>
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500 to-cyan-700">
+            <span className="text-2xl font-bold text-white">E</span>
           </div>
-          <CardTitle className="text-2xl">Fale com um Especialista</CardTitle>
-          <p className="text-muted-foreground mt-2">
+          <CardTitle className="text-2xl text-white">Fale com a Evidia</CardTitle>
+          <p className="text-slate-400 mt-2">
             Preencha seus dados e nossa equipe entrará em contato
           </p>
         </CardHeader>
@@ -150,16 +138,16 @@ export default function LeadFormPage() {
         <CardContent>
           {/* Progress indicator */}
           <div className="flex items-center justify-center gap-2 mb-6">
-            <Badge variant={step >= 1 ? 'default' : 'secondary'}>1</Badge>
-            <ArrowRight className="h-4 w-4 text-muted-foreground" />
-            <Badge variant={step >= 2 ? 'default' : 'secondary'}>2</Badge>
+            <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${step >= 1 ? 'bg-cyan-500 text-white' : 'bg-slate-700 text-slate-400'}`}>1</span>
+            <ArrowRight className="h-4 w-4 text-slate-500" />
+            <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${step >= 2 ? 'bg-cyan-500 text-white' : 'bg-slate-700 text-slate-400'}`}>2</span>
           </div>
 
           <form onSubmit={handleSubmit}>
             {step === 1 && (
               <div className="space-y-4 animate-fade-in">
                 <div className="space-y-2">
-                  <Label htmlFor="full_name" className="flex items-center gap-2">
+                  <Label htmlFor="full_name" className="flex items-center gap-2 text-slate-300">
                     <User className="h-4 w-4" />
                     Nome Completo *
                   </Label>
@@ -168,14 +156,15 @@ export default function LeadFormPage() {
                     placeholder="Seu nome completo"
                     value={formData.full_name}
                     onChange={e => setFormData(d => ({ ...d, full_name: e.target.value }))}
+                    className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
                   />
                   {errors.full_name && (
-                    <p className="text-sm text-destructive">{errors.full_name}</p>
+                    <p className="text-sm text-red-400">{errors.full_name}</p>
                   )}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="flex items-center gap-2">
+                  <Label htmlFor="email" className="flex items-center gap-2 text-slate-300">
                     <Mail className="h-4 w-4" />
                     E-mail *
                   </Label>
@@ -185,14 +174,15 @@ export default function LeadFormPage() {
                     placeholder="seu@email.com"
                     value={formData.email}
                     onChange={e => setFormData(d => ({ ...d, email: e.target.value }))}
+                    className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
                   />
                   {errors.email && (
-                    <p className="text-sm text-destructive">{errors.email}</p>
+                    <p className="text-sm text-red-400">{errors.email}</p>
                   )}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="phone" className="flex items-center gap-2">
+                  <Label htmlFor="phone" className="flex items-center gap-2 text-slate-300">
                     <Phone className="h-4 w-4" />
                     WhatsApp *
                   </Label>
@@ -202,15 +192,16 @@ export default function LeadFormPage() {
                     value={formData.phone}
                     onChange={e => setFormData(d => ({ ...d, phone: formatPhone(e.target.value) }))}
                     maxLength={15}
+                    className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
                   />
                   {errors.phone && (
-                    <p className="text-sm text-destructive">{errors.phone}</p>
+                    <p className="text-sm text-red-400">{errors.phone}</p>
                   )}
                 </div>
 
                 <Button 
                   type="button" 
-                  className="w-full"
+                  className="w-full bg-cyan-600 hover:bg-cyan-700 text-white"
                   onClick={() => {
                     const partialResult = z.object({
                       full_name: z.string().min(2),
@@ -241,7 +232,7 @@ export default function LeadFormPage() {
             {step === 2 && (
               <div className="space-y-4 animate-fade-in">
                 <div className="space-y-2">
-                  <Label htmlFor="company_name" className="flex items-center gap-2">
+                  <Label htmlFor="company_name" className="flex items-center gap-2 text-slate-300">
                     <Building className="h-4 w-4" />
                     Nome da Empresa *
                   </Label>
@@ -250,14 +241,15 @@ export default function LeadFormPage() {
                     placeholder="Nome da sua empresa"
                     value={formData.company_name}
                     onChange={e => setFormData(d => ({ ...d, company_name: e.target.value }))}
+                    className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
                   />
                   {errors.company_name && (
-                    <p className="text-sm text-destructive">{errors.company_name}</p>
+                    <p className="text-sm text-red-400">{errors.company_name}</p>
                   )}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="monthly_revenue" className="flex items-center gap-2">
+                  <Label htmlFor="monthly_revenue" className="flex items-center gap-2 text-slate-300">
                     <DollarSign className="h-4 w-4" />
                     Faturamento Mensal (opcional)
                   </Label>
@@ -266,24 +258,8 @@ export default function LeadFormPage() {
                     placeholder="R$ 50.000,00"
                     value={formData.monthly_revenue}
                     onChange={e => setFormData(d => ({ ...d, monthly_revenue: e.target.value }))}
+                    className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
                   />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="funnel_type">Tipo de Interesse</Label>
-                  <Select 
-                    value={formData.funnel_type}
-                    onValueChange={v => setFormData(d => ({ ...d, funnel_type: v as FunnelType }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="padrao">Consultoria/Serviço</SelectItem>
-                      <SelectItem value="franquia">Franquia</SelectItem>
-                      <SelectItem value="formatacao">Formatação</SelectItem>
-                    </SelectContent>
-                  </Select>
                 </div>
 
                 <div className="flex gap-2">
@@ -291,13 +267,13 @@ export default function LeadFormPage() {
                     type="button" 
                     variant="outline"
                     onClick={() => setStep(1)}
-                    className="flex-1"
+                    className="flex-1 border-slate-700 text-slate-300 hover:bg-slate-800"
                   >
                     Voltar
                   </Button>
                   <Button 
                     type="submit" 
-                    className="flex-1"
+                    className="flex-1 bg-cyan-600 hover:bg-cyan-700 text-white"
                     disabled={isSubmitting}
                   >
                     {isSubmitting ? 'Enviando...' : 'Enviar Cadastro'}

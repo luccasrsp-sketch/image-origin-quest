@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Lead, LeadStatus, ProposalProduct } from '@/types/crm';
+import { Lead, LeadStatus, ProposalProduct, Company } from '@/types/crm';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCompany } from '@/contexts/CompanyContext';
 import { SaleData } from '@/components/leads/SaleConfirmationDialog';
 
 export function useLeads() {
@@ -10,13 +11,19 @@ export function useLeads() {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { profile, viewingAs, isAdmin } = useAuth();
+  const { selectedCompany } = useCompany();
 
-  // Retorna leads filtrados baseado no viewingAs
+  // Filtra leads por empresa selecionada
+  const companyFilteredLeads = useMemo(() => {
+    return leads.filter(lead => lead.company === selectedCompany);
+  }, [leads, selectedCompany]);
+
+  // Retorna leads filtrados baseado no viewingAs (já filtrados por empresa)
   const getFilteredLeads = () => {
-    if (!viewingAs) return leads; // Admin vê tudo
+    if (!viewingAs) return companyFilteredLeads; // Admin vê tudo da empresa
     
     // Filtra leads pelo membro sendo visualizado
-    return leads.filter(lead => {
+    return companyFilteredLeads.filter(lead => {
       if (viewingAs.roles.includes('sdr')) {
         return lead.assigned_sdr_id === viewingAs.id || 
                (!lead.assigned_sdr_id && !lead.assigned_closer_id);

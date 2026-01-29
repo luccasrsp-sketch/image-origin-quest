@@ -13,6 +13,18 @@ export type LeadStatus =
 
 export type FunnelType = 'padrao' | 'franquia' | 'formatacao';
 
+export type Company = 'escola_franchising' | 'evidia';
+
+export const COMPANY_LABELS: Record<Company, string> = {
+  escola_franchising: 'Escola do Franchising',
+  evidia: 'Evidia',
+};
+
+export const COMPANY_COLORS: Record<Company, string> = {
+  escola_franchising: 'bg-primary/10 text-primary border-primary/30',
+  evidia: 'bg-cyan-100 text-cyan-800 border-cyan-300',
+};
+
 export const FUNNEL_LABELS: Record<FunnelType, string> = {
   padrao: 'Padrão',
   franquia: 'Franquia',
@@ -67,6 +79,7 @@ export interface Lead {
   utm_content?: string;
   utm_term?: string;
   funnel_type: FunnelType;
+  company: Company;
   status: LeadStatus;
   assigned_sdr_id?: string;
   assigned_closer_id?: string;
