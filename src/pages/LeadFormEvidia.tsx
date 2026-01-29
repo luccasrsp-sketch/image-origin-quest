@@ -7,18 +7,16 @@ import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
-import { CheckCircle, ArrowRight, Building, User, Phone, Mail, DollarSign } from 'lucide-react';
+import { CheckCircle, User, Phone, MapPin, Stethoscope } from 'lucide-react';
 
 const leadSchema = z.object({
   full_name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres').max(100),
-  email: z.string().email('E-mail inválido').max(255),
   phone: z.string().min(10, 'Telefone inválido').max(20),
-  company_name: z.string().min(2, 'Nome da empresa é obrigatório').max(100),
-  monthly_revenue: z.string().optional(),
+  city_state: z.string().min(2, 'Cidade/UF é obrigatório').max(100),
+  specialty: z.string().min(2, 'Especialidade é obrigatória').max(200),
 });
 
 export default function LeadFormEvidiaPage() {
-  const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -27,10 +25,9 @@ export default function LeadFormEvidiaPage() {
 
   const [formData, setFormData] = useState({
     full_name: '',
-    email: '',
     phone: '',
-    company_name: '',
-    monthly_revenue: '',
+    city_state: '',
+    specialty: '',
   });
 
   // Capture UTM parameters from URL
@@ -64,16 +61,14 @@ export default function LeadFormEvidiaPage() {
     setIsSubmitting(true);
 
     const utmParams = getUTMParams();
-    const monthlyRevenue = formData.monthly_revenue 
-      ? parseFloat(formData.monthly_revenue.replace(/[^\d,]/g, '').replace(',', '.'))
-      : null;
 
     const { error } = await supabase.from('leads').insert({
       full_name: formData.full_name,
-      email: formData.email,
+      email: `${formData.phone.replace(/\D/g, '')}@evidia.temp`,
       phone: formData.phone,
-      company_name: formData.company_name,
-      monthly_revenue: monthlyRevenue,
+      company_name: formData.specialty,
+      city_state: formData.city_state,
+      specialty: formData.specialty,
       funnel_type: 'padrao',
       company: 'evidia',
       status: 'sem_atendimento',
@@ -83,6 +78,7 @@ export default function LeadFormEvidiaPage() {
     setIsSubmitting(false);
 
     if (error) {
+      console.error('Error submitting lead:', error);
       toast({
         title: 'Erro ao enviar',
         description: 'Ocorreu um erro ao enviar seus dados. Tente novamente.',
@@ -136,151 +132,83 @@ export default function LeadFormEvidiaPage() {
         </CardHeader>
 
         <CardContent>
-          {/* Progress indicator */}
-          <div className="flex items-center justify-center gap-2 mb-6">
-            <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${step >= 1 ? 'bg-cyan-500 text-white' : 'bg-slate-700 text-slate-400'}`}>1</span>
-            <ArrowRight className="h-4 w-4 text-slate-500" />
-            <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${step >= 2 ? 'bg-cyan-500 text-white' : 'bg-slate-700 text-slate-400'}`}>2</span>
-          </div>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="full_name" className="flex items-center gap-2 text-slate-300">
+                <User className="h-4 w-4" />
+                Nome Completo *
+              </Label>
+              <Input
+                id="full_name"
+                placeholder="Seu nome completo"
+                value={formData.full_name}
+                onChange={e => setFormData(d => ({ ...d, full_name: e.target.value }))}
+                className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
+              />
+              {errors.full_name && (
+                <p className="text-sm text-red-400">{errors.full_name}</p>
+              )}
+            </div>
 
-          <form onSubmit={handleSubmit}>
-            {step === 1 && (
-              <div className="space-y-4 animate-fade-in">
-                <div className="space-y-2">
-                  <Label htmlFor="full_name" className="flex items-center gap-2 text-slate-300">
-                    <User className="h-4 w-4" />
-                    Nome Completo *
-                  </Label>
-                  <Input
-                    id="full_name"
-                    placeholder="Seu nome completo"
-                    value={formData.full_name}
-                    onChange={e => setFormData(d => ({ ...d, full_name: e.target.value }))}
-                    className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
-                  />
-                  {errors.full_name && (
-                    <p className="text-sm text-red-400">{errors.full_name}</p>
-                  )}
-                </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone" className="flex items-center gap-2 text-slate-300">
+                <Phone className="h-4 w-4" />
+                WhatsApp *
+              </Label>
+              <Input
+                id="phone"
+                placeholder="(00) 00000-0000"
+                value={formData.phone}
+                onChange={e => setFormData(d => ({ ...d, phone: formatPhone(e.target.value) }))}
+                maxLength={15}
+                className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
+              />
+              {errors.phone && (
+                <p className="text-sm text-red-400">{errors.phone}</p>
+              )}
+            </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="flex items-center gap-2 text-slate-300">
-                    <Mail className="h-4 w-4" />
-                    E-mail *
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="seu@email.com"
-                    value={formData.email}
-                    onChange={e => setFormData(d => ({ ...d, email: e.target.value }))}
-                    className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
-                  />
-                  {errors.email && (
-                    <p className="text-sm text-red-400">{errors.email}</p>
-                  )}
-                </div>
+            <div className="space-y-2">
+              <Label htmlFor="city_state" className="flex items-center gap-2 text-slate-300">
+                <MapPin className="h-4 w-4" />
+                Cidade/UF *
+              </Label>
+              <Input
+                id="city_state"
+                placeholder="Ex: São Paulo/SP"
+                value={formData.city_state}
+                onChange={e => setFormData(d => ({ ...d, city_state: e.target.value }))}
+                className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
+              />
+              {errors.city_state && (
+                <p className="text-sm text-red-400">{errors.city_state}</p>
+              )}
+            </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="phone" className="flex items-center gap-2 text-slate-300">
-                    <Phone className="h-4 w-4" />
-                    WhatsApp *
-                  </Label>
-                  <Input
-                    id="phone"
-                    placeholder="(00) 00000-0000"
-                    value={formData.phone}
-                    onChange={e => setFormData(d => ({ ...d, phone: formatPhone(e.target.value) }))}
-                    maxLength={15}
-                    className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
-                  />
-                  {errors.phone && (
-                    <p className="text-sm text-red-400">{errors.phone}</p>
-                  )}
-                </div>
+            <div className="space-y-2">
+              <Label htmlFor="specialty" className="flex items-center gap-2 text-slate-300">
+                <Stethoscope className="h-4 w-4" />
+                Especialidade *
+              </Label>
+              <Input
+                id="specialty"
+                placeholder="Ex: Cardiologia, Dermatologia..."
+                value={formData.specialty}
+                onChange={e => setFormData(d => ({ ...d, specialty: e.target.value }))}
+                className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
+              />
+              {errors.specialty && (
+                <p className="text-sm text-red-400">{errors.specialty}</p>
+              )}
+            </div>
 
-                <Button 
-                  type="button" 
-                  className="w-full bg-cyan-600 hover:bg-cyan-700 text-white"
-                  onClick={() => {
-                    const partialResult = z.object({
-                      full_name: z.string().min(2),
-                      email: z.string().email(),
-                      phone: z.string().min(10),
-                    }).safeParse(formData);
-
-                    if (!partialResult.success) {
-                      const fieldErrors: Record<string, string> = {};
-                      partialResult.error.errors.forEach(err => {
-                        if (err.path[0]) {
-                          fieldErrors[err.path[0] as string] = err.message;
-                        }
-                      });
-                      setErrors(fieldErrors);
-                      return;
-                    }
-                    setErrors({});
-                    setStep(2);
-                  }}
-                >
-                  Continuar
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
-              </div>
-            )}
-
-            {step === 2 && (
-              <div className="space-y-4 animate-fade-in">
-                <div className="space-y-2">
-                  <Label htmlFor="company_name" className="flex items-center gap-2 text-slate-300">
-                    <Building className="h-4 w-4" />
-                    Nome da Empresa *
-                  </Label>
-                  <Input
-                    id="company_name"
-                    placeholder="Nome da sua empresa"
-                    value={formData.company_name}
-                    onChange={e => setFormData(d => ({ ...d, company_name: e.target.value }))}
-                    className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
-                  />
-                  {errors.company_name && (
-                    <p className="text-sm text-red-400">{errors.company_name}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="monthly_revenue" className="flex items-center gap-2 text-slate-300">
-                    <DollarSign className="h-4 w-4" />
-                    Faturamento Mensal (opcional)
-                  </Label>
-                  <Input
-                    id="monthly_revenue"
-                    placeholder="R$ 50.000,00"
-                    value={formData.monthly_revenue}
-                    onChange={e => setFormData(d => ({ ...d, monthly_revenue: e.target.value }))}
-                    className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
-                  />
-                </div>
-
-                <div className="flex gap-2">
-                  <Button 
-                    type="button" 
-                    variant="outline"
-                    onClick={() => setStep(1)}
-                    className="flex-1 border-slate-700 text-slate-300 hover:bg-slate-800"
-                  >
-                    Voltar
-                  </Button>
-                  <Button 
-                    type="submit" 
-                    className="flex-1 bg-cyan-600 hover:bg-cyan-700 text-white"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? 'Enviando...' : 'Enviar Cadastro'}
-                  </Button>
-                </div>
-              </div>
-            )}
+            <Button 
+              type="submit" 
+              className="w-full bg-cyan-600 hover:bg-cyan-700 text-white"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Enviando...' : 'Enviar Cadastro'}
+            </Button>
           </form>
         </CardContent>
       </Card>
