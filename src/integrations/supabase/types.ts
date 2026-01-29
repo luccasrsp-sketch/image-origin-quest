@@ -161,6 +161,7 @@ export type Database = {
         Row: {
           assigned_closer_id: string | null
           assigned_sdr_id: string | null
+          company: Database["public"]["Enums"]["company"]
           company_name: string
           created_at: string
           email: string
@@ -201,6 +202,7 @@ export type Database = {
         Insert: {
           assigned_closer_id?: string | null
           assigned_sdr_id?: string | null
+          company?: Database["public"]["Enums"]["company"]
           company_name: string
           created_at?: string
           email: string
@@ -241,6 +243,7 @@ export type Database = {
         Update: {
           assigned_closer_id?: string | null
           assigned_sdr_id?: string | null
+          company?: Database["public"]["Enums"]["company"]
           company_name?: string
           created_at?: string
           email?: string
@@ -556,6 +559,7 @@ export type Database = {
     }
     Enums: {
       app_role: "sdr" | "closer" | "admin"
+      company: "escola_franchising" | "evidia"
       funnel_type: "padrao" | "franquia" | "formatacao"
       lead_status:
         | "sem_atendimento"
@@ -695,6 +699,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["sdr", "closer", "admin"],
+      company: ["escola_franchising", "evidia"],
       funnel_type: ["padrao", "franquia", "formatacao"],
       lead_status: [
         "sem_atendimento",

@@ -16,6 +16,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { CompanySelector } from './CompanySelector';
 
 interface AppHeaderProps {
   title: string;
@@ -70,6 +71,9 @@ export function AppHeader({ title }: AppHeaderProps) {
       </div>
 
       <div className="flex items-center gap-1 md:gap-2">
+        {/* Company Selector */}
+        <CompanySelector />
+        
         {/* Mobile viewing as indicator */}
         {viewingAs && (
           <Badge variant="outline" className="md:hidden text-xs border-warning text-warning max-w-[100px] truncate">

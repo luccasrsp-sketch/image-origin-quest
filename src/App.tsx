@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { CompanyProvider } from "@/contexts/CompanyContext";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Leads from "./pages/Leads";
@@ -12,6 +13,7 @@ import Agenda from "./pages/Agenda";
 import Relatorios from "./pages/Relatorios";
 import Configuracoes from "./pages/Configuracoes";
 import LeadForm from "./pages/LeadForm";
+import LeadFormEvidia from "./pages/LeadFormEvidia";
 import ImportLeads from "./pages/ImportLeads";
 import NotFound from "./pages/NotFound";
 
@@ -51,6 +53,7 @@ function AppRoutes() {
       {/* Public routes */}
       <Route path="/auth" element={user ? <Navigate to="/dashboard" replace /> : <Auth />} />
       <Route path="/cadastro" element={<LeadForm />} />
+      <Route path="/cadastro-evidia" element={<LeadFormEvidia />} />
       
       {/* Protected routes */}
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
@@ -74,9 +77,11 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <div className="dark">
-            <AppRoutes />
-          </div>
+          <CompanyProvider>
+            <div className="dark">
+              <AppRoutes />
+            </div>
+          </CompanyProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
