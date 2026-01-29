@@ -42,8 +42,8 @@ import { ptBR } from 'date-fns/locale';
 const COLORS = ['hsl(38, 92%, 50%)', 'hsl(142, 76%, 36%)', 'hsl(199, 89%, 48%)', 'hsl(0, 84%, 60%)', 'hsl(280, 65%, 60%)'];
 
 export default function RelatoriosPage() {
-  const { leads } = useLeads();
-  const { events } = useCalendar();
+  const { filteredLeads: leads } = useLeads();
+  const { filteredEvents: events } = useCalendar();
   const { team, getSDRs, getClosers } = useTeam();
 
   // Date ranges
