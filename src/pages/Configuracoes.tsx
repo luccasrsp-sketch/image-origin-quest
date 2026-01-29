@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTeam } from '@/hooks/useTeam';
 import { useInvites } from '@/hooks/useInvites';
 import { InviteUserDialog } from '@/components/team/InviteUserDialog';
+import { PushNotificationSettings } from '@/components/notifications/PushNotificationSettings';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
   User, 
@@ -120,6 +121,9 @@ export default function ConfiguracoesPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Push Notifications section */}
+        <PushNotificationSettings />
 
         {/* Form URL section */}
         <Card>
