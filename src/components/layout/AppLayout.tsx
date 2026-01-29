@@ -36,36 +36,13 @@ export function AppLayout({ children, title }: AppLayoutProps) {
   }, []);
 
   const fetchSalesData = async () => {
-    // Get current month date range
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+    // Use the security definer function to get team totals (visible to all members)
+    const { data, error } = await supabase.rpc('get_team_sales_totals');
 
-    // Total de vendas do mês (soma de entry_value + remaining_value)
-    const { data: salesData } = await supabase
-      .from('leads')
-      .select('sale_entry_value, sale_remaining_value')
-      .eq('status', 'vendido')
-      .gte('sale_confirmed_at', startOfMonth.toISOString())
-      .lte('sale_confirmed_at', endOfMonth.toISOString());
-
-    const total = salesData?.reduce((sum, lead) => {
-      return sum + (lead.sale_entry_value || 0) + (lead.sale_remaining_value || 0);
-    }, 0) || 0;
-
-    setSalesTotal(total);
-
-    // Dinheiro na mesa: soma de todas as propostas em aberto
-    const { data: proposalsData } = await supabase
-      .from('leads')
-      .select('proposal_value')
-      .eq('status', 'envio_proposta');
-
-    const proposalsTotal = proposalsData?.reduce((sum, lead) => {
-      return sum + (lead.proposal_value || 0);
-    }, 0) || 0;
-
-    setMoneyOnTable(proposalsTotal);
+    if (!error && data && data.length > 0) {
+      setSalesTotal(Number(data[0].sales_total) || 0);
+      setMoneyOnTable(Number(data[0].money_on_table) || 0);
+    }
   };
 
   return (
