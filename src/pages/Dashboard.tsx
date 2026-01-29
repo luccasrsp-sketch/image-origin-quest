@@ -104,7 +104,7 @@ export default function Dashboard() {
           </div>
           <Button onClick={() => setReportOpen(true)} className="gap-2 bg-primary hover:bg-primary/90">
             <FileText className="h-4 w-4" />
-            Relatório Diário
+            Relatório Simples
           </Button>
         </div>
 
