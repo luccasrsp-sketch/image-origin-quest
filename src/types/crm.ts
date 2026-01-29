@@ -1,4 +1,4 @@
-export type AppRole = 'sdr' | 'closer' | 'admin';
+export type AppRole = 'sdr' | 'closer' | 'admin' | 'viewer';
 
 export type LeadStatus = 
   | 'sem_atendimento'

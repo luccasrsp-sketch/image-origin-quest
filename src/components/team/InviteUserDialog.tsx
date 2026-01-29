@@ -85,6 +85,7 @@ export function InviteUserDialog({ open, onOpenChange, onInvite }: InviteUserDia
               <SelectContent>
                 <SelectItem value="sdr">SDR</SelectItem>
                 <SelectItem value="closer">Closer</SelectItem>
+                <SelectItem value="viewer">Visualizador</SelectItem>
                 <SelectItem value="admin">Admin</SelectItem>
               </SelectContent>
             </Select>
