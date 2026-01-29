@@ -532,8 +532,10 @@ export type Database = {
       get_team_sales_totals: {
         Args: never
         Returns: {
+          daily_sales: number
           money_on_table: number
           sales_total: number
+          weekly_sales: number
         }[]
       }
       get_user_push_subscriptions: {

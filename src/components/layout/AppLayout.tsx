@@ -17,6 +17,8 @@ const MONTHLY_GOAL = 2000000;
 export function AppLayout({ children, title }: AppLayoutProps) {
   const [salesTotal, setSalesTotal] = useState(0);
   const [moneyOnTable, setMoneyOnTable] = useState(0);
+  const [dailySales, setDailySales] = useState(0);
+  const [weeklySales, setWeeklySales] = useState(0);
 
   useEffect(() => {
     fetchSalesData();
@@ -43,6 +45,8 @@ export function AppLayout({ children, title }: AppLayoutProps) {
     if (!error && data && data.length > 0) {
       setSalesTotal(Number(data[0].sales_total) || 0);
       setMoneyOnTable(Number(data[0].money_on_table) || 0);
+      setDailySales(Number(data[0].daily_sales) || 0);
+      setWeeklySales(Number(data[0].weekly_sales) || 0);
     }
   };
 
@@ -56,6 +60,8 @@ export function AppLayout({ children, title }: AppLayoutProps) {
             currentValue={salesTotal} 
             goalValue={MONTHLY_GOAL} 
             moneyOnTable={moneyOnTable}
+            dailySales={dailySales}
+            weeklySales={weeklySales}
             label="Meta Janeiro"
           />
           <AppHeader title={title} />
