@@ -70,7 +70,7 @@ export function LossReasonDialog({ lead, open, onOpenChange, onConfirm }: LossRe
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="lossReason">Motivo da perda *</Label>
+            <Label htmlFor="lossReason">Qual motivo do lead não comprar agora? *</Label>
             <Textarea
               id="lossReason"
               placeholder="Ex: Cliente não tem orçamento, optou por concorrente, projeto adiado, sem interesse no momento..."
