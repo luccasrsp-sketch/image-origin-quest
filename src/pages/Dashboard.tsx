@@ -1,7 +1,8 @@
+import { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Users, TrendingUp, Calendar, Clock, DollarSign, Target, AlertCircle, Phone } from 'lucide-react';
+import { Users, TrendingUp, Calendar, Clock, DollarSign, Target, AlertCircle, Phone, FileText } from 'lucide-react';
 import { useLeads } from '@/hooks/useLeads';
 import { useCalendar } from '@/hooks/useCalendar';
 import { useAuth } from '@/contexts/AuthContext';
@@ -9,6 +10,7 @@ import { format, formatDistanceToNow, isAfter, isBefore, addHours } from 'date-f
 import { ptBR } from 'date-fns/locale';
 import { STATUS_LABELS, PROPOSAL_PRODUCTS } from '@/types/crm';
 import { Button } from '@/components/ui/button';
+import { DailyReportDialog } from '@/components/reports/DailyReportDialog';
 import {
   BarChart,
   Bar,
@@ -28,6 +30,7 @@ export default function Dashboard() {
   const { filteredLeads: leads } = useLeads();
   const { filteredEvents: events } = useCalendar();
   const { profile, viewingAs } = useAuth();
+  const [reportOpen, setReportOpen] = useState(false);
 
   // Calculate metrics
   const newLeadsToday = leads.filter(l => {
@@ -83,20 +86,26 @@ export default function Dashboard() {
   return (
     <AppLayout title="Dashboard">
       <div className="space-y-6">
-        {/* Welcome message */}
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">
-            {viewingAs 
-              ? `Painel de ${viewingAs.full_name}` 
-              : `Olá, ${profile?.full_name?.split(' ')[0]}! 👋`
-            }
-          </h2>
-          <p className="text-muted-foreground">
-            {viewingAs 
-              ? `Visualizando como ${viewingAs.roles.includes('sdr') ? 'SDR' : 'Closer'}` 
-              : 'Aqui está o resumo do seu CRM hoje.'
-            }
-          </p>
+        {/* Welcome message + Report button */}
+        <div className="flex items-start justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-foreground">
+              {viewingAs 
+                ? `Painel de ${viewingAs.full_name}` 
+                : `Olá, ${profile?.full_name?.split(' ')[0]}! 👋`
+              }
+            </h2>
+            <p className="text-muted-foreground">
+              {viewingAs 
+                ? `Visualizando como ${viewingAs.roles.includes('sdr') ? 'SDR' : 'Closer'}` 
+                : 'Aqui está o resumo do seu CRM hoje.'
+              }
+            </p>
+          </div>
+          <Button onClick={() => setReportOpen(true)} variant="outline" className="gap-2">
+            <FileText className="h-4 w-4" />
+            Relatório Diário
+          </Button>
         </div>
 
         {/* Stats cards */}
@@ -376,6 +385,9 @@ export default function Dashboard() {
           </Card>
         </div>
       </div>
+
+      {/* Daily Report Dialog */}
+      <DailyReportDialog open={reportOpen} onOpenChange={setReportOpen} />
     </AppLayout>
   );
 }
