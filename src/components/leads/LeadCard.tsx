@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Lead, STATUS_LABELS, PROPOSAL_PRODUCTS } from '@/types/crm';
+import { Lead, STATUS_LABELS, PROPOSAL_PRODUCTS, FUNNEL_LABELS, FUNNEL_COLORS } from '@/types/crm';
 import { formatDistanceToNow, format, isBefore, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -113,6 +113,15 @@ export function LeadCard({ lead, onClick, onViewSale, onUpdateSaleStatus, onMark
           </div>
         )}
         <CardContent className={`p-3 space-y-1.5 ${lead.status === 'sem_atendimento' || isVendido ? 'pt-10' : 'pt-3'}`}>
+          {/* Tag de Funil (Franquia/Formatação) */}
+          {lead.funnel_type !== 'padrao' && (
+            <Badge 
+              variant="outline" 
+              className={`text-xs mb-1 ${FUNNEL_COLORS[lead.funnel_type]}`}
+            >
+              {FUNNEL_LABELS[lead.funnel_type]}
+            </Badge>
+          )}
           {lead.needs_scheduling && (
             <Badge className="bg-destructive text-destructive-foreground text-xs mb-1">
               Precisa agendar call!
@@ -300,9 +309,12 @@ ${lead.sale_observations ? `📝 *Observações:* ${lead.sale_observations}` : '
           <span className="font-medium">{formatCurrency(lead.monthly_revenue)}</span>
         </div>
 
-        {lead.funnel_type === 'franquia' && (
-          <Badge variant="outline" className="text-xs">
-            Franquia
+        {lead.funnel_type !== 'padrao' && (
+          <Badge 
+            variant="outline" 
+            className={`text-xs ${FUNNEL_COLORS[lead.funnel_type]}`}
+          >
+            {FUNNEL_LABELS[lead.funnel_type]}
           </Badge>
         )}
 

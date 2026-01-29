@@ -25,7 +25,7 @@ const leadSchema = z.object({
   phone: z.string().min(10, 'Telefone inválido').max(20),
   company_name: z.string().min(2, 'Nome da empresa é obrigatório').max(100),
   monthly_revenue: z.string().optional(),
-  funnel_type: z.enum(['padrao', 'franquia']),
+  funnel_type: z.enum(['padrao', 'franquia', 'formatacao']),
 });
 
 export default function LeadFormPage() {
@@ -280,6 +280,7 @@ export default function LeadFormPage() {
                     <SelectContent>
                       <SelectItem value="padrao">Consultoria/Serviço</SelectItem>
                       <SelectItem value="franquia">Franquia</SelectItem>
+                      <SelectItem value="formatacao">Formatação</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

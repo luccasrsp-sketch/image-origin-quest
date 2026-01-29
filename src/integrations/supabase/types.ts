@@ -554,7 +554,7 @@ export type Database = {
     }
     Enums: {
       app_role: "sdr" | "closer" | "admin"
-      funnel_type: "padrao" | "franquia"
+      funnel_type: "padrao" | "franquia" | "formatacao"
       lead_status:
         | "sem_atendimento"
         | "nao_atendeu"
@@ -693,7 +693,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["sdr", "closer", "admin"],
-      funnel_type: ["padrao", "franquia"],
+      funnel_type: ["padrao", "franquia", "formatacao"],
       lead_status: [
         "sem_atendimento",
         "nao_atendeu",
