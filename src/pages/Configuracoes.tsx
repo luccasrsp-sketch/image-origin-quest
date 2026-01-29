@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTeam } from '@/hooks/useTeam';
 import { useInvites } from '@/hooks/useInvites';
 import { InviteUserDialog } from '@/components/team/InviteUserDialog';
+import { EditRoleDialog } from '@/components/team/EditRoleDialog';
 import { PushNotificationSettings } from '@/components/notifications/PushNotificationSettings';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
@@ -20,18 +21,24 @@ import {
   Clock,
   Trash2,
   CheckCircle2,
+  Pencil,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { AppRole } from '@/types/crm';
+import { AppRole, Profile } from '@/types/crm';
+
+interface TeamMemberWithRoles extends Profile {
+  roles: AppRole[];
+}
 
 export default function ConfiguracoesPage() {
   const { profile, roles, isAdmin } = useAuth();
-  const { team, fetchTeam } = useTeam();
+  const { team, fetchTeam, updateMemberRole } = useTeam();
   const { pendingInvites, acceptedInvites, createInvite, deleteInvite } = useInvites();
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+  const [editingMember, setEditingMember] = useState<TeamMemberWithRoles | null>(null);
 
   const formUrl = `${window.location.origin}/cadastro`;
 
@@ -81,6 +88,21 @@ export default function ConfiguracoesPage() {
         description: `O convite para ${email} foi cancelado.`,
       });
     }
+  };
+
+  const handleEditRole = async (newRole: AppRole) => {
+    if (!editingMember) return { success: false, error: 'Nenhum membro selecionado' };
+    
+    const result = await updateMemberRole(editingMember.user_id, newRole);
+    
+    if (result.success) {
+      toast({
+        title: 'Papel atualizado',
+        description: `O papel de ${editingMember.full_name} foi alterado para ${newRole.toUpperCase()}.`,
+      });
+    }
+    
+    return result;
   };
 
   return (
@@ -195,7 +217,19 @@ export default function ConfiguracoesPage() {
                         <p className="font-medium">{member.full_name}</p>
                       </div>
                     </div>
-                    <Badge variant={badge.variant}>{badge.label}</Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={badge.variant}>{badge.label}</Badge>
+                      {isAdmin() && member.user_id !== profile?.user_id && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setEditingMember(member)}
+                          title="Editar papel"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 );
               })}
@@ -329,6 +363,17 @@ export default function ConfiguracoesPage() {
         onOpenChange={setInviteDialogOpen}
         onInvite={handleInvite}
       />
+
+      {/* Edit Role Dialog */}
+      {editingMember && (
+        <EditRoleDialog
+          open={!!editingMember}
+          onOpenChange={(open) => !open && setEditingMember(null)}
+          memberName={editingMember.full_name}
+          currentRoles={editingMember.roles}
+          onSave={handleEditRole}
+        />
+      )}
     </AppLayout>
   );
 }
