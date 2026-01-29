@@ -36,11 +36,9 @@ export default function KanbanPage() {
     if (viewingAs) {
       // Colunas adminOnly nunca aparecem na visão simulada
       if (col.adminOnly) return false;
-      // SDR vê apenas colunas de SDR
-      if (viewingAs.roles.includes('sdr') && col.role === 'sdr') return true;
-      // Closer vê apenas colunas de Closer
-      if (viewingAs.roles.includes('closer') && col.role === 'closer') return true;
-      return false;
+      // Verifica se a coluna é visível para algum dos papéis do membro
+      const memberRoles = viewingAs.roles;
+      return col.roles.some(colRole => memberRoles.includes(colRole));
     }
     
     // Visão normal (sem simulação)
@@ -48,10 +46,10 @@ export default function KanbanPage() {
     if (col.adminOnly && !isAdmin()) return false;
     // Admin vê todas as colunas
     if (isAdmin()) return true;
-    // SDR vê apenas colunas de SDR
-    if (isSDR() && col.role === 'sdr') return true;
-    // Closer vê apenas colunas de Closer (exceto adminOnly)
-    if (isCloser() && col.role === 'closer') return true;
+    // SDR vê colunas que incluem 'sdr' no array de roles
+    if (isSDR() && col.roles.includes('sdr')) return true;
+    // Closer vê colunas que incluem 'closer' no array de roles
+    if (isCloser() && col.roles.includes('closer')) return true;
     return false;
   });
 
@@ -142,7 +140,7 @@ export default function KanbanPage() {
                     </Badge>
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {column.role === 'sdr' ? 'SDR' : 'Closer'}
+                    {column.roles.includes('sdr') && column.roles.includes('closer') ? 'SDR / Closer' : column.roles.includes('sdr') ? 'SDR' : 'Closer'}
                   </p>
                 </div>
 
