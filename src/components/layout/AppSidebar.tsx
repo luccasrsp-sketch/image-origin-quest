@@ -27,6 +27,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import logoEscolaFranchising from '@/assets/logo-escola-franchising.svg';
+import { CompanySelector } from './CompanySelector';
 
 const mainNavItems = [
   { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
@@ -64,7 +65,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
-      <SidebarHeader className="p-4">
+      <SidebarHeader className="p-4 space-y-3">
         <div className="flex items-center gap-3">
           <img 
             src={logoEscolaFranchising} 
@@ -72,6 +73,8 @@ export function AppSidebar() {
             className={collapsed ? "h-10 w-10 object-contain" : "h-12 w-auto max-w-[180px] object-contain"}
           />
         </div>
+        {/* Company Selector no desktop - abaixo do logo */}
+        {!collapsed && <CompanySelector variant="prominent" />}
       </SidebarHeader>
 
       <SidebarContent>
