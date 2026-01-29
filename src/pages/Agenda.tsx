@@ -31,8 +31,8 @@ import { EventDetailDialog } from '@/components/calendar/EventDetailDialog';
 import { CalendarEvent } from '@/types/crm';
 
 export default function AgendaPage() {
-  const { events, loading } = useCalendar();
-  const { profile, isAdmin } = useAuth();
+  const { events, filteredEvents: baseFilteredEvents, loading } = useCalendar();
+  const { profile, isAdmin, viewingAs } = useAuth();
   const { getClosers } = useTeam();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -42,10 +42,13 @@ export default function AgendaPage() {
 
   const closers = getClosers();
 
-  // Filter events based on selected closer (admin only)
-  const filteredEvents = isAdmin() && selectedCloserId !== 'all'
-    ? events.filter(event => event.user_id === selectedCloserId)
-    : events;
+  // Se está em modo "visualizar como", usa os eventos filtrados pelo contexto
+  // Senão, permite filtrar por closer (comportamento original para admin)
+  const filteredEvents = viewingAs 
+    ? baseFilteredEvents 
+    : (isAdmin() && selectedCloserId !== 'all'
+        ? events.filter(event => event.user_id === selectedCloserId)
+        : events);
 
   // Get events for selected date
   const dayEvents = filteredEvents.filter(event => 
@@ -98,8 +101,8 @@ export default function AgendaPage() {
             Novo Evento
           </Button>
 
-          {/* Closer selector for admins */}
-          {isAdmin() && (
+          {/* Closer selector for admins - hide when viewing as another member */}
+          {isAdmin() && !viewingAs && (
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">

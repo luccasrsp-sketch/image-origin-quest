@@ -23,6 +23,10 @@ export interface Profile {
   updated_at: string;
 }
 
+export interface TeamMember extends Profile {
+  roles: AppRole[];
+}
+
 export interface UserRole {
   id: string;
   user_id: string;

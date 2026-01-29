@@ -9,7 +9,24 @@ export function useLeads() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const { profile } = useAuth();
+  const { profile, viewingAs, isAdmin } = useAuth();
+
+  // Retorna leads filtrados baseado no viewingAs
+  const getFilteredLeads = () => {
+    if (!viewingAs) return leads; // Admin vê tudo
+    
+    // Filtra leads pelo membro sendo visualizado
+    return leads.filter(lead => {
+      if (viewingAs.roles.includes('sdr')) {
+        return lead.assigned_sdr_id === viewingAs.id || 
+               (!lead.assigned_sdr_id && !lead.assigned_closer_id);
+      }
+      if (viewingAs.roles.includes('closer')) {
+        return lead.assigned_closer_id === viewingAs.id;
+      }
+      return false;
+    });
+  };
 
   const fetchLeads = async () => {
     setLoading(true);
@@ -495,6 +512,7 @@ export function useLeads() {
 
   return {
     leads,
+    filteredLeads: getFilteredLeads(),
     loading,
     fetchLeads,
     updateLeadStatus,

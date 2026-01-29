@@ -18,9 +18,9 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function KanbanPage() {
-  const { leads, loading, updateLeadStatus, moveToQualified, addNote, setNeedsScheduling, clearNeedsScheduling, saveProposal, saveSaleData, updateSaleStatus, markAsLost } = useLeads();
+  const { leads, filteredLeads, loading, updateLeadStatus, moveToQualified, addNote, setNeedsScheduling, clearNeedsScheduling, saveProposal, saveSaleData, updateSaleStatus, markAsLost } = useLeads();
   const { createEvent } = useCalendar();
-  const { profile, isAdmin, isSDR, isCloser } = useAuth();
+  const { profile, isAdmin, isSDR, isCloser, viewingAs } = useAuth();
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [schedulingLead, setSchedulingLead] = useState<Lead | null>(null);
   const [qualifyingLead, setQualifyingLead] = useState<Lead | null>(null);
@@ -30,8 +30,20 @@ export default function KanbanPage() {
   const [lossLead, setLossLead] = useState<Lead | null>(null);
   const [coldAlertDismissed, setColdAlertDismissed] = useState(false);
 
-  // Filtra colunas baseado no papel do usuário
+  // Filtra colunas baseado no papel do usuário ou do membro sendo visualizado
   const visibleColumns = KANBAN_COLUMNS.filter(col => {
+    // Se está visualizando como outro membro
+    if (viewingAs) {
+      // Colunas adminOnly nunca aparecem na visão simulada
+      if (col.adminOnly) return false;
+      // SDR vê apenas colunas de SDR
+      if (viewingAs.roles.includes('sdr') && col.role === 'sdr') return true;
+      // Closer vê apenas colunas de Closer
+      if (viewingAs.roles.includes('closer') && col.role === 'closer') return true;
+      return false;
+    }
+    
+    // Visão normal (sem simulação)
     // Colunas adminOnly só aparecem para admins
     if (col.adminOnly && !isAdmin()) return false;
     // Admin vê todas as colunas
@@ -44,7 +56,7 @@ export default function KanbanPage() {
   });
 
   const getLeadsByStatus = (status: LeadStatus) => 
-    leads.filter(l => l.status === status);
+    filteredLeads.filter(l => l.status === status);
 
   const handleDragEnd = async (result: DropResult) => {
     if (!result.destination) return;
