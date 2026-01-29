@@ -51,12 +51,15 @@ interface LeadDetailDialogProps {
 
 export function LeadDetailDialog({ lead, open, onOpenChange, onStatusChange, onAddNote, onMarkAsLost }: LeadDetailDialogProps) {
   const { toast } = useToast();
-  const { profile } = useAuth();
+  const { profile, isViewerOnly } = useAuth();
   const [newNote, setNewNote] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<LeadStatus | ''>('');
   const [isSaving, setIsSaving] = useState(false);
   const [activities, setActivities] = useState<LeadActivity[]>([]);
   const [loadingActivities, setLoadingActivities] = useState(false);
+  
+  // Viewers não podem editar
+  const canEdit = !isViewerOnly();
 
   // Buscar histórico de atividades quando o dialog abrir
   useEffect(() => {
@@ -116,7 +119,7 @@ export function LeadDetailDialog({ lead, open, onOpenChange, onStatusChange, onA
     setIsSaving(false);
   };
 
-  const canMarkAsLost = lead.status !== 'vendido' && lead.status !== 'perdido' && lead.status !== 'sem_atendimento';
+  const canMarkAsLost = canEdit && lead.status !== 'vendido' && lead.status !== 'perdido' && lead.status !== 'sem_atendimento';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -248,27 +251,29 @@ export function LeadDetailDialog({ lead, open, onOpenChange, onStatusChange, onA
             )}
           </div>
 
-          {/* Nova Observação */}
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2">
-              <StickyNote className="h-4 w-4" />
-              Nova Observação
-            </Label>
-            <Textarea
-              value={newNote}
-              onChange={e => setNewNote(e.target.value)}
-              placeholder="Adicione uma observação sobre este lead..."
-              rows={3}
-            />
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleSaveNotes}
-              disabled={isSaving || !newNote.trim()}
-            >
-              Salvar Observação
-            </Button>
-          </div>
+          {/* Nova Observação - apenas para quem pode editar */}
+          {canEdit && (
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <StickyNote className="h-4 w-4" />
+                Nova Observação
+              </Label>
+              <Textarea
+                value={newNote}
+                onChange={e => setNewNote(e.target.value)}
+                placeholder="Adicione uma observação sobre este lead..."
+                rows={3}
+              />
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleSaveNotes}
+                disabled={isSaving || !newNote.trim()}
+              >
+                Salvar Observação
+              </Button>
+            </div>
+          )}
 
           {/* Histórico de Atividades */}
           <div className="space-y-2 border-t pt-4">
@@ -304,34 +309,36 @@ export function LeadDetailDialog({ lead, open, onOpenChange, onStatusChange, onA
             </ScrollArea>
           </div>
 
-          {/* Status change */}
-          <div className="space-y-3 border-t pt-4">
-            <Label>Alterar Status</Label>
-            <div className="flex gap-2 flex-wrap">
-              <Select value={selectedStatus} onValueChange={(v) => setSelectedStatus(v as LeadStatus)}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Novo status" />
-                </SelectTrigger>
-                <SelectContent>
-                  {KANBAN_COLUMNS.map(col => (
-                    <SelectItem key={col.id} value={col.id}>
-                      {col.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          {/* Status change - apenas para quem pode editar */}
+          {canEdit && (
+            <div className="space-y-3 border-t pt-4">
+              <Label>Alterar Status</Label>
+              <div className="flex gap-2 flex-wrap">
+                <Select value={selectedStatus} onValueChange={(v) => setSelectedStatus(v as LeadStatus)}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Novo status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {KANBAN_COLUMNS.map(col => (
+                      <SelectItem key={col.id} value={col.id}>
+                        {col.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-              <Button 
-                onClick={handleStatusChange}
-                disabled={!selectedStatus || isSaving}
-              >
-                Atualizar
-              </Button>
+                <Button 
+                  onClick={handleStatusChange}
+                  disabled={!selectedStatus || isSaving}
+                >
+                  Atualizar
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Ao mover para "Qualificado", o Closer será atribuído automaticamente pelo sistema.
+              </p>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Ao mover para "Qualificado", o Closer será atribuído automaticamente pelo sistema.
-            </p>
-          </div>
+          )}
 
           {/* WhatsApp button */}
           <Button

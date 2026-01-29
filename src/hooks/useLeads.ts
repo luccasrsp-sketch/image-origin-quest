@@ -10,7 +10,7 @@ export function useLeads() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const { profile, viewingAs, isAdmin } = useAuth();
+  const { profile, viewingAs, isAdmin, isViewerOnly } = useAuth();
   const { selectedCompany } = useCompany();
 
   // Filtra leads por empresa selecionada
@@ -20,6 +20,9 @@ export function useLeads() {
 
   // Retorna leads filtrados baseado no viewingAs (já filtrados por empresa)
   const getFilteredLeads = () => {
+    // Viewers veem todos os leads da empresa (apenas visualização)
+    if (isViewerOnly()) return companyFilteredLeads;
+    
     if (!viewingAs) return companyFilteredLeads; // Admin vê tudo da empresa
     
     // Filtra leads pelo membro sendo visualizado

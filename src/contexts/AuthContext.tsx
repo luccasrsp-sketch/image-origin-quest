@@ -16,6 +16,8 @@ interface AuthContextType {
   isAdmin: () => boolean;
   isSDR: () => boolean;
   isCloser: () => boolean;
+  isViewer: () => boolean;
+  isViewerOnly: () => boolean;
   // View as functionality for admins
   viewingAs: TeamMember | null;
   setViewingAs: (member: TeamMember | null) => void;
@@ -132,6 +134,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isAdmin = () => hasRole('admin');
   const isSDR = () => hasRole('sdr');
   const isCloser = () => hasRole('closer');
+  const isViewer = () => hasRole('viewer');
+  const isViewerOnly = () => isViewer() && !isAdmin() && !isSDR() && !isCloser();
 
   // Returns the profile ID to use for filtering (viewingAs or self)
   const getEffectiveProfileId = (): string | null => {
@@ -159,6 +163,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isAdmin,
       isSDR,
       isCloser,
+      isViewer,
+      isViewerOnly,
       viewingAs,
       setViewingAs,
       getEffectiveProfileId,

@@ -21,7 +21,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function KanbanPage() {
   const { leads, filteredLeads, loading, updateLeadStatus, moveToQualified, addNote, setNeedsScheduling, clearNeedsScheduling, saveProposal, saveSaleData, updateSaleStatus, markAsLost } = useLeads();
   const { createEvent } = useCalendar();
-  const { profile, isAdmin, isSDR, isCloser, viewingAs } = useAuth();
+  const { profile, isAdmin, isSDR, isCloser, isViewerOnly, viewingAs } = useAuth();
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [schedulingLead, setSchedulingLead] = useState<Lead | null>(null);
   const [qualifyingLead, setQualifyingLead] = useState<Lead | null>(null);
@@ -32,8 +32,16 @@ export default function KanbanPage() {
   const [coldAlertDismissed, setColdAlertDismissed] = useState(false);
   const kanbanContainerRef = useRef<HTMLDivElement>(null);
 
+  // Viewers podem apenas visualizar, não podem editar ou mover leads
+  const canEdit = !isViewerOnly();
+
   // Filtra colunas baseado no papel do usuário ou do membro sendo visualizado
   const visibleColumns = KANBAN_COLUMNS.filter(col => {
+    // Viewers veem todas as colunas (exceto adminOnly)
+    if (isViewerOnly()) {
+      return !col.adminOnly;
+    }
+    
     // Se está visualizando como outro membro
     if (viewingAs) {
       // Colunas adminOnly nunca aparecem na visão simulada
@@ -59,6 +67,8 @@ export default function KanbanPage() {
     filteredLeads.filter(l => l.status === status);
 
   const handleDragEnd = async (result: DropResult) => {
+    // Bloqueia movimentação para viewers
+    if (!canEdit) return;
     if (!result.destination) return;
 
     const leadId = result.draggableId;
@@ -175,6 +185,7 @@ export default function KanbanPage() {
                           key={lead.id}
                           draggableId={lead.id}
                           index={index}
+                          isDragDisabled={!canEdit}
                         >
                           {(provided, snapshot) => (
                             <div
@@ -183,14 +194,14 @@ export default function KanbanPage() {
                               {...provided.dragHandleProps}
                               className={`transition-transform ${
                                 snapshot.isDragging ? 'rotate-2 scale-105' : ''
-                              }`}
+                              } ${!canEdit ? 'cursor-default' : ''}`}
                             >
                               <LeadCard
                                 lead={lead}
                                 onClick={() => setSelectedLead(lead)}
                                 onViewSale={() => setSaleDetailsLead(lead)}
-                                onUpdateSaleStatus={updateSaleStatus}
-                                onMarkAsLost={setLossLead}
+                                onUpdateSaleStatus={canEdit ? updateSaleStatus : undefined}
+                                onMarkAsLost={canEdit ? setLossLead : undefined}
                                 compact
                               />
                             </div>

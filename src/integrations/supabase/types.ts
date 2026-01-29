@@ -571,6 +571,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_viewer_only: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "sdr" | "closer" | "admin" | "viewer"
