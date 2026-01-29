@@ -3,6 +3,7 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from './AppSidebar';
 import { AppHeader } from './AppHeader';
 import { GoalProgressBar } from './GoalProgressBar';
+import { MobileHeader } from './MobileHeader';
 import { supabase } from '@/integrations/supabase/client';
 
 interface AppLayoutProps {
@@ -50,7 +51,8 @@ export function AppLayout({ children, title }: AppLayoutProps) {
       <div className="flex min-h-screen w-full">
         <AppSidebar />
         <div className="flex flex-1 flex-col min-w-0">
-          <GoalProgressBar 
+          <MobileHeader />
+          <GoalProgressBar
             currentValue={salesTotal} 
             goalValue={MONTHLY_GOAL} 
             moneyOnTable={moneyOnTable}

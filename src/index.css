@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Safe area for iOS notch */
+.safe-area-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
 /* Escola do Franchising - Design System */
 /* Cores: Preto, Dourado (#c4ae6b) e Branco */
 
