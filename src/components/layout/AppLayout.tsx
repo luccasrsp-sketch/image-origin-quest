@@ -5,6 +5,7 @@ import { AppHeader } from './AppHeader';
 import { GoalProgressBar } from './GoalProgressBar';
 import { MobileHeader } from './MobileHeader';
 import { supabase } from '@/integrations/supabase/client';
+import { useCompany } from '@/contexts/CompanyContext';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -19,6 +20,7 @@ export function AppLayout({ children, title }: AppLayoutProps) {
   const [moneyOnTable, setMoneyOnTable] = useState(0);
   const [dailySales, setDailySales] = useState(0);
   const [weeklySales, setWeeklySales] = useState(0);
+  const { selectedCompany } = useCompany();
 
   useEffect(() => {
     fetchSalesData();
@@ -36,11 +38,13 @@ export function AppLayout({ children, title }: AppLayoutProps) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [selectedCompany]); // Refetch when company changes
 
   const fetchSalesData = async () => {
-    // Use the security definer function to get team totals (visible to all members)
-    const { data, error } = await supabase.rpc('get_team_sales_totals');
+    // Use the security definer function with company filter
+    const { data, error } = await supabase.rpc('get_team_sales_totals_by_company', {
+      target_company: selectedCompany
+    });
 
     if (!error && data && data.length > 0) {
       setSalesTotal(Number(data[0].sales_total) || 0);
