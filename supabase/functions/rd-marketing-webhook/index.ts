@@ -2,7 +2,60 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-rd-signature, x-webhook-secret',
+}
+
+// Verify webhook secret from Authorization header or custom header
+function verifyWebhookSecret(req: Request): boolean {
+  const webhookSecret = Deno.env.get('RD_MARKETING_WEBHOOK_SECRET')
+  
+  if (!webhookSecret) {
+    console.error('RD_MARKETING_WEBHOOK_SECRET not configured')
+    return false
+  }
+  
+  // Check Authorization header (Bearer token)
+  const authHeader = req.headers.get('Authorization')
+  if (authHeader) {
+    const token = authHeader.replace('Bearer ', '')
+    if (token === webhookSecret) {
+      return true
+    }
+  }
+  
+  // Check custom header as fallback
+  const customSecret = req.headers.get('X-Webhook-Secret')
+  if (customSecret === webhookSecret) {
+    return true
+  }
+  
+  // Check query parameter as last resort (for webhook services that only support URL params)
+  const url = new URL(req.url)
+  const querySecret = url.searchParams.get('secret')
+  if (querySecret === webhookSecret) {
+    return true
+  }
+  
+  return false
+}
+
+// Input validation helpers
+function validateEmail(email: string): boolean {
+  const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/
+  return emailRegex.test(email) && email.length <= 255
+}
+
+function sanitizeText(input: string, maxLength: number): string {
+  return input
+    .trim()
+    .replace(/[\x00-\x1F\x7F]/g, '') // Remove control characters
+    .slice(0, maxLength)
+}
+
+function validatePhone(phone: string): boolean {
+  // Allow digits, spaces, parentheses, plus, and dash
+  const phoneRegex = /^[\d\s()+-]+$/
+  return phoneRegex.test(phone) && phone.length >= 8 && phone.length <= 30
 }
 
 Deno.serve(async (req) => {
@@ -12,6 +65,15 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Verify webhook authentication
+    if (!verifyWebhookSecret(req)) {
+      console.error('Webhook authentication failed - invalid or missing secret')
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized', message: 'Invalid or missing webhook secret' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
@@ -24,7 +86,7 @@ Deno.serve(async (req) => {
     // Parse webhook payload - RD Marketing sends data inside a "leads" array
     const rawPayload = await req.json()
     
-    console.log('RD Marketing webhook received:', JSON.stringify(rawPayload, null, 2))
+    console.log('RD Marketing webhook received (authenticated):', JSON.stringify(rawPayload, null, 2))
 
     // Handle RD Marketing format: { leads: [...] }
     const leadsArray = rawPayload.leads || [rawPayload]
@@ -58,11 +120,19 @@ Deno.serve(async (req) => {
 
     for (const leadData of leadsArray) {
       // Extract email from various possible locations
-      const email = leadData.email || leadData.first_conversion?.content?.email_lead
+      const rawEmail = leadData.email || leadData.first_conversion?.content?.email_lead
       
-      if (!email) {
+      if (!rawEmail) {
         console.error('Missing email in lead data:', leadData)
         results.push({ success: false, error: 'Email não encontrado' })
+        continue
+      }
+
+      // Validate email format
+      const email = sanitizeText(rawEmail, 255).toLowerCase()
+      if (!validateEmail(email)) {
+        console.error('Invalid email format:', email)
+        results.push({ success: false, error: 'Email inválido', email })
         continue
       }
 
@@ -83,10 +153,32 @@ Deno.serve(async (req) => {
       const conversionContent = leadData.first_conversion?.content || {}
       const conversionOrigin = leadData.first_conversion?.conversion_origin || {}
       
-      // Map fields - check multiple possible locations
-      const fullName = leadData.name || conversionContent.Nome || email.split('@')[0]
-      const phone = leadData.personal_phone || leadData.phone || conversionContent.Telefone || ''
-      const companyName = leadData.company || conversionContent.Empresa || 'Não informado'
+      // Map and validate fields
+      const rawFullName = leadData.name || conversionContent.Nome || email.split('@')[0]
+      const fullName = sanitizeText(rawFullName, 200)
+      
+      if (fullName.length < 2) {
+        console.error('Name too short:', fullName)
+        results.push({ success: false, error: 'Nome muito curto', email })
+        continue
+      }
+
+      const rawPhone = leadData.personal_phone || leadData.phone || conversionContent.Telefone || ''
+      const phone = sanitizeText(rawPhone, 30)
+      
+      // Phone is optional but if provided, must be valid
+      if (phone && !validatePhone(phone)) {
+        console.warn('Invalid phone format, using empty:', phone)
+      }
+      
+      const rawCompanyName = leadData.company || conversionContent.Empresa || 'Não informado'
+      const companyName = sanitizeText(rawCompanyName, 200)
+      
+      if (companyName.length < 2) {
+        console.error('Company name too short:', companyName)
+        results.push({ success: false, error: 'Nome da empresa muito curto', email })
+        continue
+      }
       
       // Parse monthly revenue if provided
       let monthlyRevenue: number | null = null
@@ -94,13 +186,14 @@ Deno.serve(async (req) => {
                         conversionContent.cf_faturamento_mensal
       if (revenueStr) {
         const numericValue = parseFloat(String(revenueStr).replace(/[^\d.,]/g, '').replace(',', '.'))
-        if (!isNaN(numericValue)) {
+        if (!isNaN(numericValue) && numericValue > 0 && numericValue < 1000000000) {
           monthlyRevenue = numericValue
         }
       }
 
       // Determine funnel type based on conversion identifier
-      const conversionIdentifier = conversionContent.conversion_identifier || ''
+      const rawConversionIdentifier = conversionContent.conversion_identifier || ''
+      const conversionIdentifier = sanitizeText(rawConversionIdentifier, 500)
       let funnelType = 'padrao'
       if (conversionIdentifier.toLowerCase().includes('franquia')) {
         funnelType = 'franquia'
@@ -108,10 +201,10 @@ Deno.serve(async (req) => {
         funnelType = 'formatacao'
       }
       
-      // Extract UTM data from conversion origin
-      const utmSource = conversionOrigin.source || null
-      const utmMedium = conversionOrigin.medium || null
-      const utmCampaign = conversionOrigin.campaign || null
+      // Extract and validate UTM data from conversion origin
+      const utmSource = conversionOrigin.source ? sanitizeText(conversionOrigin.source, 100) : null
+      const utmMedium = conversionOrigin.medium ? sanitizeText(conversionOrigin.medium, 100) : null
+      const utmCampaign = conversionOrigin.campaign ? sanitizeText(conversionOrigin.campaign, 100) : null
 
       // Selecionar SDR aleatório para atribuição automática
       let assignedSdrId: string | null = null
@@ -121,13 +214,13 @@ Deno.serve(async (req) => {
         console.log('Lead atribuído ao SDR:', assignedSdrId)
       }
 
-      // Create lead in CRM
+      // Create lead in CRM with validated data
       const { data: newLead, error } = await supabase
         .from('leads')
         .insert({
           full_name: fullName,
           email: email,
-          phone: phone,
+          phone: phone || '',
           company_name: companyName,
           monthly_revenue: monthlyRevenue,
           funnel_type: funnelType,
