@@ -1,5 +1,6 @@
 import { Building2, ChevronDown } from 'lucide-react';
 import { useCompany } from '@/contexts/CompanyContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { Company, COMPANY_LABELS, COMPANY_COLORS } from '@/types/crm';
 import {
   DropdownMenu,
@@ -11,10 +12,24 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
-const companies: Company[] = ['escola_franchising', 'evidia'];
-
 export function CompanySelector() {
   const { selectedCompany, setSelectedCompany, companyLabel } = useCompany();
+  const { isAdmin } = useAuth();
+
+  // Apenas admins podem ver Evidia
+  const companies: Company[] = isAdmin() 
+    ? ['escola_franchising', 'evidia'] 
+    : ['escola_franchising'];
+
+  // Se não é admin e estava vendo Evidia, volta para escola_franchising
+  if (!isAdmin() && selectedCompany === 'evidia') {
+    setSelectedCompany('escola_franchising');
+  }
+
+  // Se só tem uma empresa disponível, não mostra o seletor
+  if (companies.length === 1) {
+    return null;
+  }
 
   return (
     <DropdownMenu>
