@@ -1,5 +1,5 @@
 // Schedule slots configuration
-export const SLOT_DURATION_MINUTES = 45;
+export const SLOT_DURATION_MINUTES = 20;
 export const WORK_START_HOUR = 9;
 export const WORK_END_HOUR = 20;
 export const LUNCH_START_HOUR = 12;
