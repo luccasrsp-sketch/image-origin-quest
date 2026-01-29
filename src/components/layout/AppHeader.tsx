@@ -71,8 +71,6 @@ export function AppHeader({ title }: AppHeaderProps) {
       </div>
 
       <div className="flex items-center gap-1 md:gap-2">
-        {/* Company Selector */}
-        <CompanySelector />
         
         {/* Mobile viewing as indicator */}
         {viewingAs && (
