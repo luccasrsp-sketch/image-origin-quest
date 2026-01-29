@@ -144,4 +144,25 @@
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
     background: hsl(var(--muted-foreground) / 0.5);
   }
+
+  /* Top scrollbar for Kanban */
+  .scrollbar-top {
+    transform: rotateX(180deg);
+  }
+
+  .scrollbar-top > * {
+    transform: rotateX(180deg);
+  }
+
+  .kanban-scroll-track {
+    @apply h-3 bg-muted rounded-lg cursor-pointer overflow-hidden;
+  }
+
+  .kanban-scroll-thumb {
+    @apply h-full bg-primary/40 rounded-lg cursor-grab active:cursor-grabbing transition-colors;
+  }
+
+  .kanban-scroll-thumb:hover {
+    @apply bg-primary/60;
+  }
 }
