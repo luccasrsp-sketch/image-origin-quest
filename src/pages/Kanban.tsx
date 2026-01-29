@@ -18,7 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function KanbanPage() {
-  const { leads, loading, updateLeadStatus, addNote, setNeedsScheduling, clearNeedsScheduling, saveProposal, saveSaleData, updateSaleStatus, markAsLost } = useLeads();
+  const { leads, loading, updateLeadStatus, moveToQualified, addNote, setNeedsScheduling, clearNeedsScheduling, saveProposal, saveSaleData, updateSaleStatus, markAsLost } = useLeads();
   const { createEvent } = useCalendar();
   const { profile, isAdmin, isSDR, isCloser } = useAuth();
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
@@ -55,10 +55,12 @@ export default function KanbanPage() {
 
     if (!lead || lead.status === newStatus) return;
 
-    // Se for para qualificado, abre o diálogo de qualificação
+    // Se for para qualificado, usa moveToQualified com round-robin de closer
     if (newStatus === 'qualificado') {
-      await updateLeadStatus(leadId, newStatus);
-      setQualifyingLead({ ...lead, status: newStatus } as Lead);
+      const result = await moveToQualified(leadId);
+      if (result.success) {
+        setQualifyingLead({ ...lead, status: newStatus, assigned_closer_id: result.closerId } as Lead);
+      }
       return;
     }
 

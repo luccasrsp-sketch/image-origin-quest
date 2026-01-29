@@ -58,6 +58,18 @@ export function useLeads() {
     };
   }, []);
 
+  // Função para obter o próximo closer via round-robin
+  const getNextCloser = async (): Promise<string | null> => {
+    const { data, error } = await supabase.rpc('get_next_closer');
+    
+    if (error) {
+      console.error('Error getting next closer:', error);
+      return null;
+    }
+    
+    return data;
+  };
+
   const updateLeadStatus = async (leadId: string, newStatus: LeadStatus, closerId?: string) => {
     const lead = leads.find(l => l.id === leadId);
     const oldStatus = lead?.status;
@@ -120,6 +132,76 @@ export function useLeads() {
     });
 
     return true;
+  };
+
+  // Função para mover lead para qualificado com atribuição automática de closer
+  const moveToQualified = async (leadId: string): Promise<{ success: boolean; closerId: string | null }> => {
+    const lead = leads.find(l => l.id === leadId);
+    const oldStatus = lead?.status;
+
+    // Buscar próximo closer via round-robin
+    const nextCloserId = await getNextCloser();
+    
+    if (!nextCloserId) {
+      toast({
+        title: 'Erro',
+        description: 'Não há closers disponíveis para atribuição.',
+        variant: 'destructive',
+      });
+      return { success: false, closerId: null };
+    }
+
+    // Optimistic update
+    setLeads(prevLeads => 
+      prevLeads.map(l => 
+        l.id === leadId 
+          ? { ...l, status: 'qualificado' as LeadStatus, assigned_closer_id: nextCloserId, last_contact_at: new Date().toISOString() }
+          : l
+      )
+    );
+
+    const { error } = await supabase
+      .from('leads')
+      .update({
+        status: 'qualificado',
+        assigned_closer_id: nextCloserId,
+        last_contact_at: new Date().toISOString(),
+      })
+      .eq('id', leadId);
+
+    if (error) {
+      // Revert
+      setLeads(prevLeads => 
+        prevLeads.map(l => 
+          l.id === leadId 
+            ? { ...l, status: oldStatus as LeadStatus, assigned_closer_id: lead?.assigned_closer_id }
+            : l
+        )
+      );
+      toast({
+        title: 'Erro ao qualificar lead',
+        description: error.message,
+        variant: 'destructive',
+      });
+      return { success: false, closerId: null };
+    }
+
+    // Log activity
+    if (profile?.id) {
+      await supabase.from('lead_activities').insert({
+        lead_id: leadId,
+        user_id: profile.id,
+        action: 'status_change',
+        old_status: oldStatus,
+        new_status: 'qualificado',
+        notes: `Lead atribuído automaticamente ao closer (round-robin)`,
+      });
+    }
+
+    // Fetch para atualizar os dados do closer atribuído
+    fetchLeads();
+
+    return { success: true, closerId: nextCloserId };
   };
 
   const assignLead = async (leadId: string, userId: string, type: 'sdr' | 'closer') => {
@@ -416,6 +498,8 @@ export function useLeads() {
     loading,
     fetchLeads,
     updateLeadStatus,
+    moveToQualified,
+    getNextCloser,
     assignLead,
     addNote,
     setNeedsScheduling,
