@@ -540,6 +540,7 @@ export function useLeads() {
 
   const updateSaleStatus = async (leadId: string, field: 'contract' | 'payment', value: boolean) => {
     const updateField = field === 'contract' ? 'sale_contract_sent' : 'sale_payment_received';
+    const lead = leads.find(l => l.id === leadId);
     
     // Optimistic update
     setLeads(prevLeads => 
@@ -570,6 +571,70 @@ export function useLeads() {
         variant: 'destructive',
       });
       return false;
+    }
+
+    // Se marcou pagamento como realizado, criar entrada de caixa automática
+    if (field === 'payment' && value && lead) {
+      try {
+        // Buscar a venda financeira associada a este lead
+        const { data: financialSale } = await supabase
+          .from('financial_sales')
+          .select('*')
+          .eq('lead_id', leadId)
+          .single();
+
+        if (financialSale) {
+          // Calcular o valor total da venda (entrada + restante)
+          const totalAmount = lead.sale_entry_value || 0 + (lead.sale_remaining_value || 0);
+          
+          // Mapear método de pagamento
+          const paymentMethodMap: Record<string, 'pix' | 'credit_card' | 'debit_card' | 'check' | 'cash' | 'other'> = {
+            'Cartão': 'credit_card',
+            'Pix': 'pix',
+            'Entrada pix + cartão': 'pix',
+            'Entrada cartão + cheque': 'credit_card',
+            'Entrada pix + cheque': 'pix',
+          };
+          const financialPaymentMethod = paymentMethodMap[lead.sale_payment_method || ''] || 'other';
+
+          // Criar entrada de caixa para o valor total da venda
+          await supabase
+            .from('financial_cash_entries')
+            .insert({
+              sale_id: financialSale.id,
+              installment_id: null,
+              amount: totalAmount,
+              entry_date: new Date().toISOString().split('T')[0],
+              payment_method: financialPaymentMethod,
+              description: `Pagamento confirmado - ${lead.proposal_product || 'Venda'} - ${lead.full_name}`,
+              company: lead.company as 'escola_franchising' | 'evidia',
+              created_by: profile?.id || null,
+            });
+
+          // Atualizar o valor recebido na venda financeira
+          await supabase
+            .from('financial_sales')
+            .update({ received_amount: totalAmount })
+            .eq('id', financialSale.id);
+
+          // Marcar todas as parcelas como recebidas
+          await supabase
+            .from('financial_installments')
+            .update({ 
+              status: 'received',
+              received_date: new Date().toISOString().split('T')[0]
+            })
+            .eq('sale_id', financialSale.id);
+
+          toast({
+            title: 'Entrada de caixa criada',
+            description: `R$ ${totalAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} registrado no financeiro.`,
+          });
+        }
+      } catch (financialErr) {
+        console.error('Error creating cash entry:', financialErr);
+        // Não falha a operação principal se o registro financeiro falhar
+      }
     }
 
     toast({
