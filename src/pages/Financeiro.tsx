@@ -6,6 +6,7 @@ import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useFinancial } from '@/hooks/useFinancial';
 import { useSyncSalesToFinancial } from '@/hooks/useSyncSalesToFinancial';
+import { useFinancialRealtimeNotifications } from '@/hooks/useFinancialRealtimeNotifications';
 import { useCompany } from '@/contexts/CompanyContext';
 import { DollarSign, TrendingUp, Calendar, CreditCard, CalendarDays, Filter, LineChartIcon, RefreshCw } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, LineChart, Line, XAxis, YAxis, CartesianGrid, Area, AreaChart } from 'recharts';
@@ -34,6 +35,9 @@ export default function Financeiro() {
   const { cashEntries, sales, installments, loading, refetch } = useFinancial();
   const { syncSales, isSyncing } = useSyncSalesToFinancial();
   const { selectedCompany } = useCompany();
+  
+  // Enable realtime notifications for new sales
+  useFinancialRealtimeNotifications();
 
   const handleSyncSales = async () => {
     await syncSales();
