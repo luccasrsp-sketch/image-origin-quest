@@ -1,12 +1,16 @@
+import { useState, useMemo } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useFinancial } from '@/hooks/useFinancial';
 import { useCompany } from '@/contexts/CompanyContext';
-import { DollarSign, TrendingUp, Calendar, CreditCard } from 'lucide-react';
+import { DollarSign, TrendingUp, Calendar, CreditCard, CalendarDays, Filter } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { format, startOfDay, startOfWeek, startOfMonth, isAfter, parseISO } from 'date-fns';
+import { format, startOfDay, startOfWeek, startOfMonth, endOfMonth, isAfter, isBefore, parseISO, subDays, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { 
   PAYMENT_METHOD_LABELS, 
@@ -14,6 +18,9 @@ import {
   INSTALLMENT_STATUS_LABELS 
 } from '@/types/financial';
 import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
+
+type FilterPeriod = '7days' | '30days' | 'month' | 'custom';
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('pt-BR', {
@@ -25,12 +32,59 @@ const formatCurrency = (value: number) => {
 export default function Financeiro() {
   const { cashEntries, sales, installments, loading } = useFinancial();
   const { selectedCompany } = useCompany();
+  
+  // Filter state
+  const [filterPeriod, setFilterPeriod] = useState<FilterPeriod>('month');
+  const [customStartDate, setCustomStartDate] = useState<Date | undefined>(startOfMonth(new Date()));
+  const [customEndDate, setCustomEndDate] = useState<Date | undefined>(new Date());
+  const [startDateOpen, setStartDateOpen] = useState(false);
+  const [endDateOpen, setEndDateOpen] = useState(false);
+
+  // Calculate date range based on filter
+  const dateRange = useMemo(() => {
+    const today = new Date();
+    switch (filterPeriod) {
+      case '7days':
+        return { start: subDays(today, 7), end: today };
+      case '30days':
+        return { start: subDays(today, 30), end: today };
+      case 'month':
+        return { start: startOfMonth(today), end: endOfMonth(today) };
+      case 'custom':
+        return { 
+          start: customStartDate || startOfMonth(today), 
+          end: customEndDate || today 
+        };
+      default:
+        return { start: startOfMonth(today), end: today };
+    }
+  }, [filterPeriod, customStartDate, customEndDate]);
+
+  // Filter entries based on date range
+  const filteredCashEntries = useMemo(() => {
+    return cashEntries.filter(e => {
+      const entryDate = parseISO(e.entry_date);
+      return (isAfter(entryDate, dateRange.start) || entryDate.getTime() === dateRange.start.getTime()) &&
+             (isBefore(entryDate, dateRange.end) || entryDate.getTime() <= dateRange.end.getTime());
+    });
+  }, [cashEntries, dateRange]);
+
+  const filteredSales = useMemo(() => {
+    return sales.filter(s => {
+      const saleDate = parseISO(s.created_at);
+      return (isAfter(saleDate, dateRange.start) || saleDate.getTime() === dateRange.start.getTime()) &&
+             (isBefore(saleDate, dateRange.end) || saleDate.getTime() <= dateRange.end.getTime());
+    });
+  }, [sales, dateRange]);
 
   const today = startOfDay(new Date());
   const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
   const monthStart = startOfMonth(new Date());
 
-  // Calculate metrics
+  // Calculate metrics based on filtered data
+  const periodRevenue = filteredCashEntries.reduce((sum, e) => sum + Number(e.amount), 0);
+
+  // Keep original metrics for today/week/month
   const todayRevenue = cashEntries
     .filter(e => isAfter(parseISO(e.entry_date), today) || parseISO(e.entry_date).getTime() === today.getTime())
     .reduce((sum, e) => sum + Number(e.amount), 0);
@@ -43,9 +97,9 @@ export default function Financeiro() {
     .filter(e => isAfter(parseISO(e.entry_date), monthStart) || parseISO(e.entry_date).getTime() >= monthStart.getTime())
     .reduce((sum, e) => sum + Number(e.amount), 0);
 
-  // Payment method breakdown
+  // Payment method breakdown based on filtered data
   const paymentMethodData = Object.entries(
-    cashEntries.reduce((acc, entry) => {
+    filteredCashEntries.reduce((acc, entry) => {
       acc[entry.payment_method] = (acc[entry.payment_method] || 0) + Number(entry.amount);
       return acc;
     }, {} as Record<string, number>)
@@ -55,8 +109,8 @@ export default function Financeiro() {
     color: PAYMENT_METHOD_COLORS[method as keyof typeof PAYMENT_METHOD_COLORS] || '#6b7280',
   }));
 
-  // Recent transactions
-  const recentSales = sales.slice(0, 10);
+  // Recent transactions from filtered sales
+  const recentSales = filteredSales.slice(0, 10);
 
   if (loading) {
     return (
@@ -71,6 +125,110 @@ export default function Financeiro() {
   return (
     <AppLayout title="XFranchise Finances - Dashboard">
       <div className="space-y-6">
+        {/* Period Filter */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Filter className="h-4 w-4" />
+                  <span>Período:</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant={filterPeriod === '7days' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setFilterPeriod('7days')}
+                  >
+                    Últimos 7 dias
+                  </Button>
+                  <Button
+                    variant={filterPeriod === '30days' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setFilterPeriod('30days')}
+                  >
+                    Últimos 30 dias
+                  </Button>
+                  <Button
+                    variant={filterPeriod === 'month' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setFilterPeriod('month')}
+                  >
+                    Este mês
+                  </Button>
+                  <Button
+                    variant={filterPeriod === 'custom' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setFilterPeriod('custom')}
+                  >
+                    <CalendarDays className="h-4 w-4 mr-1" />
+                    Personalizado
+                  </Button>
+                </div>
+                
+                {filterPeriod === 'custom' && (
+                  <div className="flex items-center gap-2 ml-auto">
+                    <Popover open={startDateOpen} onOpenChange={setStartDateOpen}>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" size="sm" className="w-[130px] justify-start text-left font-normal">
+                          <CalendarDays className="h-4 w-4 mr-2" />
+                          {customStartDate ? format(customStartDate, 'dd/MM/yyyy') : 'Início'}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <CalendarComponent
+                          mode="single"
+                          selected={customStartDate}
+                          onSelect={(date) => {
+                            setCustomStartDate(date);
+                            setStartDateOpen(false);
+                          }}
+                          initialFocus
+                          className={cn("p-3 pointer-events-auto")}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <span className="text-muted-foreground">até</span>
+                    <Popover open={endDateOpen} onOpenChange={setEndDateOpen}>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" size="sm" className="w-[130px] justify-start text-left font-normal">
+                          <CalendarDays className="h-4 w-4 mr-2" />
+                          {customEndDate ? format(customEndDate, 'dd/MM/yyyy') : 'Fim'}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <CalendarComponent
+                          mode="single"
+                          selected={customEndDate}
+                          onSelect={(date) => {
+                            setCustomEndDate(date);
+                            setEndDateOpen(false);
+                          }}
+                          initialFocus
+                          className={cn("p-3 pointer-events-auto")}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                )}
+              </div>
+              
+              {/* Period summary */}
+              <div className="mt-3 pt-3 border-t flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">
+                  Exibindo dados de {format(dateRange.start, "dd/MM/yyyy", { locale: ptBR })} até {format(dateRange.end, "dd/MM/yyyy", { locale: ptBR })}
+                </span>
+                <Badge variant="secondary" className="text-lg font-bold">
+                  Total: {formatCurrency(periodRevenue)}
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
         {/* Metrics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <motion.div
