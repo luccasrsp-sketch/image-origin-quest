@@ -102,6 +102,261 @@ export type Database = {
         }
         Relationships: []
       }
+      financial_cash_entries: {
+        Row: {
+          amount: number
+          check_id: string | null
+          company: Database["public"]["Enums"]["company"]
+          created_at: string
+          created_by: string | null
+          description: string | null
+          entry_date: string
+          id: string
+          installment_id: string | null
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          sale_id: string | null
+        }
+        Insert: {
+          amount: number
+          check_id?: string | null
+          company?: Database["public"]["Enums"]["company"]
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          entry_date?: string
+          id?: string
+          installment_id?: string | null
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          sale_id?: string | null
+        }
+        Update: {
+          amount?: number
+          check_id?: string | null
+          company?: Database["public"]["Enums"]["company"]
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          entry_date?: string
+          id?: string
+          installment_id?: string | null
+          payment_method?: Database["public"]["Enums"]["payment_method"]
+          sale_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_cash_entries_check_id_fkey"
+            columns: ["check_id"]
+            isOneToOne: false
+            referencedRelation: "financial_checks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_cash_entries_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_cash_entries_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_cash_entries_installment_id_fkey"
+            columns: ["installment_id"]
+            isOneToOne: false
+            referencedRelation: "financial_installments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_cash_entries_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "financial_sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      financial_checks: {
+        Row: {
+          actual_clear_date: string | null
+          amount: number
+          bank: string
+          check_number: string
+          company: Database["public"]["Enums"]["company"]
+          created_at: string
+          expected_clear_date: string
+          id: string
+          installment_id: string | null
+          issuer: string
+          notes: string | null
+          sale_id: string | null
+          status: Database["public"]["Enums"]["check_status"]
+          updated_at: string
+        }
+        Insert: {
+          actual_clear_date?: string | null
+          amount: number
+          bank: string
+          check_number: string
+          company?: Database["public"]["Enums"]["company"]
+          created_at?: string
+          expected_clear_date: string
+          id?: string
+          installment_id?: string | null
+          issuer: string
+          notes?: string | null
+          sale_id?: string | null
+          status?: Database["public"]["Enums"]["check_status"]
+          updated_at?: string
+        }
+        Update: {
+          actual_clear_date?: string | null
+          amount?: number
+          bank?: string
+          check_number?: string
+          company?: Database["public"]["Enums"]["company"]
+          created_at?: string
+          expected_clear_date?: string
+          id?: string
+          installment_id?: string | null
+          issuer?: string
+          notes?: string | null
+          sale_id?: string | null
+          status?: Database["public"]["Enums"]["check_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_checks_installment_id_fkey"
+            columns: ["installment_id"]
+            isOneToOne: false
+            referencedRelation: "financial_installments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_checks_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "financial_sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      financial_installments: {
+        Row: {
+          amount: number
+          created_at: string
+          due_date: string
+          id: string
+          installment_number: number
+          notes: string | null
+          received_date: string | null
+          sale_id: string
+          status: Database["public"]["Enums"]["installment_status"]
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          due_date: string
+          id?: string
+          installment_number: number
+          notes?: string | null
+          received_date?: string | null
+          sale_id: string
+          status?: Database["public"]["Enums"]["installment_status"]
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          due_date?: string
+          id?: string
+          installment_number?: number
+          notes?: string | null
+          received_date?: string | null
+          sale_id?: string
+          status?: Database["public"]["Enums"]["installment_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_installments_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "financial_sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      financial_sales: {
+        Row: {
+          company: Database["public"]["Enums"]["company"]
+          created_at: string
+          created_by: string | null
+          description: string
+          id: string
+          installments_count: number
+          lead_id: string | null
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          received_amount: number | null
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          company?: Database["public"]["Enums"]["company"]
+          created_at?: string
+          created_by?: string | null
+          description: string
+          id?: string
+          installments_count?: number
+          lead_id?: string | null
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          received_amount?: number | null
+          total_amount: number
+          updated_at?: string
+        }
+        Update: {
+          company?: Database["public"]["Enums"]["company"]
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          id?: string
+          installments_count?: number
+          lead_id?: string | null
+          payment_method?: Database["public"]["Enums"]["payment_method"]
+          received_amount?: number | null
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_sales_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_sales_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_sales_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_activities: {
         Row: {
           action: string
@@ -567,8 +822,10 @@ export type Database = {
     }
     Enums: {
       app_role: "sdr" | "closer" | "admin" | "viewer"
+      check_status: "pending" | "cleared" | "bounced"
       company: "escola_franchising" | "evidia"
       funnel_type: "padrao" | "franquia" | "formatacao"
+      installment_status: "pending" | "received" | "overdue"
       lead_status:
         | "sem_atendimento"
         | "nao_atendeu"
@@ -579,6 +836,13 @@ export type Database = {
         | "vendido"
         | "recuperacao_sdr"
         | "perdido"
+      payment_method:
+        | "pix"
+        | "credit_card"
+        | "debit_card"
+        | "check"
+        | "cash"
+        | "other"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -707,8 +971,10 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["sdr", "closer", "admin", "viewer"],
+      check_status: ["pending", "cleared", "bounced"],
       company: ["escola_franchising", "evidia"],
       funnel_type: ["padrao", "franquia", "formatacao"],
+      installment_status: ["pending", "received", "overdue"],
       lead_status: [
         "sem_atendimento",
         "nao_atendeu",
@@ -719,6 +985,14 @@ export const Constants = {
         "vendido",
         "recuperacao_sdr",
         "perdido",
+      ],
+      payment_method: [
+        "pix",
+        "credit_card",
+        "debit_card",
+        "check",
+        "cash",
+        "other",
       ],
     },
   },
