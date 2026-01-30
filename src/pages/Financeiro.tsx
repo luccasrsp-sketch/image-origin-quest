@@ -6,11 +6,11 @@ import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useFinancial } from '@/hooks/useFinancial';
 import { useCompany } from '@/contexts/CompanyContext';
-import { DollarSign, TrendingUp, Calendar, CreditCard, CalendarDays, Filter } from 'lucide-react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { DollarSign, TrendingUp, Calendar, CreditCard, CalendarDays, Filter, LineChartIcon } from 'lucide-react';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, LineChart, Line, XAxis, YAxis, CartesianGrid, Area, AreaChart } from 'recharts';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { format, startOfDay, startOfWeek, startOfMonth, endOfMonth, isAfter, isBefore, parseISO, subDays, subMonths } from 'date-fns';
+import { format, startOfDay, startOfWeek, startOfMonth, endOfMonth, isAfter, isBefore, parseISO, subDays, eachDayOfInterval, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { 
   PAYMENT_METHOD_LABELS, 
@@ -108,6 +108,27 @@ export default function Financeiro() {
     value,
     color: PAYMENT_METHOD_COLORS[method as keyof typeof PAYMENT_METHOD_COLORS] || '#6b7280',
   }));
+
+  // Revenue evolution data for line chart
+  const revenueEvolutionData = useMemo(() => {
+    const days = eachDayOfInterval({ start: dateRange.start, end: dateRange.end });
+    
+    let cumulativeTotal = 0;
+    return days.map(day => {
+      const dayRevenue = filteredCashEntries
+        .filter(e => isSameDay(parseISO(e.entry_date), day))
+        .reduce((sum, e) => sum + Number(e.amount), 0);
+      
+      cumulativeTotal += dayRevenue;
+      
+      return {
+        date: format(day, 'dd/MM'),
+        fullDate: format(day, 'dd/MM/yyyy'),
+        daily: dayRevenue,
+        cumulative: cumulativeTotal,
+      };
+    });
+  }, [filteredCashEntries, dateRange]);
 
   // Recent transactions from filtered sales
   const recentSales = filteredSales.slice(0, 10);
@@ -287,6 +308,93 @@ export default function Financeiro() {
                 <div className="text-2xl font-bold text-purple-500">
                   {formatCurrency(monthRevenue)}
                 </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-6">
+          {/* Revenue Evolution Chart */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35 }}
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <LineChartIcon className="h-5 w-5" />
+                  Evolução da Receita
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {revenueEvolutionData.length > 0 && revenueEvolutionData.some(d => d.daily > 0 || d.cumulative > 0) ? (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <AreaChart data={revenueEvolutionData}>
+                      <defs>
+                        <linearGradient id="colorCumulative" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                        </linearGradient>
+                        <linearGradient id="colorDaily" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="#22c55e" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis 
+                        dataKey="date" 
+                        stroke="hsl(var(--muted-foreground))"
+                        fontSize={12}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <YAxis 
+                        stroke="hsl(var(--muted-foreground))"
+                        fontSize={12}
+                        tickLine={false}
+                        axisLine={false}
+                        tickFormatter={(value) => formatCurrency(value).replace('R$', '').trim()}
+                      />
+                      <Tooltip 
+                        formatter={(value: number, name: string) => [
+                          formatCurrency(value), 
+                          name === 'cumulative' ? 'Acumulado' : 'Diário'
+                        ]}
+                        labelFormatter={(label) => `Data: ${label}`}
+                        contentStyle={{ 
+                          backgroundColor: 'hsl(var(--card))', 
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px'
+                        }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="cumulative"
+                        stroke="hsl(var(--primary))"
+                        strokeWidth={2}
+                        fill="url(#colorCumulative)"
+                        name="Acumulado"
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="daily"
+                        stroke="#22c55e"
+                        strokeWidth={2}
+                        dot={{ fill: '#22c55e', strokeWidth: 2, r: 4 }}
+                        activeDot={{ r: 6 }}
+                        name="Diário"
+                      />
+                      <Legend 
+                        formatter={(value) => value === 'cumulative' ? 'Acumulado' : 'Diário'}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                    Nenhuma entrada registrada no período
+                  </div>
+                )}
               </CardContent>
             </Card>
           </motion.div>
