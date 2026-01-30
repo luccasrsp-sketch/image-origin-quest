@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useFinancial } from '@/hooks/useFinancial';
+import { useSyncSalesToFinancial } from '@/hooks/useSyncSalesToFinancial';
 import { useCompany } from '@/contexts/CompanyContext';
-import { DollarSign, TrendingUp, Calendar, CreditCard, CalendarDays, Filter, LineChartIcon } from 'lucide-react';
+import { DollarSign, TrendingUp, Calendar, CreditCard, CalendarDays, Filter, LineChartIcon, RefreshCw } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, LineChart, Line, XAxis, YAxis, CartesianGrid, Area, AreaChart } from 'recharts';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -30,8 +31,14 @@ const formatCurrency = (value: number) => {
 };
 
 export default function Financeiro() {
-  const { cashEntries, sales, installments, loading } = useFinancial();
+  const { cashEntries, sales, installments, loading, refetch } = useFinancial();
+  const { syncSales, isSyncing } = useSyncSalesToFinancial();
   const { selectedCompany } = useCompany();
+
+  const handleSyncSales = async () => {
+    await syncSales();
+    refetch();
+  };
   
   // Filter state
   const [filterPeriod, setFilterPeriod] = useState<FilterPeriod>('month');
@@ -238,13 +245,24 @@ export default function Financeiro() {
               </div>
               
               {/* Period summary */}
-              <div className="mt-3 pt-3 border-t flex items-center justify-between">
+              <div className="mt-3 pt-3 border-t flex items-center justify-between flex-wrap gap-2">
                 <span className="text-sm text-muted-foreground">
                   Exibindo dados de {format(dateRange.start, "dd/MM/yyyy", { locale: ptBR })} até {format(dateRange.end, "dd/MM/yyyy", { locale: ptBR })}
                 </span>
-                <Badge variant="secondary" className="text-lg font-bold">
-                  Total: {formatCurrency(periodRevenue)}
-                </Badge>
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSyncSales}
+                    disabled={isSyncing}
+                  >
+                    <RefreshCw className={cn("h-4 w-4 mr-2", isSyncing && "animate-spin")} />
+                    {isSyncing ? 'Sincronizando...' : 'Sincronizar vendas do CRM'}
+                  </Button>
+                  <Badge variant="secondary" className="text-lg font-bold">
+                    Total: {formatCurrency(periodRevenue)}
+                  </Badge>
+                </div>
               </div>
             </CardContent>
           </Card>
