@@ -43,6 +43,29 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+// Admin-only route protection
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading, isAdmin } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  if (!isAdmin()) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <>{children}</>;
+}
+
 function AppRoutes() {
   const { user, loading } = useAuth();
 
@@ -71,12 +94,12 @@ function AppRoutes() {
       <Route path="/importar" element={<ProtectedRoute><ImportLeads /></ProtectedRoute>} />
       <Route path="/configuracoes" element={<ProtectedRoute><Configuracoes /></ProtectedRoute>} />
       
-      {/* Financial module routes */}
-      <Route path="/financeiro" element={<ProtectedRoute><Financeiro /></ProtectedRoute>} />
-      <Route path="/financeiro/projecoes" element={<ProtectedRoute><FinanceiroProjecoes /></ProtectedRoute>} />
-      <Route path="/financeiro/nova-venda" element={<ProtectedRoute><FinanceiroNovaVenda /></ProtectedRoute>} />
-      <Route path="/financeiro/cheques" element={<ProtectedRoute><FinanceiroCheques /></ProtectedRoute>} />
-      <Route path="/financeiro/calendario" element={<ProtectedRoute><FinanceiroCalendario /></ProtectedRoute>} />
+      {/* Financial module routes (Admin Only) */}
+      <Route path="/financeiro" element={<AdminRoute><Financeiro /></AdminRoute>} />
+      <Route path="/financeiro/projecoes" element={<AdminRoute><FinanceiroProjecoes /></AdminRoute>} />
+      <Route path="/financeiro/nova-venda" element={<AdminRoute><FinanceiroNovaVenda /></AdminRoute>} />
+      <Route path="/financeiro/cheques" element={<AdminRoute><FinanceiroCheques /></AdminRoute>} />
+      <Route path="/financeiro/calendario" element={<AdminRoute><FinanceiroCalendario /></AdminRoute>} />
       
       <Route path="*" element={<NotFound />} />
     </Routes>
