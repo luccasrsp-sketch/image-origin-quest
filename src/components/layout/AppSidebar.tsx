@@ -7,6 +7,11 @@ import {
   Settings,
   LogOut,
   Upload,
+  DollarSign,
+  TrendingUp,
+  PlusCircle,
+  FileCheck,
+  CalendarDays,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
@@ -37,6 +42,14 @@ const mainNavItems = [
   { title: 'Kanban', url: '/kanban', icon: Kanban },
   { title: 'Agenda', url: '/agenda', icon: Calendar },
   { title: 'Relatórios', url: '/relatorios', icon: BarChart3 },
+];
+
+const financeNavItems = [
+  { title: 'Dashboard Receitas', url: '/financeiro', icon: DollarSign },
+  { title: 'Projeções', url: '/financeiro/projecoes', icon: TrendingUp },
+  { title: 'Nova Venda', url: '/financeiro/nova-venda', icon: PlusCircle },
+  { title: 'Cheques', url: '/financeiro/cheques', icon: FileCheck },
+  { title: 'Calendário', url: '/financeiro/calendario', icon: CalendarDays },
 ];
 
 const settingsItems = [
@@ -93,6 +106,29 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {mainNavItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild tooltip={item.title}>
+                    <NavLink 
+                      to={item.url} 
+                      className="flex items-center gap-3 rounded-md px-3 py-2 text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                      activeClassName="bg-sidebar-accent text-primary font-medium"
+                    >
+                      <item.icon className="h-5 w-5" />
+                      {!collapsed && <span>{item.title}</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Financial Module - XFranchise Finances */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Financeiro</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {financeNavItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild tooltip={item.title}>
                     <NavLink 

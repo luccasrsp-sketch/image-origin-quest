@@ -16,6 +16,12 @@ import LeadForm from "./pages/LeadForm";
 import LeadFormEvidia from "./pages/LeadFormEvidia";
 import ImportLeads from "./pages/ImportLeads";
 import NotFound from "./pages/NotFound";
+// Financial module pages
+import Financeiro from "./pages/Financeiro";
+import FinanceiroProjecoes from "./pages/FinanceiroProjecoes";
+import FinanceiroNovaVenda from "./pages/FinanceiroNovaVenda";
+import FinanceiroCheques from "./pages/FinanceiroCheques";
+import FinanceiroCalendario from "./pages/FinanceiroCalendario";
 
 const queryClient = new QueryClient();
 
@@ -64,6 +70,13 @@ function AppRoutes() {
       <Route path="/relatorios" element={<ProtectedRoute><Relatorios /></ProtectedRoute>} />
       <Route path="/importar" element={<ProtectedRoute><ImportLeads /></ProtectedRoute>} />
       <Route path="/configuracoes" element={<ProtectedRoute><Configuracoes /></ProtectedRoute>} />
+      
+      {/* Financial module routes */}
+      <Route path="/financeiro" element={<ProtectedRoute><Financeiro /></ProtectedRoute>} />
+      <Route path="/financeiro/projecoes" element={<ProtectedRoute><FinanceiroProjecoes /></ProtectedRoute>} />
+      <Route path="/financeiro/nova-venda" element={<ProtectedRoute><FinanceiroNovaVenda /></ProtectedRoute>} />
+      <Route path="/financeiro/cheques" element={<ProtectedRoute><FinanceiroCheques /></ProtectedRoute>} />
+      <Route path="/financeiro/calendario" element={<ProtectedRoute><FinanceiroCalendario /></ProtectedRoute>} />
       
       <Route path="*" element={<NotFound />} />
     </Routes>

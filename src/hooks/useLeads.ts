@@ -393,6 +393,9 @@ export function useLeads() {
   const getLeadsByStatus = (status: LeadStatus) => companyFilteredLeads.filter(l => l.status === status);
 
   const saveSaleData = async (data: SaleData) => {
+    // Get lead data for financial record
+    const lead = leads.find(l => l.id === data.leadId);
+    
     const { error } = await supabase
       .from('leads')
       .update({
@@ -420,19 +423,115 @@ export function useLeads() {
       return false;
     }
 
+    // Create financial sale record
+    const totalAmount = data.entryValue + data.remainingValue;
+    const paymentMethodMap: Record<string, string> = {
+      'Cartão': 'credit_card',
+      'Pix': 'pix',
+      'Entrada pix + cartão': 'credit_card',
+      'Entrada cartão + cheque': 'check',
+      'Entrada pix + cheque': 'check',
+    };
+    const financialPaymentMethod = paymentMethodMap[data.paymentMethod] || 'other';
+
+    try {
+      // Create the financial sale
+      const { data: financialSale, error: financialError } = await supabase
+        .from('financial_sales')
+        .insert({
+          lead_id: data.leadId,
+          description: `Venda ${data.product} - ${lead?.company_name || 'Cliente'}`,
+          total_amount: totalAmount,
+          received_amount: data.paymentReceived ? data.entryValue : 0,
+          payment_method: financialPaymentMethod as 'pix' | 'credit_card' | 'debit_card' | 'check' | 'cash' | 'other',
+          installments_count: data.installments || 1,
+          company: (lead?.company || selectedCompany) as 'escola_franchising' | 'evidia',
+          created_by: profile?.id || null,
+        })
+        .select()
+        .single();
+
+      if (!financialError && financialSale) {
+        // Generate installments
+        const installmentsCount = data.installments || 1;
+        const installmentAmount = totalAmount / installmentsCount;
+        const firstDueDate = data.firstCheckDate || new Date();
+        
+        const installmentsToCreate = Array.from({ length: installmentsCount }, (_, i) => {
+          const dueDate = new Date(firstDueDate);
+          dueDate.setMonth(dueDate.getMonth() + i);
+          
+          return {
+            sale_id: financialSale.id,
+            installment_number: i + 1,
+            amount: installmentAmount,
+            due_date: dueDate.toISOString().split('T')[0],
+            status: (i === 0 && data.paymentReceived ? 'received' : 'pending') as 'pending' | 'received' | 'overdue',
+            received_date: i === 0 && data.paymentReceived ? new Date().toISOString().split('T')[0] : null,
+          };
+        });
+
+        await supabase
+          .from('financial_installments')
+          .insert(installmentsToCreate);
+
+        // If payment was received, create cash entry for entry value
+        if (data.paymentReceived && data.entryValue > 0) {
+          await supabase
+            .from('financial_cash_entries')
+            .insert({
+              sale_id: financialSale.id,
+              installment_id: null,
+              amount: data.entryValue,
+              entry_date: new Date().toISOString().split('T')[0],
+              payment_method: financialPaymentMethod as 'pix' | 'credit_card' | 'debit_card' | 'check' | 'cash' | 'other',
+              description: `Entrada - ${data.product} - ${lead?.full_name || 'Cliente'}`,
+              company: (lead?.company || selectedCompany) as 'escola_franchising' | 'evidia',
+              created_by: profile?.id || null,
+            });
+        }
+
+        // If payment method involves checks, create check records
+        if (data.paymentMethod.toLowerCase().includes('cheque') && data.firstCheckDate) {
+          const checkAmount = data.remainingValue / (installmentsCount > 1 ? installmentsCount - 1 : 1);
+          
+          for (let i = 1; i < installmentsCount; i++) {
+            const checkDate = new Date(data.firstCheckDate);
+            checkDate.setMonth(checkDate.getMonth() + i - 1);
+            
+            await supabase
+              .from('financial_checks')
+              .insert({
+                sale_id: financialSale.id,
+                amount: checkAmount,
+                bank: 'A definir',
+                check_number: `${i}`,
+                issuer: lead?.full_name || 'Cliente',
+                expected_clear_date: checkDate.toISOString().split('T')[0],
+                company: (lead?.company || selectedCompany) as 'escola_franchising' | 'evidia',
+                notes: `Cheque ${i} - ${data.product}`,
+              });
+          }
+        }
+      }
+    } catch (financialErr) {
+      console.error('Error creating financial record:', financialErr);
+      // Don't fail the sale if financial record fails
+    }
+
     // Log activity
     if (profile?.id) {
       await supabase.from('lead_activities').insert({
         lead_id: data.leadId,
         user_id: profile.id,
         action: 'note_added',
-        notes: `Venda confirmada: ${data.product} - R$ ${(data.entryValue + data.remainingValue).toLocaleString('pt-BR')} - ${data.paymentMethod}`,
+        notes: `Venda confirmada: ${data.product} - R$ ${totalAmount.toLocaleString('pt-BR')} - ${data.paymentMethod}`,
       });
     }
 
     toast({
       title: 'Venda registrada',
-      description: 'Dados da venda salvos com sucesso.',
+      description: 'Dados da venda salvos com sucesso e registro financeiro criado.',
     });
 
     fetchLeads();
