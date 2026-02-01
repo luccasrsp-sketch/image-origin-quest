@@ -22,6 +22,8 @@ import FinanceiroProjecoes from "./pages/FinanceiroProjecoes";
 import FinanceiroNovaVenda from "./pages/FinanceiroNovaVenda";
 import FinanceiroCheques from "./pages/FinanceiroCheques";
 import FinanceiroCalendario from "./pages/FinanceiroCalendario";
+// TV Dashboard
+import PainelTV from "./pages/PainelTV";
 
 const queryClient = new QueryClient();
 
@@ -100,6 +102,9 @@ function AppRoutes() {
       <Route path="/financeiro/nova-venda" element={<AdminRoute><FinanceiroNovaVenda /></AdminRoute>} />
       <Route path="/financeiro/cheques" element={<AdminRoute><FinanceiroCheques /></AdminRoute>} />
       <Route path="/financeiro/calendario" element={<AdminRoute><FinanceiroCalendario /></AdminRoute>} />
+      
+      {/* TV Dashboard - fullscreen, no layout */}
+      <Route path="/painel-tv" element={<ProtectedRoute><PainelTV /></ProtectedRoute>} />
       
       <Route path="*" element={<NotFound />} />
     </Routes>
