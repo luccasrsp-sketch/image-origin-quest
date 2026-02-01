@@ -11,44 +11,71 @@
       background: #000; 
       color: #fff; 
       min-height: 100vh;
-      padding: 2rem;
+      padding: 1.5rem 2rem;
     }
     .gold { color: #c4ae6b; }
-    .header { display: flex; justify-content: space-between; margin-bottom: 2rem; }
-    .title { font-size: 2.5rem; font-weight: bold; }
-    .date { color: #888; font-size: 1.2rem; margin-top: 0.5rem; }
-    .time { font-size: 4rem; font-weight: bold; text-align: right; }
-    .update { color: #666; font-size: 0.9rem; }
-    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
-    .card { background: rgba(30,30,30,0.9); border: 1px solid rgba(196,174,107,0.3); border-radius: 1.5rem; padding: 1.5rem; }
-    .card-title { font-size: 1.3rem; color: #c4ae6b; margin-bottom: 1rem; }
-    .progress-item { margin-bottom: 1.5rem; }
-    .progress-label { display: flex; justify-content: space-between; margin-bottom: 0.5rem; }
-    .progress-bar { height: 2.5rem; background: #333; border-radius: 1rem; overflow: hidden; position: relative; }
+    
+    /* Header - horizontal layout */
+    .header { 
+      display: flex; 
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(196,174,107,0.2);
+    }
+    .header-left { display: flex; align-items: center; gap: 2rem; }
+    .title { font-size: 2.2rem; font-weight: bold; }
+    .date { color: #888; font-size: 1rem; margin-top: 0.25rem; }
+    .time { font-size: 3.5rem; font-weight: bold; }
+    .update { color: #666; font-size: 0.85rem; }
+    
+    /* Sales section - horizontal 3 columns */
+    .sales-section { margin-bottom: 1.5rem; }
+    .section-title { font-size: 1.1rem; color: #c4ae6b; margin-bottom: 0.75rem; }
+    .sales-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+    .progress-item { background: rgba(30,30,30,0.8); border: 1px solid rgba(196,174,107,0.2); border-radius: 1rem; padding: 1rem; }
+    .progress-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.5rem; }
+    .progress-label { font-size: 0.85rem; color: #888; }
+    .progress-value { font-size: 1.4rem; font-weight: bold; }
+    .progress-meta { color: #666; font-size: 0.85rem; }
+    .progress-bar { height: 1.75rem; background: #333; border-radius: 0.75rem; overflow: hidden; position: relative; margin: 0.5rem 0; }
     .progress-fill { height: 100%; transition: width 0.5s; }
-    .progress-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; }
-    .value { font-size: 1.8rem; font-weight: bold; }
-    .meta { color: #666; }
-    .funnel-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
-    .funnel-card { background: rgba(40,40,40,0.5); border: 2px solid #444; border-radius: 1rem; padding: 1rem; }
+    .progress-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.95rem; }
+    .progress-footer { display: flex; justify-content: space-between; color: #777; font-size: 0.75rem; }
+    
+    /* Bottom grid - funnel and ranking side by side */
+    .bottom-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; }
+    .card { background: rgba(30,30,30,0.8); border: 1px solid rgba(196,174,107,0.2); border-radius: 1rem; padding: 1rem; }
+    .card-title { font-size: 1.1rem; color: #c4ae6b; margin-bottom: 0.75rem; }
+    
+    /* Funnel grid - 3x2 */
+    .funnel-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
+    .funnel-card { background: rgba(40,40,40,0.5); border: 2px solid #444; border-radius: 0.75rem; padding: 0.75rem; }
     .funnel-card.success { border-color: #c4ae6b; background: rgba(196,174,107,0.1); }
     .funnel-card.warning { border-color: #b45309; background: rgba(180,83,9,0.1); }
     .funnel-card.danger { border-color: #dc2626; background: rgba(220,38,38,0.1); }
-    .funnel-label { color: #888; font-size: 0.9rem; margin-bottom: 0.25rem; }
-    .funnel-value { font-size: 2.5rem; font-weight: bold; }
-    .funnel-goal { color: #666; font-size: 1.2rem; }
-    .funnel-full { grid-column: span 2; }
-    .funnel-full .funnel-value { font-size: 3rem; color: #c4ae6b; }
-    .rank-item { display: flex; align-items: center; gap: 1rem; padding: 1rem; border: 2px solid #444; border-radius: 1rem; margin-bottom: 0.75rem; }
+    .funnel-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.25rem; }
+    .funnel-label { color: #888; font-size: 0.75rem; }
+    .funnel-conv { background: #333; padding: 0.1rem 0.35rem; border-radius: 0.25rem; font-size: 0.65rem; color: #c4ae6b; }
+    .funnel-value { font-size: 1.75rem; font-weight: bold; }
+    .funnel-goal { color: #666; font-size: 0.9rem; }
+    .funnel-progress { height: 0.2rem; background: #333; border-radius: 0.25rem; margin-top: 0.4rem; overflow: hidden; }
+    .funnel-progress-fill { height: 100%; background: #c4ae6b; }
+    .funnel-percent { color: #777; font-size: 0.65rem; margin-top: 0.2rem; }
+    
+    /* Ranking */
+    .rank-list { display: flex; flex-direction: column; gap: 0.5rem; }
+    .rank-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0.75rem; border: 2px solid #444; border-radius: 0.75rem; }
     .rank-item.gold { border-color: #c4ae6b; background: rgba(196,174,107,0.1); }
     .rank-item.silver { border-color: #9ca3af; background: rgba(156,163,175,0.1); }
     .rank-item.bronze { border-color: #b45309; background: rgba(180,83,9,0.1); }
-    .rank-medal { font-size: 2rem; }
+    .rank-medal { font-size: 1.4rem; }
     .rank-info { flex: 1; }
-    .rank-name { font-size: 1.1rem; font-weight: 600; }
-    .rank-sales { color: #888; font-size: 0.9rem; }
-    .rank-value { font-size: 1.3rem; font-weight: bold; color: #c4ae6b; }
-    .empty { text-align: center; color: #666; padding: 3rem; font-size: 1.2rem; }
+    .rank-name { font-size: 0.9rem; font-weight: 600; }
+    .rank-sales { color: #888; font-size: 0.75rem; }
+    .rank-value { font-size: 1rem; font-weight: bold; color: #c4ae6b; }
+    .empty { text-align: center; color: #666; padding: 2rem; font-size: 1rem; }
     .loading { display: flex; align-items: center; justify-content: center; min-height: 100vh; font-size: 2rem; }
     .error { color: #ef4444; }
   </style>
@@ -96,6 +123,7 @@
       const app = document.getElementById('app');
       
       app.innerHTML = `
+        <!-- HEADER: Escola, Dia, Horário -->
         <header class="header">
           <div>
             <h1 class="title gold">Escola de Franchising</h1>
@@ -107,32 +135,38 @@
           </div>
         </header>
         
-        <div class="grid">
-          <div class="card">
-            <h2 class="card-title">📈 Vendas</h2>
+        <!-- VENDAS: Barras de métricas da meta -->
+        <section class="sales-section">
+          <h2 class="section-title">📈 Vendas</h2>
+          <div class="sales-grid">
             ${renderSalesProgress('Meta Diária', data.vendas.dia)}
             ${renderSalesProgress('Meta Semanal', data.vendas.semana)}
             ${renderSalesProgress('Meta Mensal', data.vendas.mes)}
           </div>
-          
+        </section>
+        
+        <!-- FUNIL + RANKING -->
+        <div class="bottom-grid">
           <div class="card">
             <h2 class="card-title">🎯 Funil (Hoje)</h2>
             <div class="funnel-grid">
-              ${renderFunnelCard('Leads Recebidos', data.funil_diario.recebidos, data.metas_diarias.leads_received)}
-              ${renderFunnelCard('Leads Atendidos', data.funil_diario.atendidos, data.metas_diarias.leads_attended)}
-              ${renderFunnelCard('Reuniões Marcadas', data.funil_diario.reunioes_marcadas, data.metas_diarias.meetings_marked)}
-              ${renderFunnelCard('Reuniões Realizadas', data.funil_diario.reunioes_realizadas, data.metas_diarias.meetings_done)}
-              ${renderFunnelCard('Em Negociação', data.funil_diario.negociacao_andamento, data.metas_diarias.negotiations)}
-              ${renderFunnelCard('Vendas Realizadas', data.funil_diario.vendas, data.metas_diarias.sales, true)}
+              ${renderFunnelCard('Leads Recebidos', data.funil_diario.recebidos, data.metas_diarias.leads_received, null)}
+              ${renderFunnelCard('Leads Atendidos', data.funil_diario.atendidos, data.metas_diarias.leads_attended, data.taxas_conversao.atendidos_recebidos)}
+              ${renderFunnelCard('Reuniões Marcadas', data.funil_diario.reunioes_marcadas, data.metas_diarias.meetings_marked, data.taxas_conversao.reunioes_atendidos)}
+              ${renderFunnelCard('Reuniões Realizadas', data.funil_diario.reunioes_realizadas, data.metas_diarias.meetings_done, data.taxas_conversao.realizadas_marcadas)}
+              ${renderFunnelCard('Em Negociação', data.funil_diario.negociacao_andamento, data.metas_diarias.negotiations, data.taxas_conversao.negociacao_realizadas)}
+              ${renderFunnelCard('Vendas Realizadas', data.funil_diario.vendas, data.metas_diarias.sales, data.taxas_conversao.vendas_negociacao)}
             </div>
           </div>
           
           <div class="card">
             <h2 class="card-title">🏆 Ranking (Hoje)</h2>
-            ${data.ranking_vendedores && data.ranking_vendedores.length > 0 
-              ? data.ranking_vendedores.map((s, i) => renderRankItem(s, i)).join('')
-              : '<div class="empty">Nenhuma venda hoje</div>'
-            }
+            <div class="rank-list">
+              ${data.ranking_vendedores && data.ranking_vendedores.length > 0 
+                ? data.ranking_vendedores.map((s, i) => renderRankItem(s, i)).join('')
+                : '<div class="empty">Nenhuma venda hoje</div>'
+              }
+            </div>
           </div>
         </div>
       `;
@@ -142,15 +176,18 @@
       const percent = data.meta > 0 ? Math.min(100, Math.round((data.valor_realizado / data.meta) * 100)) : 0;
       return `
         <div class="progress-item">
-          <div class="progress-label">
-            <span>${label}</span>
-            <span><span class="value gold">${formatCurrency(data.valor_realizado)}</span> <span class="meta">/ ${formatCurrency(data.meta)}</span></span>
+          <div class="progress-header">
+            <span class="progress-label">${label}</span>
+            <div>
+              <span class="progress-value gold">${formatCurrency(data.valor_realizado)}</span>
+              <span class="progress-meta"> / ${formatCurrency(data.meta)}</span>
+            </div>
           </div>
           <div class="progress-bar">
             <div class="progress-fill" style="width:${percent}%;background:${getBarColor(percent)}"></div>
             <div class="progress-text">${percent}%</div>
           </div>
-          <div style="display:flex;justify-content:space-between;margin-top:0.5rem;color:#888;font-size:0.9rem">
+          <div class="progress-footer">
             <span>${data.quantidade} venda${data.quantidade !== 1 ? 's' : ''}</span>
             ${data.meta > 0 ? `<span>Faltam ${formatCurrency(Math.max(0, data.meta - data.valor_realizado))}</span>` : ''}
           </div>
@@ -158,15 +195,25 @@
       `;
     }
     
-    function renderFunnelCard(label, value, goal, isLast = false) {
+    function renderFunnelCard(label, value, goal, convRate) {
       const cls = getFunnelClass(value, goal);
       const percent = goal > 0 ? Math.round((value / goal) * 100) : 0;
       return `
-        <div class="funnel-card ${cls} ${isLast ? 'funnel-full' : ''}">
-          <div class="funnel-label">${label}</div>
-          <span class="funnel-value">${value}</span>
-          ${goal > 0 ? `<span class="funnel-goal">/ ${goal}</span>` : ''}
-          ${goal > 0 ? `<div style="margin-top:0.5rem;color:#888;font-size:0.8rem">${percent}% da meta</div>` : ''}
+        <div class="funnel-card ${cls}">
+          <div class="funnel-header">
+            <span class="funnel-label">${label}</span>
+            ${convRate !== null ? `<span class="funnel-conv">${convRate}% conv.</span>` : ''}
+          </div>
+          <div>
+            <span class="funnel-value">${value}</span>
+            ${goal > 0 ? `<span class="funnel-goal"> / ${goal}</span>` : ''}
+          </div>
+          ${goal > 0 ? `
+            <div class="funnel-progress">
+              <div class="funnel-progress-fill" style="width:${Math.min(100, percent)}%"></div>
+            </div>
+            <div class="funnel-percent">${percent}% da meta</div>
+          ` : ''}
         </div>
       `;
     }
