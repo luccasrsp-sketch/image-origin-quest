@@ -1,24 +1,17 @@
-// Send Push Notification - Edge Function
+// Send Push Notification - Edge Function (Secured)
 import { createClient } from "npm:@supabase/supabase-js@2"
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 // Web Push library for Deno
 async function sendWebPush(subscription: { endpoint: string; p256dh: string; auth: string }, payload: object) {
-  // For now, we'll use a simple fetch approach
-  // In production, you'd want to use proper VAPID signing
-  
   const payloadString = JSON.stringify(payload);
   
   console.log(`Sending push to ${subscription.endpoint}`);
   console.log(`Payload: ${payloadString}`);
-  
-  // Note: This is a simplified version. Full Web Push requires VAPID signature
-  // For a production app, consider using a service like Firebase Cloud Messaging
-  // or implementing full VAPID signing
   
   try {
     const response = await fetch(subscription.endpoint, {
@@ -43,12 +36,46 @@ async function sendWebPush(subscription: { endpoint: string; p256dh: string; aut
 }
 
 Deno.serve(async (req: Request) => {
-  // Handle CORS
+  // Handle CORS preflight
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response("ok", { headers: corsHeaders });
   }
 
   try {
+    // ========== AUTHORIZATION CHECK ==========
+    // Verify the request is authenticated
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      console.error("Missing or invalid Authorization header");
+      return new Response(
+        JSON.stringify({ error: "Unauthorized - missing token" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Create auth client to verify the user
+    const supabaseAuthClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    // Verify JWT and get claims
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await supabaseAuthClient.auth.getClaims(token);
+    
+    if (claimsError || !claimsData?.claims) {
+      console.error("Invalid token:", claimsError?.message);
+      return new Response(
+        JSON.stringify({ error: "Unauthorized - invalid token" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const authenticatedUserId = claimsData.claims.sub;
+    console.log("Authenticated user:", authenticatedUserId);
+
+    // Service role client for database operations
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
@@ -57,9 +84,52 @@ Deno.serve(async (req: Request) => {
     const { userId, title, body, url, leadId } = await req.json();
 
     if (!userId) {
-      throw new Error("userId is required");
+      return new Response(
+        JSON.stringify({ error: "userId is required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
+    // ========== AUTHORIZATION: Check if user can send to target ==========
+    // Get the authenticated user's profile ID
+    const { data: callerProfile } = await supabaseClient
+      .from("profiles")
+      .select("id")
+      .eq("user_id", authenticatedUserId)
+      .single();
+
+    if (!callerProfile) {
+      console.error("Caller profile not found");
+      return new Response(
+        JSON.stringify({ error: "Forbidden - caller profile not found" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Check if caller is sending to themselves OR is an admin
+    const isTargetSelf = callerProfile.id === userId;
+    
+    if (!isTargetSelf) {
+      // Check if caller is admin
+      const { data: roles } = await supabaseClient
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", authenticatedUserId);
+      
+      const isAdmin = roles?.some(r => r.role === "admin");
+      
+      if (!isAdmin) {
+        console.error(`User ${authenticatedUserId} attempted to send notification to ${userId} without admin role`);
+        return new Response(
+          JSON.stringify({ error: "Forbidden - only admins can send notifications to other users" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      
+      console.log("Admin sending notification to another user");
+    }
+
+    // ========== SEND NOTIFICATION ==========
     console.log(`Sending notification to user ${userId}: ${title}`);
 
     // Get user's push subscriptions
