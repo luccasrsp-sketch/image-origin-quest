@@ -24,6 +24,7 @@ import FinanceiroCheques from "./pages/FinanceiroCheques";
 import FinanceiroCalendario from "./pages/FinanceiroCalendario";
 // TV Dashboard
 import PainelTV from "./pages/PainelTV";
+import PainelTVPublico from "./pages/PainelTVPublico";
 
 const queryClient = new QueryClient();
 
@@ -105,6 +106,9 @@ function AppRoutes() {
       
       {/* TV Dashboard - fullscreen, no layout */}
       <Route path="/painel-tv" element={<ProtectedRoute><PainelTV /></ProtectedRoute>} />
+      
+      {/* TV Dashboard PUBLIC - no auth required, token-based */}
+      <Route path="/tv" element={<PainelTVPublico />} />
       
       <Route path="*" element={<NotFound />} />
     </Routes>
