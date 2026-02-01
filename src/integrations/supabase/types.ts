@@ -420,7 +420,7 @@ export type Database = {
           company: Database["public"]["Enums"]["company"]
           company_name: string
           created_at: string
-          email: string
+          email: string | null
           full_name: string
           funnel_type: Database["public"]["Enums"]["funnel_type"]
           id: string
@@ -463,7 +463,7 @@ export type Database = {
           company?: Database["public"]["Enums"]["company"]
           company_name: string
           created_at?: string
-          email: string
+          email?: string | null
           full_name: string
           funnel_type?: Database["public"]["Enums"]["funnel_type"]
           id?: string
@@ -506,7 +506,7 @@ export type Database = {
           company?: Database["public"]["Enums"]["company"]
           company_name?: string
           created_at?: string
-          email?: string
+          email?: string | null
           full_name?: string
           funnel_type?: Database["public"]["Enums"]["funnel_type"]
           id?: string

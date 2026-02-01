@@ -30,12 +30,7 @@ function verifyWebhookSecret(req: Request): boolean {
     return true
   }
   
-  // Check query parameter as last resort (for webhook services that only support URL params)
-  const url = new URL(req.url)
-  const querySecret = url.searchParams.get('secret')
-  if (querySecret === webhookSecret) {
-    return true
-  }
+  // Query parameter auth removed for security - secrets in URLs leak to logs
   
   return false
 }

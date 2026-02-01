@@ -64,7 +64,7 @@ export default function LeadFormEvidiaPage() {
 
     const { error } = await supabase.from('leads').insert({
       full_name: formData.full_name,
-      email: `${formData.phone.replace(/\D/g, '')}@evidia.temp`,
+      email: null, // Email is optional for Evidia leads
       phone: formData.phone,
       company_name: formData.specialty,
       city_state: formData.city_state,
