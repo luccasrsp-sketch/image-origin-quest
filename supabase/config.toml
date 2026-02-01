@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.tv-dashboard]
 verify_jwt = false
+
+[functions.tv-dashboard-public]
+verify_jwt = false
