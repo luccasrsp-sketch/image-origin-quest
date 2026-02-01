@@ -3,6 +3,12 @@ import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { formatCurrency } from '@/utils/currency';
 
+interface SellerRanking {
+  name: string;
+  sales_count: number;
+  sales_value: number;
+}
+
 interface TVDashboardData {
   vendas: {
     dia: { valor_realizado: number; meta: number; quantidade: number };
@@ -32,6 +38,7 @@ interface TVDashboardData {
     negociacao_realizadas: number;
     vendas_negociacao: number;
   };
+  ranking_vendedores: SellerRanking[];
   timestamp: string;
 }
 
@@ -155,12 +162,12 @@ export default function PainelTVPublico() {
         </div>
       </header>
 
-      <div className="grid grid-cols-2 gap-8 h-[calc(100vh-200px)]">
+      <div className="grid grid-cols-3 gap-6 h-[calc(100vh-200px)]">
         {/* Block 1: Sales Progress */}
-        <div className="bg-slate-800/50 rounded-3xl p-8 border border-slate-700">
-          <h2 className="text-3xl font-semibold mb-8 text-blue-400">📈 Vendas</h2>
+        <div className="bg-slate-800/50 rounded-3xl p-6 border border-slate-700">
+          <h2 className="text-2xl font-semibold mb-6 text-blue-400">📈 Vendas</h2>
           
-          <div className="space-y-8">
+          <div className="space-y-6">
             <SalesProgressBar
               label="Meta Diária"
               value={data.vendas.dia.valor_realizado}
@@ -185,10 +192,10 @@ export default function PainelTVPublico() {
         </div>
 
         {/* Block 2: Daily Funnel */}
-        <div className="bg-slate-800/50 rounded-3xl p-8 border border-slate-700">
-          <h2 className="text-3xl font-semibold mb-6 text-emerald-400">🎯 Funil Comercial (Hoje)</h2>
+        <div className="bg-slate-800/50 rounded-3xl p-6 border border-slate-700">
+          <h2 className="text-2xl font-semibold mb-4 text-emerald-400">🎯 Funil (Hoje)</h2>
           
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             {funnelItems.map((item, index) => (
               <FunnelCard
                 key={item.label}
@@ -200,6 +207,29 @@ export default function PainelTVPublico() {
               />
             ))}
           </div>
+        </div>
+
+        {/* Block 3: Seller Ranking */}
+        <div className="bg-slate-800/50 rounded-3xl p-6 border border-slate-700">
+          <h2 className="text-2xl font-semibold mb-4 text-amber-400">🏆 Ranking (Hoje)</h2>
+          
+          {data.ranking_vendedores && data.ranking_vendedores.length > 0 ? (
+            <div className="space-y-3">
+              {data.ranking_vendedores.map((seller, index) => (
+                <RankingCard
+                  key={seller.name}
+                  position={index + 1}
+                  name={seller.name}
+                  salesCount={seller.sales_count}
+                  salesValue={seller.sales_value}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-[calc(100%-60px)]">
+              <p className="text-2xl text-slate-500">Nenhuma venda hoje</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -321,6 +351,47 @@ function FunnelCard({
           <p className="text-sm text-slate-500 mt-1">{percent}% da meta</p>
         </div>
       )}
+    </div>
+  );
+}
+
+function RankingCard({ 
+  position, 
+  name, 
+  salesCount, 
+  salesValue 
+}: { 
+  position: number; 
+  name: string; 
+  salesCount: number;
+  salesValue: number;
+}) {
+  const getMedalEmoji = () => {
+    if (position === 1) return '🥇';
+    if (position === 2) return '🥈';
+    if (position === 3) return '🥉';
+    return `${position}º`;
+  };
+
+  const getBorderColor = () => {
+    if (position === 1) return 'border-amber-500 bg-amber-500/10';
+    if (position === 2) return 'border-slate-400 bg-slate-400/10';
+    if (position === 3) return 'border-amber-700 bg-amber-700/10';
+    return 'border-slate-600';
+  };
+
+  return (
+    <div className={`rounded-2xl p-4 border-2 ${getBorderColor()} flex items-center gap-4`}>
+      <span className="text-4xl">{getMedalEmoji()}</span>
+      <div className="flex-1">
+        <p className="text-xl font-semibold text-white truncate">{name}</p>
+        <p className="text-sm text-slate-400">
+          {salesCount} venda{salesCount !== 1 ? 's' : ''}
+        </p>
+      </div>
+      <div className="text-right">
+        <p className="text-2xl font-bold text-emerald-400">{formatCurrency(salesValue)}</p>
+      </div>
     </div>
   );
 }
