@@ -113,24 +113,24 @@ export default function PainelTVPublico() {
 
   if (!token) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-        <p className="text-red-400 text-4xl">Token de acesso não fornecido</p>
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <p className="text-red-500 text-4xl">Token de acesso não fornecido</p>
       </div>
     );
   }
 
   if (error && !authorized) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-        <p className="text-red-400 text-4xl">{error}</p>
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <p className="text-red-500 text-4xl">{error}</p>
       </div>
     );
   }
 
   if (!data) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-        <div className="text-white text-4xl animate-pulse">Carregando...</div>
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-[#c4ae6b] text-4xl animate-pulse">Carregando...</div>
       </div>
     );
   }
@@ -147,16 +147,16 @@ export default function PainelTVPublico() {
   const companyName = company === 'escola_franchising' ? 'Escola de Franchising' : 'Evidia';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-8 overflow-hidden">
+    <div className="min-h-screen bg-black text-white p-8 overflow-hidden">
       {/* Header */}
       <header className="flex justify-between items-start mb-8">
         <div>
-          <h1 className="text-5xl font-bold tracking-tight">{companyName}</h1>
-          <p className="text-2xl text-slate-400 mt-2 capitalize">{formatDate(currentTime)}</p>
+          <h1 className="text-5xl font-bold tracking-tight text-[#c4ae6b]">{companyName}</h1>
+          <p className="text-2xl text-zinc-400 mt-2 capitalize">{formatDate(currentTime)}</p>
         </div>
         <div className="text-right">
-          <p className="text-7xl font-bold tabular-nums">{formatTime(currentTime)}</p>
-          <p className="text-lg text-slate-400 mt-1">
+          <p className="text-7xl font-bold tabular-nums text-[#c4ae6b]">{formatTime(currentTime)}</p>
+          <p className="text-lg text-zinc-500 mt-1">
             Última atualização: {lastUpdate ? formatTime(lastUpdate) : '--:--'}
           </p>
         </div>
@@ -164,8 +164,8 @@ export default function PainelTVPublico() {
 
       <div className="grid grid-cols-3 gap-6 h-[calc(100vh-200px)]">
         {/* Block 1: Sales Progress */}
-        <div className="bg-slate-800/50 rounded-3xl p-6 border border-slate-700">
-          <h2 className="text-2xl font-semibold mb-6 text-blue-400">📈 Vendas</h2>
+        <div className="bg-zinc-900/80 rounded-3xl p-6 border border-[#c4ae6b]/30">
+          <h2 className="text-2xl font-semibold mb-6 text-[#c4ae6b]">📈 Vendas</h2>
           
           <div className="space-y-6">
             <SalesProgressBar
@@ -192,8 +192,8 @@ export default function PainelTVPublico() {
         </div>
 
         {/* Block 2: Daily Funnel */}
-        <div className="bg-slate-800/50 rounded-3xl p-6 border border-slate-700">
-          <h2 className="text-2xl font-semibold mb-4 text-emerald-400">🎯 Funil (Hoje)</h2>
+        <div className="bg-zinc-900/80 rounded-3xl p-6 border border-[#c4ae6b]/30">
+          <h2 className="text-2xl font-semibold mb-4 text-[#c4ae6b]">🎯 Funil (Hoje)</h2>
           
           <div className="grid grid-cols-2 gap-3">
             {funnelItems.map((item, index) => (
@@ -210,8 +210,8 @@ export default function PainelTVPublico() {
         </div>
 
         {/* Block 3: Seller Ranking */}
-        <div className="bg-slate-800/50 rounded-3xl p-6 border border-slate-700">
-          <h2 className="text-2xl font-semibold mb-4 text-amber-400">🏆 Ranking (Hoje)</h2>
+        <div className="bg-zinc-900/80 rounded-3xl p-6 border border-[#c4ae6b]/30">
+          <h2 className="text-2xl font-semibold mb-4 text-[#c4ae6b]">🏆 Ranking (Hoje)</h2>
           
           {data.ranking_vendedores && data.ranking_vendedores.length > 0 ? (
             <div className="space-y-3">
@@ -227,7 +227,7 @@ export default function PainelTVPublico() {
             </div>
           ) : (
             <div className="flex items-center justify-center h-[calc(100%-60px)]">
-              <p className="text-2xl text-slate-500">Nenhuma venda hoje</p>
+              <p className="text-2xl text-zinc-600">Nenhuma venda hoje</p>
             </div>
           )}
         </div>
@@ -250,27 +250,27 @@ function SalesProgressBar({
   const percent = goal > 0 ? Math.min(100, Math.round((value / goal) * 100)) : 0;
   
   const getBarColor = () => {
-    if (percent >= 100) return 'bg-green-500';
-    if (percent >= 70) return 'bg-yellow-500';
-    if (percent >= 40) return 'bg-orange-500';
-    return 'bg-red-500';
+    if (percent >= 100) return 'bg-[#c4ae6b]';
+    if (percent >= 70) return 'bg-[#c4ae6b]/80';
+    if (percent >= 40) return 'bg-amber-600';
+    return 'bg-red-600';
   };
 
   return (
     <div>
       <div className="flex justify-between items-baseline mb-3">
-        <span className="text-2xl font-medium text-slate-300">{label}</span>
+        <span className="text-2xl font-medium text-zinc-300">{label}</span>
         <div className="text-right">
-          <span className="text-4xl font-bold">{formatCurrency(value)}</span>
+          <span className="text-4xl font-bold text-[#c4ae6b]">{formatCurrency(value)}</span>
           {goal > 0 && (
-            <span className="text-xl text-slate-400 ml-3">
+            <span className="text-xl text-zinc-500 ml-3">
               / {formatCurrency(goal)}
             </span>
           )}
         </div>
       </div>
       
-      <div className="relative h-10 bg-slate-700 rounded-full overflow-hidden">
+      <div className="relative h-10 bg-zinc-800 rounded-full overflow-hidden border border-zinc-700">
         <div 
           className={`absolute left-0 top-0 h-full transition-all duration-500 ${getBarColor()}`}
           style={{ width: `${percent}%` }}
@@ -282,7 +282,7 @@ function SalesProgressBar({
         </div>
       </div>
       
-      <div className="flex justify-between mt-2 text-lg text-slate-400">
+      <div className="flex justify-between mt-2 text-lg text-zinc-500">
         <span>{quantity} venda{quantity !== 1 ? 's' : ''}</span>
         {goal > 0 && (
           <span>Faltam {formatCurrency(Math.max(0, goal - value))}</span>
@@ -309,46 +309,46 @@ function FunnelCard({
   const hasGoal = goal > 0;
   
   const getStatusColor = () => {
-    if (!hasGoal) return 'border-slate-600';
-    if (percent >= 100) return 'border-green-500 bg-green-500/10';
-    if (percent >= 70) return 'border-yellow-500 bg-yellow-500/10';
-    if (percent >= 40) return 'border-orange-500 bg-orange-500/10';
-    return 'border-red-500 bg-red-500/10';
+    if (!hasGoal) return 'border-zinc-700 bg-zinc-800/50';
+    if (percent >= 100) return 'border-[#c4ae6b] bg-[#c4ae6b]/10';
+    if (percent >= 70) return 'border-[#c4ae6b]/70 bg-[#c4ae6b]/5';
+    if (percent >= 40) return 'border-amber-600 bg-amber-600/10';
+    return 'border-red-600 bg-red-600/10';
   };
 
   return (
     <div className={`rounded-2xl p-5 border-2 ${getStatusColor()} ${isLast ? 'col-span-2' : ''}`}>
       <div className="flex justify-between items-start mb-2">
-        <span className="text-lg text-slate-400">{label}</span>
+        <span className="text-lg text-zinc-400">{label}</span>
         {rate !== null && (
-          <span className="text-sm bg-slate-700 px-2 py-1 rounded-lg">
+          <span className="text-sm bg-zinc-800 border border-zinc-700 px-2 py-1 rounded-lg text-[#c4ae6b]">
             {rate}% conv.
           </span>
         )}
       </div>
       
       <div className="flex items-baseline gap-3">
-        <span className={`font-bold ${isLast ? 'text-6xl text-emerald-400' : 'text-5xl'}`}>
+        <span className={`font-bold ${isLast ? 'text-6xl text-[#c4ae6b]' : 'text-5xl text-white'}`}>
           {value}
         </span>
         {hasGoal && (
-          <span className="text-2xl text-slate-500">/ {goal}</span>
+          <span className="text-2xl text-zinc-600">/ {goal}</span>
         )}
       </div>
       
       {hasGoal && (
         <div className="mt-3">
-          <div className="h-3 bg-slate-700 rounded-full overflow-hidden">
+          <div className="h-3 bg-zinc-800 rounded-full overflow-hidden border border-zinc-700">
             <div 
               className={`h-full transition-all duration-500 ${
-                percent >= 100 ? 'bg-green-500' : 
-                percent >= 70 ? 'bg-yellow-500' : 
-                percent >= 40 ? 'bg-orange-500' : 'bg-red-500'
+                percent >= 100 ? 'bg-[#c4ae6b]' : 
+                percent >= 70 ? 'bg-[#c4ae6b]/80' : 
+                percent >= 40 ? 'bg-amber-600' : 'bg-red-600'
               }`}
               style={{ width: `${percent}%` }}
             />
           </div>
-          <p className="text-sm text-slate-500 mt-1">{percent}% da meta</p>
+          <p className="text-sm text-zinc-500 mt-1">{percent}% da meta</p>
         </div>
       )}
     </div>
@@ -374,10 +374,10 @@ function RankingCard({
   };
 
   const getBorderColor = () => {
-    if (position === 1) return 'border-amber-500 bg-amber-500/10';
-    if (position === 2) return 'border-slate-400 bg-slate-400/10';
+    if (position === 1) return 'border-[#c4ae6b] bg-[#c4ae6b]/10';
+    if (position === 2) return 'border-zinc-400 bg-zinc-400/10';
     if (position === 3) return 'border-amber-700 bg-amber-700/10';
-    return 'border-slate-600';
+    return 'border-zinc-700 bg-zinc-800/50';
   };
 
   return (
@@ -385,12 +385,12 @@ function RankingCard({
       <span className="text-4xl">{getMedalEmoji()}</span>
       <div className="flex-1">
         <p className="text-xl font-semibold text-white truncate">{name}</p>
-        <p className="text-sm text-slate-400">
+        <p className="text-sm text-zinc-400">
           {salesCount} venda{salesCount !== 1 ? 's' : ''}
         </p>
       </div>
       <div className="text-right">
-        <p className="text-2xl font-bold text-emerald-400">{formatCurrency(salesValue)}</p>
+        <p className="text-2xl font-bold text-[#c4ae6b]">{formatCurrency(salesValue)}</p>
       </div>
     </div>
   );
