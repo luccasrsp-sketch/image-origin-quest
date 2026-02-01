@@ -1,5 +1,5 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+// Send Push Notification - Edge Function
+import { createClient } from "npm:@supabase/supabase-js@2"
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -42,7 +42,7 @@ async function sendWebPush(subscription: { endpoint: string; p256dh: string; aut
   }
 }
 
-serve(async (req) => {
+Deno.serve(async (req: Request) => {
   // Handle CORS
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
