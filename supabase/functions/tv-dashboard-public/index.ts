@@ -5,8 +5,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// Simple secret token for TV access - change this to something unique!
-const TV_ACCESS_TOKEN = 'tv-dash-2026-xfranchise-secret';
+// Simple secret token for TV access - short and memorable
+const TV_ACCESS_TOKEN = 'tv2026';
 
 interface TVDashboardResponse {
   vendas: {
