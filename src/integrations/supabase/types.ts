@@ -703,6 +703,45 @@ export type Database = {
           },
         ]
       }
+      tv_dashboard_goals: {
+        Row: {
+          goal_key: string
+          goal_value: number
+          id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          goal_key: string
+          goal_value?: number
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          goal_key?: string
+          goal_value?: number
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tv_dashboard_goals_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tv_dashboard_goals_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_invites: {
         Row: {
           accepted_at: string | null
