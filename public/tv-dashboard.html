@@ -51,18 +51,13 @@
     
     /* Funnel grid - 3x2 */
     .funnel-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
-    .funnel-card { background: rgba(40,40,40,0.5); border: 2px solid #444; border-radius: 0.75rem; padding: 0.75rem; }
-    .funnel-card.success { border-color: #c4ae6b; background: rgba(196,174,107,0.1); }
-    .funnel-card.warning { border-color: #b45309; background: rgba(180,83,9,0.1); }
-    .funnel-card.danger { border-color: #dc2626; background: rgba(220,38,38,0.1); }
+    .funnel-card { background: rgba(40,40,40,0.5); border: 2px solid #555; border-radius: 0.75rem; padding: 0.75rem; }
+    .funnel-card.highlight { border-color: #c4ae6b; background: rgba(196,174,107,0.1); }
     .funnel-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.25rem; }
     .funnel-label { color: #888; font-size: 0.75rem; }
     .funnel-conv { background: #333; padding: 0.1rem 0.35rem; border-radius: 0.25rem; font-size: 0.65rem; color: #c4ae6b; }
-    .funnel-value { font-size: 1.75rem; font-weight: bold; }
-    .funnel-goal { color: #666; font-size: 0.9rem; }
-    .funnel-progress { height: 0.2rem; background: #333; border-radius: 0.25rem; margin-top: 0.4rem; overflow: hidden; }
-    .funnel-progress-fill { height: 100%; background: #c4ae6b; }
-    .funnel-percent { color: #777; font-size: 0.65rem; margin-top: 0.2rem; }
+    .funnel-value { font-size: 2rem; font-weight: bold; color: #fff; }
+    .funnel-value.gold { color: #c4ae6b; }
     
     /* Ranking */
     .rank-list { display: flex; flex-direction: column; gap: 0.5rem; }
@@ -109,14 +104,6 @@
       return '#dc2626';
     }
     
-    function getFunnelClass(value, goal) {
-      if (!goal) return '';
-      const p = (value / goal) * 100;
-      if (p >= 100) return 'success';
-      if (p >= 70) return 'success';
-      if (p >= 40) return 'warning';
-      return 'danger';
-    }
     
     function renderDashboard(data) {
       const now = new Date();
@@ -150,12 +137,12 @@
           <div class="card">
             <h2 class="card-title">🎯 Funil (Hoje)</h2>
             <div class="funnel-grid">
-              ${renderFunnelCard('Leads Recebidos', data.funil_diario.recebidos, data.metas_diarias.leads_received, null)}
-              ${renderFunnelCard('Leads Atendidos', data.funil_diario.atendidos, data.metas_diarias.leads_attended, data.taxas_conversao.atendidos_recebidos)}
-              ${renderFunnelCard('Reuniões Marcadas', data.funil_diario.reunioes_marcadas, data.metas_diarias.meetings_marked, data.taxas_conversao.reunioes_atendidos)}
-              ${renderFunnelCard('Reuniões Realizadas', data.funil_diario.reunioes_realizadas, data.metas_diarias.meetings_done, data.taxas_conversao.realizadas_marcadas)}
-              ${renderFunnelCard('Em Negociação', data.funil_diario.negociacao_andamento, data.metas_diarias.negotiations, data.taxas_conversao.negociacao_realizadas)}
-              ${renderFunnelCard('Vendas Realizadas', data.funil_diario.vendas, data.metas_diarias.sales, data.taxas_conversao.vendas_negociacao)}
+              ${renderFunnelCard('Leads Recebidos', data.funil_diario.recebidos, null)}
+              ${renderFunnelCard('Leads Atendidos', data.funil_diario.atendidos, data.taxas_conversao.atendidos_recebidos)}
+              ${renderFunnelCard('Reuniões Marcadas', data.funil_diario.reunioes_marcadas, data.taxas_conversao.reunioes_atendidos)}
+              ${renderFunnelCard('Reuniões Realizadas', data.funil_diario.reunioes_realizadas, data.taxas_conversao.realizadas_marcadas)}
+              ${renderFunnelCard('Em Negociação', data.funil_diario.negociacao_andamento, data.taxas_conversao.negociacao_realizadas)}
+              ${renderFunnelCard('Vendas Realizadas', data.funil_diario.vendas, data.taxas_conversao.vendas_negociacao, true)}
             </div>
           </div>
           
@@ -195,25 +182,16 @@
       `;
     }
     
-    function renderFunnelCard(label, value, goal, convRate) {
-      const cls = getFunnelClass(value, goal);
-      const percent = goal > 0 ? Math.round((value / goal) * 100) : 0;
+    function renderFunnelCard(label, value, convRate, isHighlight = false) {
       return `
-        <div class="funnel-card ${cls}">
+        <div class="funnel-card ${isHighlight ? 'highlight' : ''}">
           <div class="funnel-header">
             <span class="funnel-label">${label}</span>
             ${convRate !== null ? `<span class="funnel-conv">${convRate}% conv.</span>` : ''}
           </div>
           <div>
-            <span class="funnel-value">${value}</span>
-            ${goal > 0 ? `<span class="funnel-goal"> / ${goal}</span>` : ''}
+            <span class="funnel-value ${isHighlight ? 'gold' : ''}">${value}</span>
           </div>
-          ${goal > 0 ? `
-            <div class="funnel-progress">
-              <div class="funnel-progress-fill" style="width:${Math.min(100, percent)}%"></div>
-            </div>
-            <div class="funnel-percent">${percent}% da meta</div>
-          ` : ''}
         </div>
       `;
     }
