@@ -3,370 +3,219 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard TV - Escola do Franchising</title>
+  <title>Dashboard - Escola do Franchising</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
+    body { 
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #000;
-      color: #fff;
+      background: #000; 
+      color: #fff; 
       min-height: 100vh;
-      padding: 32px;
-      overflow: hidden;
+      padding: 2rem;
     }
     .gold { color: #c4ae6b; }
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 32px;
-    }
-    .title { font-size: 48px; font-weight: bold; color: #c4ae6b; }
-    .date { font-size: 24px; color: #71717a; margin-top: 8px; text-transform: capitalize; }
-    .time { font-size: 72px; font-weight: bold; color: #c4ae6b; font-variant-numeric: tabular-nums; }
-    .update { font-size: 16px; color: #52525b; margin-top: 4px; }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 24px;
-      height: calc(100vh - 180px);
-    }
-    .card {
-      background: rgba(24, 24, 27, 0.8);
-      border-radius: 24px;
-      padding: 24px;
-      border: 1px solid rgba(196, 174, 107, 0.3);
-    }
-    .card-title {
-      font-size: 24px;
-      font-weight: 600;
-      color: #c4ae6b;
-      margin-bottom: 20px;
-    }
-    .progress-item { margin-bottom: 24px; }
-    .progress-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      margin-bottom: 12px;
-    }
-    .progress-label { font-size: 20px; color: #a1a1aa; }
-    .progress-value { font-size: 32px; font-weight: bold; color: #c4ae6b; }
-    .progress-meta { font-size: 18px; color: #52525b; margin-left: 12px; }
-    .progress-bar {
-      height: 40px;
-      background: #27272a;
-      border-radius: 20px;
-      overflow: hidden;
-      position: relative;
-      border: 1px solid #3f3f46;
-    }
-    .progress-fill {
-      height: 100%;
-      transition: width 0.5s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .progress-percent {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      font-weight: bold;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-    }
-    .progress-footer {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 8px;
-      font-size: 16px;
-      color: #52525b;
-    }
-    .funnel-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-    }
-    .funnel-card {
-      padding: 20px;
-      border-radius: 16px;
-      border: 2px solid #3f3f46;
-      background: rgba(39, 39, 42, 0.5);
-    }
-    .funnel-card.success { border-color: #c4ae6b; background: rgba(196, 174, 107, 0.1); }
-    .funnel-card.warning { border-color: rgba(196, 174, 107, 0.7); background: rgba(196, 174, 107, 0.05); }
-    .funnel-card.danger { border-color: #dc2626; background: rgba(220, 38, 38, 0.1); }
-    .funnel-card.full { grid-column: span 2; }
-    .funnel-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 8px;
-    }
-    .funnel-label { font-size: 16px; color: #71717a; }
-    .funnel-rate {
-      font-size: 12px;
-      background: #27272a;
-      border: 1px solid #3f3f46;
-      padding: 4px 8px;
-      border-radius: 8px;
-      color: #c4ae6b;
-    }
-    .funnel-value { font-size: 48px; font-weight: bold; }
-    .funnel-value.highlight { color: #c4ae6b; font-size: 56px; }
-    .funnel-goal { font-size: 20px; color: #52525b; margin-left: 12px; }
-    .funnel-progress {
-      height: 12px;
-      background: #27272a;
-      border-radius: 6px;
-      overflow: hidden;
-      margin-top: 12px;
-      border: 1px solid #3f3f46;
-    }
-    .funnel-progress-fill { height: 100%; transition: width 0.5s ease; }
-    .funnel-progress-text { font-size: 12px; color: #52525b; margin-top: 4px; }
-    .ranking-item {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 16px;
-      border-radius: 16px;
-      border: 2px solid #3f3f46;
-      margin-bottom: 12px;
-    }
-    .ranking-item.gold { border-color: #c4ae6b; background: rgba(196, 174, 107, 0.1); }
-    .ranking-item.silver { border-color: #a1a1aa; background: rgba(161, 161, 170, 0.1); }
-    .ranking-item.bronze { border-color: #b45309; background: rgba(180, 83, 9, 0.1); }
-    .ranking-medal { font-size: 36px; }
-    .ranking-info { flex: 1; }
-    .ranking-name { font-size: 20px; font-weight: 600; }
-    .ranking-sales { font-size: 14px; color: #71717a; }
-    .ranking-value { font-size: 24px; font-weight: bold; color: #c4ae6b; }
-    .empty-state {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: calc(100% - 60px);
-      font-size: 24px;
-      color: #52525b;
-    }
-    .loading {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      font-size: 36px;
-      color: #c4ae6b;
-    }
-    .error {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      font-size: 36px;
-      color: #dc2626;
-    }
+    .header { display: flex; justify-content: space-between; margin-bottom: 2rem; }
+    .title { font-size: 2.5rem; font-weight: bold; }
+    .date { color: #888; font-size: 1.2rem; margin-top: 0.5rem; }
+    .time { font-size: 4rem; font-weight: bold; text-align: right; }
+    .update { color: #666; font-size: 0.9rem; }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+    .card { background: rgba(30,30,30,0.9); border: 1px solid rgba(196,174,107,0.3); border-radius: 1.5rem; padding: 1.5rem; }
+    .card-title { font-size: 1.3rem; color: #c4ae6b; margin-bottom: 1rem; }
+    .progress-item { margin-bottom: 1.5rem; }
+    .progress-label { display: flex; justify-content: space-between; margin-bottom: 0.5rem; }
+    .progress-bar { height: 2.5rem; background: #333; border-radius: 1rem; overflow: hidden; position: relative; }
+    .progress-fill { height: 100%; transition: width 0.5s; }
+    .progress-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; }
+    .value { font-size: 1.8rem; font-weight: bold; }
+    .meta { color: #666; }
+    .funnel-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+    .funnel-card { background: rgba(40,40,40,0.5); border: 2px solid #444; border-radius: 1rem; padding: 1rem; }
+    .funnel-card.success { border-color: #c4ae6b; background: rgba(196,174,107,0.1); }
+    .funnel-card.warning { border-color: #b45309; background: rgba(180,83,9,0.1); }
+    .funnel-card.danger { border-color: #dc2626; background: rgba(220,38,38,0.1); }
+    .funnel-label { color: #888; font-size: 0.9rem; margin-bottom: 0.25rem; }
+    .funnel-value { font-size: 2.5rem; font-weight: bold; }
+    .funnel-goal { color: #666; font-size: 1.2rem; }
+    .funnel-full { grid-column: span 2; }
+    .funnel-full .funnel-value { font-size: 3rem; color: #c4ae6b; }
+    .rank-item { display: flex; align-items: center; gap: 1rem; padding: 1rem; border: 2px solid #444; border-radius: 1rem; margin-bottom: 0.75rem; }
+    .rank-item.gold { border-color: #c4ae6b; background: rgba(196,174,107,0.1); }
+    .rank-item.silver { border-color: #9ca3af; background: rgba(156,163,175,0.1); }
+    .rank-item.bronze { border-color: #b45309; background: rgba(180,83,9,0.1); }
+    .rank-medal { font-size: 2rem; }
+    .rank-info { flex: 1; }
+    .rank-name { font-size: 1.1rem; font-weight: 600; }
+    .rank-sales { color: #888; font-size: 0.9rem; }
+    .rank-value { font-size: 1.3rem; font-weight: bold; color: #c4ae6b; }
+    .empty { text-align: center; color: #666; padding: 3rem; font-size: 1.2rem; }
+    .loading { display: flex; align-items: center; justify-content: center; min-height: 100vh; font-size: 2rem; }
+    .error { color: #ef4444; }
   </style>
 </head>
 <body>
-  <div id="app" class="loading">Carregando...</div>
-
+  <div id="app" class="loading"><span class="gold">Carregando...</span></div>
+  
   <script>
     const SUPABASE_URL = 'https://xxikcvtphdixcfxrwvzs.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh4aWtjdnRwaGRpeGNmeHJ3dnpzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1Mjk2NzcsImV4cCI6MjA4NTEwNTY3N30.c-5LYzHhL_66aHPAxjzJIO1LmywdsqjdP3Pv9TjDVhE';
     const TOKEN = 'tv2026';
     const COMPANY = 'escola_franchising';
-
+    
+    let lastUpdate = null;
+    
     function formatCurrency(value) {
       return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
     }
-
+    
     function formatTime(date) {
       return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
     }
-
+    
     function formatDate(date) {
-      return date.toLocaleDateString('pt-BR', { 
-        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' 
-      });
+      return date.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
     }
-
-    function getProgressColor(percent) {
+    
+    function getBarColor(percent) {
       if (percent >= 100) return '#c4ae6b';
-      if (percent >= 70) return 'rgba(196, 174, 107, 0.8)';
-      if (percent >= 40) return '#d97706';
+      if (percent >= 70) return 'rgba(196,174,107,0.8)';
+      if (percent >= 40) return '#b45309';
       return '#dc2626';
     }
-
-    function getStatusClass(percent, hasGoal) {
-      if (!hasGoal) return '';
-      if (percent >= 100) return 'success';
-      if (percent >= 70) return 'warning';
+    
+    function getFunnelClass(value, goal) {
+      if (!goal) return '';
+      const p = (value / goal) * 100;
+      if (p >= 100) return 'success';
+      if (p >= 70) return 'success';
+      if (p >= 40) return 'warning';
       return 'danger';
     }
-
-    async function fetchData() {
-      try {
-        const response = await fetch(`${SUPABASE_URL}/functions/v1/tv-dashboard-public`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`
-          },
-          body: JSON.stringify({ token: TOKEN, company: COMPANY })
-        });
-
-        if (!response.ok) throw new Error('Erro na requisição');
-        
-        const data = await response.json();
-        if (data.error) throw new Error(data.error);
-        
-        return data;
-      } catch (err) {
-        console.error('Erro:', err);
-        throw err;
-      }
-    }
-
+    
     function renderDashboard(data) {
       const now = new Date();
-      const lastUpdate = formatTime(now);
-
-      const funnelItems = [
-        { label: 'Leads Recebidos', value: data.funil_diario.recebidos, goal: data.metas_diarias.leads_received, rate: null },
-        { label: 'Leads Atendidos', value: data.funil_diario.atendidos, goal: data.metas_diarias.leads_attended, rate: data.taxas_conversao.atendidos_recebidos },
-        { label: 'Reuniões Marcadas', value: data.funil_diario.reunioes_marcadas, goal: data.metas_diarias.meetings_marked, rate: data.taxas_conversao.reunioes_atendidos },
-        { label: 'Reuniões Realizadas', value: data.funil_diario.reunioes_realizadas, goal: data.metas_diarias.meetings_done, rate: data.taxas_conversao.realizadas_marcadas },
-        { label: 'Em Negociação', value: data.funil_diario.negociacao_andamento, goal: data.metas_diarias.negotiations, rate: data.taxas_conversao.negociacao_realizadas },
-        { label: 'Vendas Realizadas', value: data.funil_diario.vendas, goal: data.metas_diarias.sales, rate: data.taxas_conversao.vendas_negociacao },
-      ];
-
-      const salesItems = [
-        { label: 'Meta Diária', ...data.vendas.dia },
-        { label: 'Meta Semanal', ...data.vendas.semana },
-        { label: 'Meta Mensal', ...data.vendas.mes },
-      ];
-
-      const getMedal = (pos) => pos === 1 ? '🥇' : pos === 2 ? '🥈' : pos === 3 ? '🥉' : `${pos}º`;
-      const getMedalClass = (pos) => pos === 1 ? 'gold' : pos === 2 ? 'silver' : pos === 3 ? 'bronze' : '';
-
-      document.getElementById('app').innerHTML = `
+      const app = document.getElementById('app');
+      
+      app.innerHTML = `
         <header class="header">
           <div>
-            <h1 class="title">Escola de Franchising</h1>
+            <h1 class="title gold">Escola de Franchising</h1>
             <p class="date">${formatDate(now)}</p>
           </div>
-          <div style="text-align: right;">
-            <p class="time">${formatTime(now)}</p>
-            <p class="update">Última atualização: ${lastUpdate}</p>
+          <div style="text-align:right">
+            <p class="time gold">${formatTime(now)}</p>
+            <p class="update">Última atualização: ${lastUpdate ? formatTime(lastUpdate) : '--:--'}</p>
           </div>
         </header>
-
+        
         <div class="grid">
           <div class="card">
             <h2 class="card-title">📈 Vendas</h2>
-            ${salesItems.map(item => {
-              const percent = item.meta > 0 ? Math.min(100, Math.round((item.valor_realizado / item.meta) * 100)) : 0;
-              const color = getProgressColor(percent);
-              return `
-                <div class="progress-item">
-                  <div class="progress-header">
-                    <span class="progress-label">${item.label}</span>
-                    <div>
-                      <span class="progress-value">${formatCurrency(item.valor_realizado)}</span>
-                      ${item.meta > 0 ? `<span class="progress-meta">/ ${formatCurrency(item.meta)}</span>` : ''}
-                    </div>
-                  </div>
-                  <div class="progress-bar">
-                    <div class="progress-fill" style="width: ${percent}%; background: ${color};"></div>
-                    <div class="progress-percent">${percent}%</div>
-                  </div>
-                  <div class="progress-footer">
-                    <span>${item.quantidade} venda${item.quantidade !== 1 ? 's' : ''}</span>
-                    ${item.meta > 0 ? `<span>Faltam ${formatCurrency(Math.max(0, item.meta - item.valor_realizado))}</span>` : ''}
-                  </div>
-                </div>
-              `;
-            }).join('')}
+            ${renderSalesProgress('Meta Diária', data.vendas.dia)}
+            ${renderSalesProgress('Meta Semanal', data.vendas.semana)}
+            ${renderSalesProgress('Meta Mensal', data.vendas.mes)}
           </div>
-
+          
           <div class="card">
             <h2 class="card-title">🎯 Funil (Hoje)</h2>
             <div class="funnel-grid">
-              ${funnelItems.map((item, index) => {
-                const percent = item.goal > 0 ? Math.min(100, Math.round((item.value / item.goal) * 100)) : 0;
-                const statusClass = getStatusClass(percent, item.goal > 0);
-                const isLast = index === funnelItems.length - 1;
-                const color = getProgressColor(percent);
-                return `
-                  <div class="funnel-card ${statusClass} ${isLast ? 'full' : ''}">
-                    <div class="funnel-header">
-                      <span class="funnel-label">${item.label}</span>
-                      ${item.rate !== null ? `<span class="funnel-rate">${item.rate}% conv.</span>` : ''}
-                    </div>
-                    <div>
-                      <span class="funnel-value ${isLast ? 'highlight' : ''}">${item.value}</span>
-                      ${item.goal > 0 ? `<span class="funnel-goal">/ ${item.goal}</span>` : ''}
-                    </div>
-                    ${item.goal > 0 ? `
-                      <div class="funnel-progress">
-                        <div class="funnel-progress-fill" style="width: ${percent}%; background: ${color};"></div>
-                      </div>
-                      <p class="funnel-progress-text">${percent}% da meta</p>
-                    ` : ''}
-                  </div>
-                `;
-              }).join('')}
+              ${renderFunnelCard('Leads Recebidos', data.funil_diario.recebidos, data.metas_diarias.leads_received)}
+              ${renderFunnelCard('Leads Atendidos', data.funil_diario.atendidos, data.metas_diarias.leads_attended)}
+              ${renderFunnelCard('Reuniões Marcadas', data.funil_diario.reunioes_marcadas, data.metas_diarias.meetings_marked)}
+              ${renderFunnelCard('Reuniões Realizadas', data.funil_diario.reunioes_realizadas, data.metas_diarias.meetings_done)}
+              ${renderFunnelCard('Em Negociação', data.funil_diario.negociacao_andamento, data.metas_diarias.negotiations)}
+              ${renderFunnelCard('Vendas Realizadas', data.funil_diario.vendas, data.metas_diarias.sales, true)}
             </div>
           </div>
-
+          
           <div class="card">
             <h2 class="card-title">🏆 Ranking (Hoje)</h2>
-            ${data.ranking_vendedores && data.ranking_vendedores.length > 0 ? 
-              data.ranking_vendedores.map((seller, index) => `
-                <div class="ranking-item ${getMedalClass(index + 1)}">
-                  <span class="ranking-medal">${getMedal(index + 1)}</span>
-                  <div class="ranking-info">
-                    <p class="ranking-name">${seller.name}</p>
-                    <p class="ranking-sales">${seller.sales_count} venda${seller.sales_count !== 1 ? 's' : ''}</p>
-                  </div>
-                  <span class="ranking-value">${formatCurrency(seller.sales_value)}</span>
-                </div>
-              `).join('') 
-              : '<div class="empty-state">Nenhuma venda hoje</div>'
+            ${data.ranking_vendedores && data.ranking_vendedores.length > 0 
+              ? data.ranking_vendedores.map((s, i) => renderRankItem(s, i)).join('')
+              : '<div class="empty">Nenhuma venda hoje</div>'
             }
           </div>
         </div>
       `;
     }
-
-    function showError(message) {
-      document.getElementById('app').innerHTML = `<div class="error">${message}</div>`;
-      document.getElementById('app').className = '';
+    
+    function renderSalesProgress(label, data) {
+      const percent = data.meta > 0 ? Math.min(100, Math.round((data.valor_realizado / data.meta) * 100)) : 0;
+      return `
+        <div class="progress-item">
+          <div class="progress-label">
+            <span>${label}</span>
+            <span><span class="value gold">${formatCurrency(data.valor_realizado)}</span> <span class="meta">/ ${formatCurrency(data.meta)}</span></span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width:${percent}%;background:${getBarColor(percent)}"></div>
+            <div class="progress-text">${percent}%</div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:0.5rem;color:#888;font-size:0.9rem">
+            <span>${data.quantidade} venda${data.quantidade !== 1 ? 's' : ''}</span>
+            ${data.meta > 0 ? `<span>Faltam ${formatCurrency(Math.max(0, data.meta - data.valor_realizado))}</span>` : ''}
+          </div>
+        </div>
+      `;
     }
-
+    
+    function renderFunnelCard(label, value, goal, isLast = false) {
+      const cls = getFunnelClass(value, goal);
+      const percent = goal > 0 ? Math.round((value / goal) * 100) : 0;
+      return `
+        <div class="funnel-card ${cls} ${isLast ? 'funnel-full' : ''}">
+          <div class="funnel-label">${label}</div>
+          <span class="funnel-value">${value}</span>
+          ${goal > 0 ? `<span class="funnel-goal">/ ${goal}</span>` : ''}
+          ${goal > 0 ? `<div style="margin-top:0.5rem;color:#888;font-size:0.8rem">${percent}% da meta</div>` : ''}
+        </div>
+      `;
+    }
+    
+    function renderRankItem(seller, index) {
+      const medals = ['🥇', '🥈', '🥉'];
+      const classes = ['gold', 'silver', 'bronze'];
+      return `
+        <div class="rank-item ${classes[index] || ''}">
+          <span class="rank-medal">${medals[index] || (index + 1) + 'º'}</span>
+          <div class="rank-info">
+            <div class="rank-name">${seller.name}</div>
+            <div class="rank-sales">${seller.sales_count} venda${seller.sales_count !== 1 ? 's' : ''}</div>
+          </div>
+          <div class="rank-value">${formatCurrency(seller.sales_value)}</div>
+        </div>
+      `;
+    }
+    
+    async function fetchData() {
+      try {
+        const response = await fetch(`${SUPABASE_URL}/functions/v1/tv-dashboard-public`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: TOKEN, company: COMPANY })
+        });
+        
+        if (!response.ok) throw new Error('Erro ao carregar dados');
+        
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+        
+        lastUpdate = new Date();
+        renderDashboard(data);
+      } catch (err) {
+        console.error('Erro:', err);
+        document.getElementById('app').innerHTML = `<div class="loading"><span class="error">Erro: ${err.message}</span></div>`;
+      }
+    }
+    
     // Update clock every second
     setInterval(() => {
       const timeEl = document.querySelector('.time');
       if (timeEl) timeEl.textContent = formatTime(new Date());
     }, 1000);
-
-    // Initial load and refresh every 30 seconds
-    async function init() {
-      try {
-        const data = await fetchData();
-        renderDashboard(data);
-      } catch (err) {
-        showError('Erro ao carregar dados');
-      }
-    }
-
-    init();
-    setInterval(init, 30000);
+    
+    // Fetch data on load and every 30 seconds
+    fetchData();
+    setInterval(fetchData, 30000);
   </script>
 </body>
 </html>
