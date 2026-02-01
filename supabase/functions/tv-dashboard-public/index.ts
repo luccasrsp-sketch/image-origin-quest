@@ -8,6 +8,12 @@ const corsHeaders = {
 // Simple secret token for TV access - short and memorable
 const TV_ACCESS_TOKEN = 'tv2026';
 
+interface SellerRanking {
+  name: string;
+  sales_count: number;
+  sales_value: number;
+}
+
 interface TVDashboardResponse {
   vendas: {
     dia: { valor_realizado: number; meta: number; quantidade: number };
@@ -37,6 +43,7 @@ interface TVDashboardResponse {
     negociacao_realizadas: number;
     vendas_negociacao: number;
   };
+  ranking_vendedores: SellerRanking[];
   timestamp: string;
 }
 
@@ -96,7 +103,7 @@ Deno.serve(async (req) => {
     // Fetch all leads for calculations (filtered by company if specified)
     let leadsQuery = supabase
       .from('leads')
-      .select('id, status, created_at, sale_entry_value, sale_remaining_value, sale_confirmed_at, company');
+      .select('id, status, created_at, sale_entry_value, sale_remaining_value, sale_confirmed_at, company, assigned_closer_id');
     
     if (company && company !== 'all') {
       leadsQuery = leadsQuery.eq('company', company);
@@ -186,6 +193,46 @@ Deno.serve(async (req) => {
       new Date(l.sale_confirmed_at) >= startOfDay
     ).length;
 
+    // 7) Seller ranking for today - get sales by closer
+    const todaySalesLeads = (allLeads || []).filter(l => 
+      l.status === 'vendido' && 
+      l.sale_confirmed_at && 
+      new Date(l.sale_confirmed_at) >= startOfDay &&
+      l.assigned_closer_id
+    );
+
+    // Group by closer
+    const salesByCloser: Record<string, { count: number; value: number }> = {};
+    todaySalesLeads.forEach(lead => {
+      const closerId = lead.assigned_closer_id;
+      if (!closerId) return;
+      if (!salesByCloser[closerId]) {
+        salesByCloser[closerId] = { count: 0, value: 0 };
+      }
+      salesByCloser[closerId].count += 1;
+      salesByCloser[closerId].value += (lead.sale_entry_value || 0) + (lead.sale_remaining_value || 0);
+    });
+
+    // Fetch closer names from profiles
+    const closerIds = Object.keys(salesByCloser);
+    let rankingVendedores: SellerRanking[] = [];
+    
+    if (closerIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', closerIds);
+
+      rankingVendedores = closerIds.map(closerId => {
+        const profile = (profiles || []).find(p => p.id === closerId);
+        return {
+          name: profile?.full_name || 'Vendedor',
+          sales_count: salesByCloser[closerId].count,
+          sales_value: salesByCloser[closerId].value,
+        };
+      }).sort((a, b) => b.sales_value - a.sales_value);
+    }
+
     // Calculate conversion rates
     const safeDiv = (a: number, b: number) => b > 0 ? Math.round((a / b) * 100) : 0;
 
@@ -230,6 +277,7 @@ Deno.serve(async (req) => {
         negociacao_realizadas: safeDiv(negotiationsInProgress, meetingsDoneToday),
         vendas_negociacao: safeDiv(salesToday, negotiationsInProgress),
       },
+      ranking_vendedores: rankingVendedores,
       timestamp: now.toISOString(),
     };
 
