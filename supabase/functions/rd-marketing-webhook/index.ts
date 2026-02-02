@@ -6,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-rd-signature, x-webhook-secret',
 }
 
-// Verify webhook secret from Authorization header or custom header
+// Verify webhook secret from URL, Authorization header, or custom header
 function verifyWebhookSecret(req: Request): boolean {
   const webhookSecret = Deno.env.get('RD_MARKETING_WEBHOOK_SECRET')
   
@@ -15,11 +15,20 @@ function verifyWebhookSecret(req: Request): boolean {
     return false
   }
   
+  // Check query parameter (for easy integration like BotConversa)
+  const url = new URL(req.url)
+  const urlSecret = url.searchParams.get('secret')
+  if (urlSecret === webhookSecret) {
+    console.log('Auth via URL query parameter')
+    return true
+  }
+  
   // Check Authorization header (Bearer token)
   const authHeader = req.headers.get('Authorization')
   if (authHeader) {
     const token = authHeader.replace('Bearer ', '')
     if (token === webhookSecret) {
+      console.log('Auth via Authorization header')
       return true
     }
   }
@@ -27,10 +36,9 @@ function verifyWebhookSecret(req: Request): boolean {
   // Check custom header as fallback
   const customSecret = req.headers.get('X-Webhook-Secret')
   if (customSecret === webhookSecret) {
+    console.log('Auth via X-Webhook-Secret header')
     return true
   }
-  
-  // Query parameter auth removed for security - secrets in URLs leak to logs
   
   return false
 }
