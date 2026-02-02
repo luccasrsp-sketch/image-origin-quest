@@ -35,32 +35,14 @@ export default function KanbanPage() {
   // Viewers podem apenas visualizar, não podem editar ou mover leads
   const canEdit = !isViewerOnly();
 
-  // Filtra colunas baseado no papel do usuário ou do membro sendo visualizado
+  // Filtra colunas baseado no papel do usuário
+  // SDRs, Closers e Viewers veem todas as colunas (exceto adminOnly como "Perdido")
+  // Admins veem todas as colunas incluindo adminOnly
   const visibleColumns = KANBAN_COLUMNS.filter(col => {
-    // Viewers veem todas as colunas (exceto adminOnly)
-    if (isViewerOnly()) {
-      return !col.adminOnly;
-    }
-    
-    // Se está visualizando como outro membro
-    if (viewingAs) {
-      // Colunas adminOnly nunca aparecem na visão simulada
-      if (col.adminOnly) return false;
-      // Verifica se a coluna é visível para algum dos papéis do membro
-      const memberRoles = viewingAs.roles;
-      return col.roles.some(colRole => memberRoles.includes(colRole));
-    }
-    
-    // Visão normal (sem simulação)
     // Colunas adminOnly só aparecem para admins
-    if (col.adminOnly && !isAdmin()) return false;
-    // Admin vê todas as colunas
-    if (isAdmin()) return true;
-    // SDR vê colunas que incluem 'sdr' no array de roles
-    if (isSDR() && col.roles.includes('sdr')) return true;
-    // Closer vê colunas que incluem 'closer' no array de roles
-    if (isCloser() && col.roles.includes('closer')) return true;
-    return false;
+    if (col.adminOnly) return isAdmin();
+    // Todas as outras colunas são visíveis para todos os papéis
+    return true;
   });
 
   const getLeadsByStatus = (status: LeadStatus) => 
