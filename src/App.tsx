@@ -70,9 +70,11 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-function AppRoutes() {
+// Componente que mostra loading enquanto auth carrega para rotas que precisam de user
+function AuthRoutes() {
   const { user, loading } = useAuth();
 
+  // Rota /auth - redireciona se logado
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -81,13 +83,24 @@ function AppRoutes() {
     );
   }
 
+  if (user) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <Auth />;
+}
+
+function AppRoutes() {
   return (
     <Routes>
-      {/* Public routes */}
-      <Route path="/auth" element={user ? <Navigate to="/dashboard" replace /> : <Auth />} />
+      {/* Public routes - COMPLETAMENTE fora do contexto de auth */}
       <Route path="/cadastro" element={<LeadForm />} />
       <Route path="/cadastro-evidia" element={<LeadFormEvidia />} />
       <Route path="/embed-form" element={<EmbedForm />} />
+      <Route path="/tv" element={<PainelTVPublico />} />
+      
+      {/* Auth route - precisa verificar se já está logado */}
+      <Route path="/auth" element={<AuthRoutes />} />
       
       {/* Protected routes */}
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
@@ -108,9 +121,6 @@ function AppRoutes() {
       
       {/* TV Dashboard - fullscreen, no layout */}
       <Route path="/painel-tv" element={<ProtectedRoute><PainelTV /></ProtectedRoute>} />
-      
-      {/* TV Dashboard PUBLIC - no auth required, token-based */}
-      <Route path="/tv" element={<PainelTVPublico />} />
       
       <Route path="*" element={<NotFound />} />
     </Routes>
