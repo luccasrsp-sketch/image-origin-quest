@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useState, useEffect, useMemo } from 'react';
+import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { CheckCircle, Loader2 } from 'lucide-react';
 
@@ -12,6 +12,20 @@ const leadSchema = z.object({
 });
 
 export default function EmbedFormPage() {
+  // Create an anonymous supabase client (without existing session)
+  // This ensures inserts go through the 'anon' role, not 'authenticated'
+  const anonSupabase = useMemo(() => {
+    return createClient(
+      import.meta.env.VITE_SUPABASE_URL,
+      import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+      {
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false,
+        }
+      }
+    );
+  }, []);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -84,7 +98,7 @@ export default function EmbedFormPage() {
       ? `Número de Franquias: ${formData.franchise_count}` 
       : undefined;
 
-    const { error } = await supabase.from('leads').insert({
+    const { error } = await anonSupabase.from('leads').insert({
       full_name: formData.full_name,
       email: formData.email,
       phone: formData.phone,
