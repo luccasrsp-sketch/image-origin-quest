@@ -257,6 +257,54 @@ export function useLeads() {
     return true;
   };
 
+  // Função para alterar responsável com registro no histórico
+  const changeLeadAssignment = async (
+    leadId: string, 
+    newUserId: string | null, 
+    type: 'sdr' | 'closer',
+    newUserName: string,
+    oldUserName?: string
+  ) => {
+    const field = type === 'sdr' ? 'assigned_sdr_id' : 'assigned_closer_id';
+    const roleName = type === 'sdr' ? 'SDR' : 'Closer';
+    
+    const { error } = await supabase
+      .from('leads')
+      .update({ [field]: newUserId })
+      .eq('id', leadId);
+
+    if (error) {
+      toast({
+        title: 'Erro ao alterar responsável',
+        description: error.message,
+        variant: 'destructive',
+      });
+      return false;
+    }
+
+    // Log activity - registrar a mudança de responsável
+    if (profile?.id) {
+      const noteText = oldUserName 
+        ? `${roleName} alterado de "${oldUserName}" para "${newUserName}"`
+        : `${roleName} atribuído: ${newUserName}`;
+      
+      await supabase.from('lead_activities').insert({
+        lead_id: leadId,
+        user_id: profile.id,
+        action: 'note_added',
+        notes: noteText,
+      });
+    }
+
+    toast({
+      title: 'Responsável alterado',
+      description: `${roleName} do lead foi alterado com sucesso.`,
+    });
+
+    fetchLeads();
+    return true;
+  };
+
   const addNote = async (leadId: string, note: string) => {
     const { error } = await supabase
       .from('leads')
@@ -601,6 +649,7 @@ export function useLeads() {
     moveToQualified,
     getNextCloser,
     assignLead,
+    changeLeadAssignment,
     addNote,
     setNeedsScheduling,
     clearNeedsScheduling,

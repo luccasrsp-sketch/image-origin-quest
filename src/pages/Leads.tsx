@@ -10,7 +10,7 @@ import { Search, Users, AlertCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function LeadsPage() {
-  const { leads, loading } = useLeads();
+  const { leads, loading, changeLeadAssignment, updateLeadStatus, addNote } = useLeads();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
 
@@ -110,6 +110,9 @@ export default function LeadsPage() {
           lead={selectedLead}
           open={!!selectedLead}
           onOpenChange={(open) => !open && setSelectedLead(null)}
+          onStatusChange={updateLeadStatus}
+          onAddNote={addNote}
+          onChangeAssignment={changeLeadAssignment}
         />
       </div>
     </AppLayout>

@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Lead, LeadStatus, STATUS_LABELS, KANBAN_COLUMNS, LeadActivity, FUNNEL_LABELS, FUNNEL_COLORS, FunnelType } from '@/types/crm';
+import { Lead, LeadStatus, STATUS_LABELS, KANBAN_COLUMNS, LeadActivity, FUNNEL_LABELS, FUNNEL_COLORS, FunnelType, Profile, AppRole } from '@/types/crm';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -38,6 +38,7 @@ import {
   StickyNote,
   History,
   XCircle,
+  UserCog,
 } from 'lucide-react';
 
 interface LeadDetailDialogProps {
@@ -47,9 +48,10 @@ interface LeadDetailDialogProps {
   onStatusChange?: (leadId: string, newStatus: LeadStatus, closerId?: string) => Promise<boolean>;
   onAddNote?: (leadId: string, note: string) => Promise<boolean>;
   onMarkAsLost?: (lead: Lead) => void;
+  onChangeAssignment?: (leadId: string, newUserId: string | null, type: 'sdr' | 'closer', newUserName: string, oldUserName?: string) => Promise<boolean>;
 }
 
-export function LeadDetailDialog({ lead, open, onOpenChange, onStatusChange, onAddNote, onMarkAsLost }: LeadDetailDialogProps) {
+export function LeadDetailDialog({ lead, open, onOpenChange, onStatusChange, onAddNote, onMarkAsLost, onChangeAssignment }: LeadDetailDialogProps) {
   const { toast } = useToast();
   const { profile, isViewerOnly } = useAuth();
   const [newNote, setNewNote] = useState('');
@@ -57,16 +59,43 @@ export function LeadDetailDialog({ lead, open, onOpenChange, onStatusChange, onA
   const [isSaving, setIsSaving] = useState(false);
   const [activities, setActivities] = useState<LeadActivity[]>([]);
   const [loadingActivities, setLoadingActivities] = useState(false);
+  const [teamMembers, setTeamMembers] = useState<(Profile & { roles: AppRole[] })[]>([]);
+  const [selectedSdr, setSelectedSdr] = useState<string>('');
+  const [selectedCloser, setSelectedCloser] = useState<string>('');
   
   // Viewers não podem editar
   const canEdit = !isViewerOnly();
 
-  // Buscar histórico de atividades quando o dialog abrir
+  // Buscar histórico de atividades e membros da equipe quando o dialog abrir
   useEffect(() => {
     if (open && lead) {
       fetchActivities();
+      fetchTeamMembers();
+      setSelectedSdr(lead.assigned_sdr_id || '');
+      setSelectedCloser(lead.assigned_closer_id || '');
     }
   }, [open, lead?.id]);
+
+  const fetchTeamMembers = async () => {
+    const { data: profiles } = await supabase
+      .from('profiles_public')
+      .select('*')
+      .order('full_name');
+
+    const { data: roles } = await supabase
+      .from('user_roles')
+      .select('*');
+
+    if (profiles && roles) {
+      const teamWithRoles = (profiles as Profile[]).map(profile => ({
+        ...profile,
+        roles: (roles as { user_id: string; role: AppRole }[])
+          .filter(r => r.user_id === profile.user_id)
+          .map(r => r.role),
+      }));
+      setTeamMembers(teamWithRoles);
+    }
+  };
 
   const fetchActivities = async () => {
     if (!lead) return;
@@ -81,6 +110,32 @@ export function LeadDetailDialog({ lead, open, onOpenChange, onStatusChange, onA
       setActivities(data as LeadActivity[]);
     }
     setLoadingActivities(false);
+  };
+
+  const getSDRs = () => teamMembers.filter(t => t.roles.includes('sdr'));
+  const getClosers = () => teamMembers.filter(t => t.roles.includes('closer') || t.roles.includes('admin'));
+
+  const handleAssignmentChange = async (type: 'sdr' | 'closer') => {
+    if (!lead || !onChangeAssignment) return;
+    
+    const newId = type === 'sdr' ? selectedSdr : selectedCloser;
+    const oldUser = type === 'sdr' ? lead.assigned_sdr : lead.assigned_closer;
+    const newUser = teamMembers.find(t => t.id === newId);
+    
+    if (!newUser) return;
+    
+    setIsSaving(true);
+    const success = await onChangeAssignment(
+      lead.id, 
+      newId || null, 
+      type, 
+      newUser.full_name || '',
+      oldUser?.full_name
+    );
+    if (success) {
+      await fetchActivities();
+    }
+    setIsSaving(false);
   };
 
   if (!lead) return null;
@@ -221,20 +276,81 @@ export function LeadDetailDialog({ lead, open, onOpenChange, onStatusChange, onA
             </div>
           )}
 
-          {/* Assigned team */}
-          <div className="grid gap-3 sm:grid-cols-2">
-            {lead.assigned_sdr && (
-              <div className="p-3 rounded-lg border">
+          {/* Assigned team - com opção de edição */}
+          <div className="space-y-3">
+            <Label className="flex items-center gap-2">
+              <UserCog className="h-4 w-4" />
+              Responsáveis
+            </Label>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {/* SDR */}
+              <div className="p-3 rounded-lg border space-y-2">
                 <p className="text-xs text-muted-foreground">SDR Responsável</p>
-                <p className="text-sm font-medium">{lead.assigned_sdr.full_name}</p>
+                {canEdit && onChangeAssignment ? (
+                  <div className="flex gap-2">
+                    <Select value={selectedSdr} onValueChange={setSelectedSdr}>
+                      <SelectTrigger className="h-8 text-sm">
+                        <SelectValue placeholder="Selecionar SDR" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getSDRs().map(sdr => (
+                          <SelectItem key={sdr.id} value={sdr.id!}>
+                            {sdr.full_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {selectedSdr !== (lead.assigned_sdr_id || '') && (
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        className="h-8 px-2"
+                        onClick={() => handleAssignmentChange('sdr')}
+                        disabled={isSaving}
+                      >
+                        Salvar
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-sm font-medium">{lead.assigned_sdr?.full_name || 'Não atribuído'}</p>
+                )}
               </div>
-            )}
-            {lead.assigned_closer && (
-              <div className="p-3 rounded-lg border">
+
+              {/* Closer */}
+              <div className="p-3 rounded-lg border space-y-2">
                 <p className="text-xs text-muted-foreground">Closer Responsável</p>
-                <p className="text-sm font-medium">{lead.assigned_closer.full_name}</p>
+                {canEdit && onChangeAssignment ? (
+                  <div className="flex gap-2">
+                    <Select value={selectedCloser} onValueChange={setSelectedCloser}>
+                      <SelectTrigger className="h-8 text-sm">
+                        <SelectValue placeholder="Selecionar Closer" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getClosers().map(closer => (
+                          <SelectItem key={closer.id} value={closer.id!}>
+                            {closer.full_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {selectedCloser !== (lead.assigned_closer_id || '') && (
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        className="h-8 px-2"
+                        onClick={() => handleAssignmentChange('closer')}
+                        disabled={isSaving}
+                      >
+                        Salvar
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-sm font-medium">{lead.assigned_closer?.full_name || 'Não atribuído'}</p>
+                )}
               </div>
-            )}
+            </div>
           </div>
 
           {/* Dates */}
