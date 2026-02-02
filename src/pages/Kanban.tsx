@@ -252,10 +252,13 @@ export default function KanbanPage() {
         open={!!qualifyingLead}
         onOpenChange={(open) => !open && setQualifyingLead(null)}
         onScheduleMeeting={(lead) => {
+          // O lead recebido aqui já tem o assigned_closer_id do qualifyingLead
+          const leadWithCloser = qualifyingLead || lead;
           setQualifyingLead(null);
           // Mover para reuniao_marcada e abrir dialog de agendamento
-          updateLeadStatus(lead.id, 'reuniao_marcada').then(() => {
-            setSchedulingLead(lead);
+          updateLeadStatus(leadWithCloser.id, 'reuniao_marcada').then(() => {
+            // Usa o lead com o closer atribuído
+            setSchedulingLead(leadWithCloser);
           });
         }}
         onNeedScheduling={setNeedsScheduling}
