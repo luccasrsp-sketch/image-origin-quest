@@ -19,7 +19,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function KanbanPage() {
-  const { leads, filteredLeads, loading, updateLeadStatus, moveToQualified, addNote, setNeedsScheduling, clearNeedsScheduling, saveProposal, saveSaleData, updateSaleStatus, markAsLost } = useLeads();
+  const { leads, filteredLeads, loading, updateLeadStatus, moveToQualified, addNote, setNeedsScheduling, clearNeedsScheduling, saveProposal, saveSaleData, updateSaleStatus, markAsLost, changeLeadAssignment } = useLeads();
   const { createEvent } = useCalendar();
   const { profile, isAdmin, isSDR, isCloser, isViewerOnly, viewingAs } = useAuth();
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
@@ -216,6 +216,7 @@ export default function KanbanPage() {
         onStatusChange={updateLeadStatus}
         onAddNote={addNote}
         onMarkAsLost={(lead) => setLossLead(lead)}
+        onChangeAssignment={changeLeadAssignment}
       />
 
       {/* Schedule meeting dialog */}
