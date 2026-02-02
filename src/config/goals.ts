@@ -6,8 +6,8 @@ export const FEBRUARY_2026_GOALS = {
   billingGoal: 2500000,  // R$ 2.5M in closed contracts (faturamento)
   cashGoal: 1500000,     // R$ 1.5M new cash received (dinheiro em caixa)
   
-  // Working days in February 2026
-  workingDays: 16,
+  // Working days in February 2026 (remaining after today)
+  workingDays: 15,
   
   // Start date of the month
   monthStart: new Date(2026, 1, 1), // February 1, 2026
