@@ -14,6 +14,7 @@ import Relatorios from "./pages/Relatorios";
 import Configuracoes from "./pages/Configuracoes";
 import LeadForm from "./pages/LeadForm";
 import LeadFormEvidia from "./pages/LeadFormEvidia";
+import EmbedForm from "./pages/EmbedForm";
 import ImportLeads from "./pages/ImportLeads";
 import NotFound from "./pages/NotFound";
 // Financial module pages
@@ -86,6 +87,7 @@ function AppRoutes() {
       <Route path="/auth" element={user ? <Navigate to="/dashboard" replace /> : <Auth />} />
       <Route path="/cadastro" element={<LeadForm />} />
       <Route path="/cadastro-evidia" element={<LeadFormEvidia />} />
+      <Route path="/embed-form" element={<EmbedForm />} />
       
       {/* Protected routes */}
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
