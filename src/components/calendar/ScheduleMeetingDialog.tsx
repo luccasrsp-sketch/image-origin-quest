@@ -83,7 +83,7 @@ export function ScheduleMeetingDialog({
 
     const title = formData.title || `Reunião com ${lead.full_name}`;
 
-    await createEvent({
+    const result = await createEvent({
       title,
       description: formData.description || `Reunião de apresentação - ${lead.company_name}`,
       lead_id: lead.id,
@@ -94,13 +94,17 @@ export function ScheduleMeetingDialog({
     });
 
     setIsLoading(false);
-    setFormData({
-      title: '',
-      description: '',
-      date: '',
-      selectedSlot: '',
-    });
-    onScheduled();
+    
+    // Só chama onScheduled se o evento foi criado com sucesso
+    if (result) {
+      setFormData({
+        title: '',
+        description: '',
+        date: '',
+        selectedSlot: '',
+      });
+      onScheduled();
+    }
   };
 
   const handleClose = () => {
@@ -119,7 +123,7 @@ export function ScheduleMeetingDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md" onInteractOutside={(e) => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
@@ -129,6 +133,14 @@ export function ScheduleMeetingDialog({
             Agendar reunião com {lead.full_name} - {lead.company_name}
           </DialogDescription>
         </DialogHeader>
+
+        <Alert className="border-primary/50 bg-primary/5">
+          <AlertCircle className="h-4 w-4 text-primary" />
+          <AlertDescription className="text-sm">
+            <strong>Importante:</strong> O agendamento é obrigatório para mover o lead para "Reunião Marcada". 
+            O evento será criado na agenda do Closer responsável.
+          </AlertDescription>
+        </Alert>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">

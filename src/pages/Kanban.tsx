@@ -24,6 +24,7 @@ export default function KanbanPage() {
   const { profile, isAdmin, isSDR, isCloser, isViewerOnly, viewingAs } = useAuth();
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [schedulingLead, setSchedulingLead] = useState<Lead | null>(null);
+  const [schedulingPreviousStatus, setSchedulingPreviousStatus] = useState<LeadStatus | null>(null);
   const [qualifyingLead, setQualifyingLead] = useState<Lead | null>(null);
   const [proposalLead, setProposalLead] = useState<Lead | null>(null);
   const [saleLead, setSaleLead] = useState<Lead | null>(null);
@@ -74,14 +75,17 @@ export default function KanbanPage() {
       return;
     }
 
-    // Se for para reuniao_marcada, abre o diálogo de agendamento
+    // Se for para reuniao_marcada, abre o diálogo de agendamento primeiro
+    // O status só será atualizado APÓS o agendamento ser concluído
     if (newStatus === 'reuniao_marcada') {
-      await updateLeadStatus(leadId, newStatus);
+      // Salva o status anterior para reverter se cancelar
+      setSchedulingPreviousStatus(lead.status);
       // Limpa a tag de needs_scheduling se existir
       if (lead.needs_scheduling) {
         await clearNeedsScheduling(leadId);
       }
-      setSchedulingLead({ ...lead, status: newStatus } as Lead);
+      // Abre o dialog sem mudar o status ainda
+      setSchedulingLead({ ...lead, assigned_closer_id: lead.assigned_closer_id } as Lead);
       return;
     }
 
@@ -223,9 +227,20 @@ export default function KanbanPage() {
       <ScheduleMeetingDialog
         lead={schedulingLead}
         open={!!schedulingLead}
-        onOpenChange={(open) => !open && setSchedulingLead(null)}
-        onScheduled={() => {
+        onOpenChange={(open) => {
+          if (!open) {
+            // Se fechou sem agendar, o status não foi alterado (comportamento esperado)
+            setSchedulingLead(null);
+            setSchedulingPreviousStatus(null);
+          }
+        }}
+        onScheduled={async () => {
+          // Agendamento concluído com sucesso, agora sim atualiza o status para reuniao_marcada
+          if (schedulingLead) {
+            await updateLeadStatus(schedulingLead.id, 'reuniao_marcada');
+          }
           setSchedulingLead(null);
+          setSchedulingPreviousStatus(null);
         }}
       />
 
@@ -238,11 +253,10 @@ export default function KanbanPage() {
           // O lead recebido aqui já tem o assigned_closer_id do qualifyingLead
           const leadWithCloser = qualifyingLead || lead;
           setQualifyingLead(null);
-          // Mover para reuniao_marcada e abrir dialog de agendamento
-          updateLeadStatus(leadWithCloser.id, 'reuniao_marcada').then(() => {
-            // Usa o lead com o closer atribuído
-            setSchedulingLead(leadWithCloser);
-          });
+          // Salva o status anterior (qualificado) para referência
+          setSchedulingPreviousStatus('qualificado');
+          // Abre dialog de agendamento - status só muda após confirmar
+          setSchedulingLead(leadWithCloser);
         }}
         onNeedScheduling={setNeedsScheduling}
       />
