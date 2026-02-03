@@ -23,6 +23,7 @@ import FinanceiroProjecoes from "./pages/FinanceiroProjecoes";
 import FinanceiroNovaVenda from "./pages/FinanceiroNovaVenda";
 import FinanceiroCheques from "./pages/FinanceiroCheques";
 import FinanceiroCalendario from "./pages/FinanceiroCalendario";
+import DashboardMeta from "./pages/DashboardMeta";
 // TV Dashboard
 import PainelTV from "./pages/PainelTV";
 import PainelTVPublico from "./pages/PainelTVPublico";
@@ -105,6 +106,7 @@ function AppRoutes() {
       {/* Protected routes */}
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+      <Route path="/meta" element={<ProtectedRoute><DashboardMeta /></ProtectedRoute>} />
       <Route path="/leads" element={<ProtectedRoute><Leads /></ProtectedRoute>} />
       <Route path="/kanban" element={<ProtectedRoute><Kanban /></ProtectedRoute>} />
       <Route path="/agenda" element={<ProtectedRoute><Agenda /></ProtectedRoute>} />
