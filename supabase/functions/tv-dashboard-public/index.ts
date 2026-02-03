@@ -44,6 +44,8 @@ interface TVDashboardResponse {
     vendas_negociacao: number;
   };
   ranking_vendedores: SellerRanking[];
+  meta_faturamento: number;
+  meta_caixa: number;
   timestamp: string;
 }
 
@@ -55,7 +57,7 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { token, company = 'escola_franchising' } = body;
+    const { token, company = 'escola_franchising', includeGoals = false } = body;
 
     // Validate token
     if (token !== TV_ACCESS_TOKEN) {
@@ -85,6 +87,36 @@ Deno.serve(async (req) => {
     
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     startOfMonth.setHours(0, 0, 0, 0);
+
+    // Calculate meta goals (faturamento and caixa) for the month
+    // Fetch faturamento (sales value from leads)
+    let faturamentoQuery = supabase
+      .from('leads')
+      .select('sale_entry_value, sale_remaining_value, sale_confirmed_at, company')
+      .eq('status', 'vendido')
+      .gte('sale_confirmed_at', startOfMonth.toISOString());
+    
+    if (company && company !== 'all') {
+      faturamentoQuery = faturamentoQuery.eq('company', company);
+    }
+
+    const { data: salesLeadsForMeta } = await faturamentoQuery;
+    const metaFaturamento = (salesLeadsForMeta || []).reduce((sum, l) => 
+      sum + (l.sale_entry_value || 0) + (l.sale_remaining_value || 0), 0
+    );
+
+    // Fetch caixa (cash entries for the month)
+    let caixaQuery = supabase
+      .from('financial_cash_entries')
+      .select('amount, entry_date, company')
+      .gte('entry_date', startOfMonth.toISOString().split('T')[0]);
+    
+    if (company && company !== 'all') {
+      caixaQuery = caixaQuery.eq('company', company);
+    }
+
+    const { data: cashEntries } = await caixaQuery;
+    const metaCaixa = (cashEntries || []).reduce((sum, e) => sum + (e.amount || 0), 0);
 
     // Fetch goals
     const { data: goalsData, error: goalsError } = await supabase
@@ -278,6 +310,8 @@ Deno.serve(async (req) => {
         vendas_negociacao: safeDiv(salesToday, negotiationsInProgress),
       },
       ranking_vendedores: rankingVendedores,
+      meta_faturamento: metaFaturamento,
+      meta_caixa: metaCaixa,
       timestamp: now.toISOString(),
     };
 
