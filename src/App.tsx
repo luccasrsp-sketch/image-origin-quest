@@ -27,6 +27,7 @@ import DashboardMeta from "./pages/DashboardMeta";
 // TV Dashboard
 import PainelTV from "./pages/PainelTV";
 import PainelTVPublico from "./pages/PainelTVPublico";
+import TVMeta from "./pages/TVMeta";
 
 const queryClient = new QueryClient();
 
@@ -99,6 +100,7 @@ function AppRoutes() {
       <Route path="/cadastro-evidia" element={<LeadFormEvidia />} />
       <Route path="/embed-form" element={<EmbedForm />} />
       <Route path="/tv" element={<PainelTVPublico />} />
+      <Route path="/tv-meta" element={<TVMeta />} />
       
       {/* Auth route - precisa verificar se já está logado */}
       <Route path="/auth" element={<AuthRoutes />} />
