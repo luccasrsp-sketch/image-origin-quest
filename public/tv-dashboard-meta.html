@@ -131,10 +131,10 @@
   <div id="app" class="loading"><span class="gold">Carregando...</span></div>
   
   <script>
-    const SUPABASE_URL = 'https://xxikcvtphdixcfxrwvzs.supabase.co';
+    const SUPABASE_URL = 'https://xxikcvtphdixcfxrwvzs.supabase.co/functions/v1';
     const TOKEN = 'tv2026';
     const COMPANY = 'escola_franchising';
-    
+    const MONTHLY_GOAL = 1500000;
     // February 2026 working days config
     const MONTHLY_GOAL = 1500000;
     const WORKING_DAYS = 15;
@@ -239,7 +239,7 @@
     
     async function fetchData() {
       try {
-        const response = await fetch(`${SUPABASE_URL}/functions/v1/tv-dashboard-public`, {
+        const response = await fetch(`${SUPABASE_URL}/tv-dashboard-public`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ token: TOKEN, company: COMPANY, includeGoals: true })
