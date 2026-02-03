@@ -1,6 +1,12 @@
 // RD Marketing Webhook - Edge Function v2
 import { createClient } from "npm:@supabase/supabase-js@2"
 
+// Startup validation - fail fast if secret is not configured
+const WEBHOOK_SECRET = Deno.env.get('RD_MARKETING_WEBHOOK_SECRET');
+if (!WEBHOOK_SECRET) {
+  throw new Error('CRITICAL: RD_MARKETING_WEBHOOK_SECRET must be configured. Webhook cannot start without authentication secret.');
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-rd-signature, x-webhook-secret',
