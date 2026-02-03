@@ -12,6 +12,7 @@ import {
   PlusCircle,
   FileCheck,
   CalendarDays,
+  Target,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
@@ -38,6 +39,7 @@ import { useCompany } from '@/contexts/CompanyContext';
 
 const mainNavItems = [
   { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
+  { title: 'Dashboard da Meta', url: '/meta', icon: Target },
   { title: 'Leads Novos', url: '/leads', icon: Users },
   { title: 'Kanban', url: '/kanban', icon: Kanban },
   { title: 'Agenda', url: '/agenda', icon: Calendar },
