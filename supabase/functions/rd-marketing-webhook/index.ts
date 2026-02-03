@@ -14,17 +14,11 @@ const corsHeaders = {
 
 // Verify webhook secret from URL, Authorization header, or custom header
 function verifyWebhookSecret(req: Request): boolean {
-  const webhookSecret = Deno.env.get('RD_MARKETING_WEBHOOK_SECRET')
-  
-  if (!webhookSecret) {
-    console.error('RD_MARKETING_WEBHOOK_SECRET not configured')
-    return false
-  }
-  
+  // Use the startup-validated constant (guaranteed to exist)
   // Check query parameter (for easy integration like BotConversa)
   const url = new URL(req.url)
   const urlSecret = url.searchParams.get('secret')
-  if (urlSecret === webhookSecret) {
+  if (urlSecret === WEBHOOK_SECRET) {
     console.log('Auth via URL query parameter')
     return true
   }
@@ -33,7 +27,7 @@ function verifyWebhookSecret(req: Request): boolean {
   const authHeader = req.headers.get('Authorization')
   if (authHeader) {
     const token = authHeader.replace('Bearer ', '')
-    if (token === webhookSecret) {
+    if (token === WEBHOOK_SECRET) {
       console.log('Auth via Authorization header')
       return true
     }
@@ -41,7 +35,7 @@ function verifyWebhookSecret(req: Request): boolean {
   
   // Check custom header as fallback
   const customSecret = req.headers.get('X-Webhook-Secret')
-  if (customSecret === webhookSecret) {
+  if (customSecret === WEBHOOK_SECRET) {
     console.log('Auth via X-Webhook-Secret header')
     return true
   }
