@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard da Meta - TV</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #000; 
+      color: #fff; 
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+    .gold { color: #c4ae6b; }
+    
+    .container {
+      width: 100%;
+      max-width: 900px;
+    }
+    
+    .header { 
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+    .title { font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem; }
+    .date { color: #888; font-size: 1.2rem; margin-bottom: 0.5rem; }
+    .time { font-size: 4rem; font-weight: bold; }
+    .update { color: #666; font-size: 1rem; margin-top: 0.5rem; }
+    
+    .goals-container {
+      display: flex;
+      flex-direction: column;
+      gap: 2.5rem;
+    }
+    
+    .goal-card {
+      background: rgba(30,30,30,0.8);
+      border: 2px solid rgba(196,174,107,0.3);
+      border-radius: 1.5rem;
+      padding: 2rem 2.5rem;
+    }
+    
+    .goal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 1rem;
+    }
+    
+    .goal-label {
+      font-size: 1.4rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    
+    .goal-icon {
+      font-size: 1.6rem;
+    }
+    
+    .goal-values {
+      text-align: right;
+    }
+    
+    .goal-current {
+      font-size: 2.2rem;
+      font-weight: bold;
+    }
+    
+    .goal-target {
+      color: #888;
+      font-size: 1.1rem;
+    }
+    
+    .progress-bar {
+      height: 3rem;
+      background: #333;
+      border-radius: 1.5rem;
+      overflow: hidden;
+      position: relative;
+      margin: 1rem 0;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      transition: width 0.8s ease-out;
+      border-radius: 1.5rem;
+    }
+    
+    .progress-text {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 1.3rem;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    }
+    
+    .goal-footer {
+      display: flex;
+      justify-content: space-between;
+      color: #777;
+      font-size: 1rem;
+      margin-top: 0.5rem;
+    }
+    
+    .goal-footer .remaining {
+      color: #c4ae6b;
+    }
+    
+    .loading { 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      min-height: 100vh; 
+      font-size: 2rem; 
+    }
+    .error { color: #ef4444; }
+  </style>
+</head>
+<body>
+  <div id="app" class="loading"><span class="gold">Carregando...</span></div>
+  
+  <script>
+    const SUPABASE_URL = 'https://xxikcvtphdixcfxrwvzs.supabase.co';
+    const TOKEN = 'tv2026';
+    const COMPANY = 'escola_franchising';
+    
+    // February 2026 working days config
+    const MONTHLY_GOAL = 1500000;
+    const WORKING_DAYS = 15;
+    
+    let lastUpdate = null;
+    
+    function formatCurrency(value) {
+      return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+    }
+    
+    function formatTime(date) {
+      return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+    
+    function formatDate(date) {
+      return date.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    }
+    
+    function getBarColor(percent) {
+      if (percent >= 100) return '#22c55e';
+      if (percent >= 70) return '#c4ae6b';
+      if (percent >= 40) return '#f59e0b';
+      return '#ef4444';
+    }
+    
+    function calculateDailyGoal(achieved, totalGoal, remainingDays) {
+      const remaining = Math.max(0, totalGoal - achieved);
+      const days = Math.max(1, remainingDays);
+      return remaining / days;
+    }
+    
+    function getRemainingWorkingDays() {
+      // For February 2026, working days are 2-6, 9-13, 16-20, 23-27 (15 days)
+      const workingDays = [2, 3, 4, 5, 6, 9, 10, 11, 12, 13, 16, 17, 18, 19, 20, 23, 24, 25, 26, 27];
+      const today = new Date();
+      const currentDay = today.getDate();
+      const currentMonth = today.getMonth();
+      const currentYear = today.getFullYear();
+      
+      // Only count for February 2026
+      if (currentYear !== 2026 || currentMonth !== 1) {
+        return WORKING_DAYS;
+      }
+      
+      return workingDays.filter(day => day >= currentDay).length || 1;
+    }
+    
+    function renderDashboard(data) {
+      const now = new Date();
+      const app = document.getElementById('app');
+      const remainingDays = getRemainingWorkingDays();
+      
+      // Calculate daily goals based on remaining
+      const dailyFaturamento = calculateDailyGoal(data.faturamento, MONTHLY_GOAL, remainingDays);
+      const dailyCaixa = calculateDailyGoal(data.caixa, MONTHLY_GOAL, remainingDays);
+      
+      // Calculate percentages (monthly progress)
+      const faturamentoPercent = Math.min(100, Math.round((data.faturamento / MONTHLY_GOAL) * 100));
+      const caixaPercent = Math.min(100, Math.round((data.caixa / MONTHLY_GOAL) * 100));
+      
+      app.className = 'container';
+      app.innerHTML = `
+        <header class="header">
+          <h1 class="title gold">Dashboard da Meta</h1>
+          <p class="date">${formatDate(now)}</p>
+          <p class="time gold">${formatTime(now)}</p>
+          <p class="update">Atualização: ${lastUpdate ? formatTime(lastUpdate) : '--:--'}</p>
+        </header>
+        
+        <div class="goals-container">
+          ${renderGoalCard('💰', 'Faturamento', data.faturamento, MONTHLY_GOAL, faturamentoPercent, dailyFaturamento, remainingDays)}
+          ${renderGoalCard('🏦', 'Caixa', data.caixa, MONTHLY_GOAL, caixaPercent, dailyCaixa, remainingDays)}
+        </div>
+      `;
+    }
+    
+    function renderGoalCard(icon, label, current, target, percent, dailyGoal, remainingDays) {
+      const remaining = Math.max(0, target - current);
+      return `
+        <div class="goal-card">
+          <div class="goal-header">
+            <span class="goal-label">
+              <span class="goal-icon">${icon}</span>
+              ${label}
+            </span>
+            <div class="goal-values">
+              <div class="goal-current gold">${formatCurrency(current)}</div>
+              <div class="goal-target">Meta: ${formatCurrency(target)}</div>
+            </div>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width:${percent}%;background:${getBarColor(percent)}"></div>
+            <div class="progress-text">${percent}%</div>
+          </div>
+          <div class="goal-footer">
+            <span>Meta diária: ${formatCurrency(dailyGoal)} (${remainingDays} dias úteis)</span>
+            <span class="remaining">Faltam: ${formatCurrency(remaining)}</span>
+          </div>
+        </div>
+      `;
+    }
+    
+    async function fetchData() {
+      try {
+        const response = await fetch(`${SUPABASE_URL}/functions/v1/tv-dashboard-public`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: TOKEN, company: COMPANY, includeGoals: true })
+        });
+        
+        if (!response.ok) throw new Error('Erro ao carregar dados');
+        
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+        
+        lastUpdate = new Date();
+        renderDashboard({
+          faturamento: data.meta_faturamento || 0,
+          caixa: data.meta_caixa || 0
+        });
+      } catch (err) {
+        console.error('Erro:', err);
+        document.getElementById('app').innerHTML = `<div class="loading"><span class="error">Erro: ${err.message}</span></div>`;
+      }
+    }
+    
+    // Update clock every second
+    setInterval(() => {
+      const timeEl = document.querySelector('.time');
+      if (timeEl) timeEl.textContent = formatTime(new Date());
+    }, 1000);
+    
+    // Fetch data on load and every 30 seconds
+    fetchData();
+    setInterval(fetchData, 30000);
+  </script>
+</body>
+</html>
