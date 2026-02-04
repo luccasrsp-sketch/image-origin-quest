@@ -80,9 +80,9 @@ export default function TVMeta() {
 
   if (!token) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center">
         <p className="text-red-500 text-4xl">Token de acesso não fornecido</p>
-        <p className="text-zinc-500 text-xl mt-4">Acesse: /tv?token=tv2026</p>
+        <p className="text-zinc-500 text-xl mt-4">Solicite o token de acesso ao administrador</p>
       </div>
     );
   }
