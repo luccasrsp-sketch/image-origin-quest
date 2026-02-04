@@ -7,6 +7,50 @@ if (!WEBHOOK_SECRET) {
   throw new Error('CRITICAL: RD_MARKETING_WEBHOOK_SECRET must be configured. Webhook cannot start without authentication secret.');
 }
 
+// Rate limiting configuration
+const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute window
+const MAX_REQUESTS_PER_WINDOW = 20; // Max 20 requests per minute per IP
+const MAX_LEADS_PER_REQUEST = 10; // Max 10 leads per batch request
+
+// In-memory rate limiting store (resets on cold start, which is acceptable for edge functions)
+const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
+
+// Get client IP from request headers
+function getClientIP(req: Request): string {
+  // Check common headers for real IP (behind proxy/load balancer)
+  const forwardedFor = req.headers.get('x-forwarded-for');
+  if (forwardedFor) {
+    return forwardedFor.split(',')[0].trim();
+  }
+  const realIP = req.headers.get('x-real-ip');
+  if (realIP) {
+    return realIP;
+  }
+  // Fallback to a generic identifier
+  return 'unknown';
+}
+
+// Check rate limit for an IP
+function checkRateLimit(ip: string): { allowed: boolean; remaining: number; resetIn: number } {
+  const now = Date.now();
+  const entry = rateLimitStore.get(ip);
+  
+  if (!entry || now > entry.resetTime) {
+    // New window or expired - reset
+    rateLimitStore.set(ip, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
+    return { allowed: true, remaining: MAX_REQUESTS_PER_WINDOW - 1, resetIn: RATE_LIMIT_WINDOW_MS };
+  }
+  
+  if (entry.count >= MAX_REQUESTS_PER_WINDOW) {
+    // Rate limit exceeded
+    return { allowed: false, remaining: 0, resetIn: entry.resetTime - now };
+  }
+  
+  // Increment counter
+  entry.count++;
+  return { allowed: true, remaining: MAX_REQUESTS_PER_WINDOW - entry.count, resetIn: entry.resetTime - now };
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-rd-signature, x-webhook-secret',
@@ -68,6 +112,31 @@ Deno.serve(async (req) => {
     return new Response('ok', { headers: corsHeaders })
   }
 
+  // Get client IP and check rate limit
+  const clientIP = getClientIP(req);
+  const rateLimit = checkRateLimit(clientIP);
+  
+  if (!rateLimit.allowed) {
+    console.warn(`Rate limit exceeded for IP: ${clientIP}`);
+    return new Response(
+      JSON.stringify({ 
+        error: 'Rate limit exceeded', 
+        message: `Too many requests. Try again in ${Math.ceil(rateLimit.resetIn / 1000)} seconds.`,
+        retryAfter: Math.ceil(rateLimit.resetIn / 1000)
+      }),
+      { 
+        status: 429, 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json',
+          'Retry-After': String(Math.ceil(rateLimit.resetIn / 1000)),
+          'X-RateLimit-Remaining': '0',
+          'X-RateLimit-Reset': String(Math.ceil(rateLimit.resetIn / 1000))
+        } 
+      }
+    )
+  }
+
   try {
     // Verify webhook authentication
     if (!verifyWebhookSecret(req)) {
@@ -93,7 +162,14 @@ Deno.serve(async (req) => {
     console.log('RD Marketing webhook received (authenticated):', JSON.stringify(rawPayload, null, 2))
 
     // Handle RD Marketing format: { leads: [...] }
-    const leadsArray = rawPayload.leads || [rawPayload]
+    let leadsArray = rawPayload.leads || [rawPayload]
+    
+    // Validate batch size to prevent abuse
+    if (leadsArray.length > MAX_LEADS_PER_REQUEST) {
+      console.warn(`Batch size exceeded: ${leadsArray.length} leads (max: ${MAX_LEADS_PER_REQUEST}). Truncating.`);
+      leadsArray = leadsArray.slice(0, MAX_LEADS_PER_REQUEST);
+    }
+    
     const results: { success: boolean; lead_id?: string; email?: string; error?: string }[] = []
 
     // Buscar SDRs disponíveis para distribuição randômica
