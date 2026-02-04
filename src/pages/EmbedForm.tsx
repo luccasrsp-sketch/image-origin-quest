@@ -1,7 +1,18 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { CheckCircle, Loader2 } from 'lucide-react';
+
+// Allowed parent origins for postMessage communication
+// This prevents tracking by unauthorized sites embedding the form
+const ALLOWED_PARENT_ORIGINS = [
+  'https://escoladefranchising.com.br',
+  'https://www.escoladefranchising.com.br',
+  'https://evidia.com.br',
+  'https://www.evidia.com.br',
+  // Allow same-origin for development and preview
+  typeof window !== 'undefined' ? window.location.origin : '',
+].filter(Boolean);
 
 const leadSchema = z.object({
   full_name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres').max(100),
@@ -61,17 +72,28 @@ export default function EmbedFormPage() {
     };
   }, []);
 
+  // Helper to send postMessage to allowed parent origins only
+  const sendToParent = useCallback((data: Record<string, unknown>) => {
+    ALLOWED_PARENT_ORIGINS.forEach(origin => {
+      try {
+        window.parent.postMessage(data, origin);
+      } catch {
+        // Silently ignore if origin doesn't match
+      }
+    });
+  }, []);
+
   // Notify parent window of form height for responsive iframe
   useEffect(() => {
     const sendHeight = () => {
       const height = document.body.scrollHeight;
-      window.parent.postMessage({ type: 'embed-form-height', height }, '*');
+      sendToParent({ type: 'embed-form-height', height });
     };
     
     sendHeight();
     window.addEventListener('resize', sendHeight);
     return () => window.removeEventListener('resize', sendHeight);
-  }, [isSubmitted]);
+  }, [isSubmitted, sendToParent]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -120,8 +142,8 @@ export default function EmbedFormPage() {
 
     setIsSubmitted(true);
     
-    // Notify parent of successful submission
-    window.parent.postMessage({ type: 'embed-form-submitted', success: true }, '*');
+    // Notify parent of successful submission (to allowed origins only)
+    sendToParent({ type: 'embed-form-submitted', success: true });
   };
 
   const formatPhone = (value: string) => {
