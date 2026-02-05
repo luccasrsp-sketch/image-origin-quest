@@ -1,10 +1,18 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useCompany } from '@/contexts/CompanyContext';
 import { startOfDay, startOfMonth, endOfMonth, format } from 'date-fns';
-import { Banknote, Calendar, CalendarDays, CalendarRange, Wallet, TrendingUp } from 'lucide-react';
+import { Banknote, Calendar, CalendarDays, CalendarRange, Wallet, TrendingUp, Menu } from 'lucide-react';
 import { getCurrentMonthGoals, getRemainingWorkingDays, calculateDailyGoal } from '@/config/goals';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 function MiniProgressBar({ 
   current, 
@@ -91,6 +99,7 @@ function MiniProgressBar({
 }
 
 export default function DashboardMeta() {
+  const navigate = useNavigate();
   const [billingTotal, setBillingTotal] = useState(0);
   const [cashTotal, setCashTotal] = useState(0);
   const [moneyOnTable, setMoneyOnTable] = useState(0);
@@ -184,7 +193,41 @@ export default function DashboardMeta() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative">
+      {/* Menu button */}
+      <div className="absolute top-4 left-4">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="icon" className="border-primary/50 hover:bg-primary/10">
+              <Menu className="h-5 w-5 text-primary" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-48">
+            <DropdownMenuItem onClick={() => navigate('/dashboard')}>
+              Dashboard
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate('/kanban')}>
+              CRM
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate('/agenda')}>
+              Agenda
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate('/leads')}>
+              Leads
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate('/financeiro')}>
+              Financeiro
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate('/relatorios')}>
+              Relatórios
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate('/configuracoes')}>
+              Configurações
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
       <div className="w-full max-w-4xl bg-card border rounded-xl p-6 md:p-10 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between text-sm md:text-base">
