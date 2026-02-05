@@ -132,11 +132,12 @@
   
   <script>
     const SUPABASE_URL = 'https://xxikcvtphdixcfxrwvzs.supabase.co/functions/v1';
-    const TOKEN = 'tv2026';
-    const COMPANY = 'escola_franchising';
+    // Token should be passed via URL parameter: ?token=YOUR_SECURE_TOKEN
+    const urlParams = new URLSearchParams(window.location.search);
+    const TOKEN = urlParams.get('token') || '';
+    const COMPANY = urlParams.get('company') || 'escola_franchising';
     const MONTHLY_GOAL = 1500000;
     // February 2026 working days config
-    const MONTHLY_GOAL = 1500000;
     const WORKING_DAYS = 15;
     
     let lastUpdate = null;
