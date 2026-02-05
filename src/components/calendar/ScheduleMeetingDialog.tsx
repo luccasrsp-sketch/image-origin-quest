@@ -11,6 +11,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Lead } from '@/types/crm';
 import { useCalendar } from '@/hooks/useCalendar';
 import { useTeam } from '@/hooks/useTeam';
@@ -32,7 +40,7 @@ export function ScheduleMeetingDialog({
   onScheduled 
 }: ScheduleMeetingDialogProps) {
   const { createEvent, events } = useCalendar();
-  const { team } = useTeam();
+  const { team, getClosers } = useTeam();
   const [isLoading, setIsLoading] = useState(false);
   
   const [formData, setFormData] = useState({
@@ -40,10 +48,15 @@ export function ScheduleMeetingDialog({
     description: '',
     date: '',
     selectedSlot: '',
+    selectedCloserId: '',
   });
 
-  // O closer já está atribuído ao lead automaticamente pelo sistema
-  const closerId = lead?.assigned_closer_id || '';
+  // Lista de closers disponíveis
+  const closers = getClosers();
+
+  // O closer pode ser o já atribuído ao lead ou selecionado manualmente
+  const closerId = formData.selectedCloserId || lead?.assigned_closer_id || '';
+  const hasAssignedCloser = !!lead?.assigned_closer_id;
   
   // Buscar nome do closer da lista de team members
   const closerMember = useMemo(() => {
@@ -52,6 +65,13 @@ export function ScheduleMeetingDialog({
   }, [closerId, team]);
   
   const closerName = closerMember?.full_name || lead?.assigned_closer?.full_name || '';
+
+  // Reset selectedCloserId when dialog opens with a lead that has an assigned closer
+  useEffect(() => {
+    if (open && lead?.assigned_closer_id) {
+      setFormData(prev => ({ ...prev, selectedCloserId: lead.assigned_closer_id || '' }));
+    }
+  }, [open, lead?.assigned_closer_id]);
 
   // Get available slots for the assigned closer and selected date
   const availableSlots = useMemo(() => {
@@ -62,10 +82,10 @@ export function ScheduleMeetingDialog({
     return getAvailableSlots(formData.date, events, closerId);
   }, [closerId, formData.date, events]);
 
-  // Reset slot selection when date changes
+  // Reset slot selection when date or closer changes
   useEffect(() => {
     setFormData(prev => ({ ...prev, selectedSlot: '' }));
-  }, [formData.date]);
+  }, [formData.date, closerId]);
 
   const selectedSlotData = useMemo(() => {
     if (!formData.selectedSlot) return null;
@@ -102,6 +122,7 @@ export function ScheduleMeetingDialog({
         description: '',
         date: '',
         selectedSlot: '',
+        selectedCloserId: '',
       });
       onScheduled();
     }
@@ -113,6 +134,7 @@ export function ScheduleMeetingDialog({
       description: '',
       date: '',
       selectedSlot: '',
+      selectedCloserId: '',
     });
     onOpenChange(false);
   };
@@ -123,7 +145,7 @@ export function ScheduleMeetingDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md" onInteractOutside={(e) => e.preventDefault()}>
+      <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col" onInteractOutside={(e) => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
@@ -134,104 +156,134 @@ export function ScheduleMeetingDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <Alert className="border-primary/50 bg-primary/5">
-          <AlertCircle className="h-4 w-4 text-primary" />
-          <AlertDescription className="text-sm">
-            <strong>Importante:</strong> O agendamento é obrigatório para mover o lead para "Reunião Marcada". 
-            O evento será criado na agenda do Closer responsável.
-          </AlertDescription>
-        </Alert>
+        <ScrollArea className="flex-1 pr-4">
+          <div className="space-y-4">
+            <Alert className="border-primary/50 bg-primary/5">
+              <AlertCircle className="h-4 w-4 text-primary" />
+              <AlertDescription className="text-sm">
+                <strong>Importante:</strong> O agendamento é obrigatório para mover o lead para "Reunião Marcada". 
+                O evento será criado na agenda do Closer responsável.
+              </AlertDescription>
+            </Alert>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="title">Título da Reunião</Label>
-            <Input
-              id="title"
-              placeholder={`Reunião com ${lead.full_name}`}
-              value={formData.title}
-              onChange={e => setFormData(d => ({ ...d, title: e.target.value }))}
-            />
-          </div>
+            <form id="schedule-form" onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="title">Título da Reunião</Label>
+                <Input
+                  id="title"
+                  placeholder={`Reunião com ${lead.full_name}`}
+                  value={formData.title}
+                  onChange={e => setFormData(d => ({ ...d, title: e.target.value }))}
+                />
+              </div>
 
-          <div className="space-y-2">
-            <Label>Closer Responsável</Label>
-            <div className="p-3 rounded-md border bg-muted/50 text-sm font-medium">
-              {closerName || (closerId ? 'Carregando...' : 'Aguardando atribuição...')}
-            </div>
-            {closerName && (
-              <p className="text-xs text-muted-foreground">
-                O Closer foi atribuído automaticamente pelo sistema.
-              </p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="date">Data</Label>
-            <Input
-              id="date"
-              type="date"
-              value={formData.date}
-              onChange={e => setFormData(d => ({ ...d, date: e.target.value }))}
-              min={new Date().toISOString().split('T')[0]}
-            />
-          </div>
-
-          {closerId && formData.date && (
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <Clock className="h-4 w-4" />
-                Horário Disponível
-              </Label>
-              
-              {showNoSlotsWarning ? (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    Não há horários disponíveis para este closer nesta data. Escolha outra data ou outro closer.
-                  </AlertDescription>
-                </Alert>
-              ) : (
-                <div className="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto">
-                  {availableSlots.map((slot) => (
-                    <Button
-                      key={slot.startTime}
-                      type="button"
-                      variant={formData.selectedSlot === slot.startTime ? "default" : "outline"}
-                      size="sm"
-                      className="text-xs"
-                      onClick={() => setFormData(d => ({ ...d, selectedSlot: slot.startTime }))}
+              <div className="space-y-2">
+                <Label>Closer Responsável</Label>
+                {hasAssignedCloser ? (
+                  <>
+                    <div className="p-3 rounded-md border bg-muted/50 text-sm font-medium">
+                      {closerName || 'Carregando...'}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      O Closer foi atribuído automaticamente pelo sistema.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <Select 
+                      value={formData.selectedCloserId} 
+                      onValueChange={(value) => setFormData(d => ({ ...d, selectedCloserId: value }))}
                     >
-                      {slot.label}
-                    </Button>
-                  ))}
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o closer..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {closers.map(closer => (
+                          <SelectItem key={closer.id} value={closer.id}>
+                            {closer.full_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Selecione o closer que será responsável pela reunião.
+                    </p>
+                  </>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="date">Data</Label>
+                <Input
+                  id="date"
+                  type="date"
+                  value={formData.date}
+                  onChange={e => setFormData(d => ({ ...d, date: e.target.value }))}
+                  min={new Date().toISOString().split('T')[0]}
+                />
+              </div>
+
+              {closerId && formData.date && (
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
+                    Horário Disponível
+                  </Label>
+                  
+                  {showNoSlotsWarning ? (
+                    <Alert variant="destructive">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>
+                        Não há horários disponíveis para este closer nesta data. Escolha outra data ou outro closer.
+                      </AlertDescription>
+                    </Alert>
+                  ) : (
+                    <ScrollArea className="h-48 rounded-md border p-2">
+                      <div className="grid grid-cols-3 gap-2">
+                        {availableSlots.map((slot) => (
+                          <Button
+                            key={slot.startTime}
+                            type="button"
+                            variant={formData.selectedSlot === slot.startTime ? "default" : "outline"}
+                            size="sm"
+                            className="text-xs"
+                            onClick={() => setFormData(d => ({ ...d, selectedSlot: slot.startTime }))}
+                          >
+                            {slot.label}
+                          </Button>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                  )}
                 </div>
               )}
-            </div>
-          )}
 
-          <div className="space-y-2">
-            <Label htmlFor="description">Descrição (opcional)</Label>
-            <Textarea
-              id="description"
-              placeholder="Detalhes sobre a reunião..."
-              value={formData.description}
-              onChange={e => setFormData(d => ({ ...d, description: e.target.value }))}
-              rows={2}
-            />
+              <div className="space-y-2">
+                <Label htmlFor="description">Descrição (opcional)</Label>
+                <Textarea
+                  id="description"
+                  placeholder="Detalhes sobre a reunião..."
+                  value={formData.description}
+                  onChange={e => setFormData(d => ({ ...d, description: e.target.value }))}
+                  rows={2}
+                />
+              </div>
+            </form>
           </div>
+        </ScrollArea>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={handleClose}>
-              Cancelar
-            </Button>
-            <Button 
-              type="submit" 
-              disabled={!closerId || !formData.date || !formData.selectedSlot || isLoading}
-            >
-              {isLoading ? 'Agendando...' : 'Agendar Reunião'}
-            </Button>
-          </DialogFooter>
-        </form>
+        <DialogFooter className="pt-4">
+          <Button type="button" variant="outline" onClick={handleClose}>
+            Cancelar
+          </Button>
+          <Button 
+            type="submit"
+            form="schedule-form"
+            disabled={!closerId || !formData.date || !formData.selectedSlot || isLoading}
+          >
+            {isLoading ? 'Agendando...' : 'Agendar Reunião'}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
