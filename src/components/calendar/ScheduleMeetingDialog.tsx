@@ -145,8 +145,8 @@ export function ScheduleMeetingDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col" onInteractOutside={(e) => e.preventDefault()}>
-        <DialogHeader>
+      <DialogContent className="sm:max-w-md max-h-[85vh] overflow-hidden flex flex-col" onInteractOutside={(e) => e.preventDefault()}>
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
             Agendar Reunião
@@ -156,8 +156,8 @@ export function ScheduleMeetingDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 pr-4">
-          <div className="space-y-4">
+        <div className="flex-1 overflow-y-auto min-h-0 pr-2">
+          <div className="space-y-4 pb-2">
             <Alert className="border-primary/50 bg-primary/5">
               <AlertCircle className="h-4 w-4 text-primary" />
               <AlertDescription className="text-sm">
@@ -238,7 +238,7 @@ export function ScheduleMeetingDialog({
                       </AlertDescription>
                     </Alert>
                   ) : (
-                    <ScrollArea className="h-48 rounded-md border p-2">
+                    <div className="max-h-36 overflow-y-auto rounded-md border p-2">
                       <div className="grid grid-cols-3 gap-2">
                         {availableSlots.map((slot) => (
                           <Button
@@ -253,7 +253,7 @@ export function ScheduleMeetingDialog({
                           </Button>
                         ))}
                       </div>
-                    </ScrollArea>
+                    </div>
                   )}
                 </div>
               )}
@@ -270,9 +270,9 @@ export function ScheduleMeetingDialog({
               </div>
             </form>
           </div>
-        </ScrollArea>
+        </div>
 
-        <DialogFooter className="pt-4">
+        <DialogFooter className="flex-shrink-0 pt-4 border-t">
           <Button type="button" variant="outline" onClick={handleClose}>
             Cancelar
           </Button>
