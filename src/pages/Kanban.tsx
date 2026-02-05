@@ -142,13 +142,13 @@ export default function KanbanPage() {
     <AppLayout title="CRM">
       {/* Search bar */}
       <div className="mb-4 relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/70" />
         <Input
           type="text"
           placeholder="Buscar por nome, e-mail ou empresa..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 pr-10"
+          className="pl-10 pr-10 bg-background/50 border-border text-white placeholder:text-white/50"
         />
         {searchQuery && (
           <button
