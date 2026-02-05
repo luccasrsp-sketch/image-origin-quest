@@ -5,9 +5,13 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// Get token from environment variable with fallback for backwards compatibility
-// IMPORTANT: Set TV_DASHBOARD_TOKEN secret for production security
-const TV_ACCESS_TOKEN = Deno.env.get('TV_DASHBOARD_TOKEN') || 'tv2026';
+// Get token from environment variable - REQUIRED for security
+const TV_ACCESS_TOKEN = Deno.env.get('TV_DASHBOARD_TOKEN');
+
+// Fail fast if token is not configured
+if (!TV_ACCESS_TOKEN) {
+  console.error('CRITICAL: TV_DASHBOARD_TOKEN environment variable must be configured');
+}
 
 // Rate limiting configuration
 const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
@@ -106,6 +110,15 @@ Deno.serve(async (req) => {
             'X-RateLimit-Remaining': '0',
           } 
         }
+      );
+    }
+
+    // Check if token is configured
+    if (!TV_ACCESS_TOKEN) {
+      console.error('TV_DASHBOARD_TOKEN not configured - rejecting request');
+      return new Response(
+        JSON.stringify({ error: 'Serviço não configurado. Contate o administrador.' }),
+        { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 

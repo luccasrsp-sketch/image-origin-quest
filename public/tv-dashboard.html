@@ -80,8 +80,10 @@
   
   <script>
     const SUPABASE_URL = 'https://xxikcvtphdixcfxrwvzs.supabase.co';
-    const TOKEN = 'tv2026';
-    const COMPANY = 'escola_franchising';
+    // Token should be passed via URL parameter: ?token=YOUR_SECURE_TOKEN
+    const urlParams = new URLSearchParams(window.location.search);
+    const TOKEN = urlParams.get('token') || '';
+    const COMPANY = urlParams.get('company') || 'escola_franchising';
     
     let lastUpdate = null;
     
