@@ -61,8 +61,20 @@ export default function KanbanPage() {
     return true;
   });
 
-  const getLeadsByStatus = (status: LeadStatus) => 
-    searchedLeads.filter(l => l.status === status);
+  const getLeadsByStatus = (status: LeadStatus) => {
+    const leads = searchedLeads.filter(l => l.status === status);
+    
+    // Para vendidos, ordena do mais recente para o mais antigo
+    if (status === 'vendido') {
+      return leads.sort((a, b) => {
+        const dateA = a.sale_confirmed_at ? new Date(a.sale_confirmed_at).getTime() : 0;
+        const dateB = b.sale_confirmed_at ? new Date(b.sale_confirmed_at).getTime() : 0;
+        return dateB - dateA; // Mais recente primeiro
+      });
+    }
+    
+    return leads;
+  };
 
   const handleDragEnd = async (result: DropResult) => {
     // Bloqueia movimentação para viewers
