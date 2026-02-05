@@ -1,5 +1,6 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
+import { Search, X } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { LeadCard } from '@/components/leads/LeadCard';
 import { LeadDetailDialog } from '@/components/leads/LeadDetailDialog';
@@ -17,6 +18,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Lead, LeadStatus, KANBAN_COLUMNS } from '@/types/crm';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Input } from '@/components/ui/input';
 
 export default function KanbanPage() {
   const { leads, filteredLeads, loading, updateLeadStatus, moveToQualified, addNote, setNeedsScheduling, clearNeedsScheduling, saveProposal, saveSaleData, updateSaleStatus, markAsLost, changeLeadAssignment } = useLeads();
@@ -31,7 +33,20 @@ export default function KanbanPage() {
   const [saleDetailsLead, setSaleDetailsLead] = useState<Lead | null>(null);
   const [lossLead, setLossLead] = useState<Lead | null>(null);
   const [coldAlertDismissed, setColdAlertDismissed] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const kanbanContainerRef = useRef<HTMLDivElement>(null);
+
+  // Filtra leads baseado na busca por nome ou e-mail
+  const searchedLeads = useMemo(() => {
+    if (!searchQuery.trim()) return filteredLeads;
+    
+    const query = searchQuery.toLowerCase().trim();
+    return filteredLeads.filter(lead => 
+      lead.full_name?.toLowerCase().includes(query) ||
+      lead.email?.toLowerCase().includes(query) ||
+      lead.company_name?.toLowerCase().includes(query)
+    );
+  }, [filteredLeads, searchQuery]);
 
   // Viewers podem apenas visualizar, não podem editar ou mover leads
   const canEdit = !isViewerOnly();
@@ -47,7 +62,7 @@ export default function KanbanPage() {
   });
 
   const getLeadsByStatus = (status: LeadStatus) => 
-    filteredLeads.filter(l => l.status === status);
+    searchedLeads.filter(l => l.status === status);
 
   const handleDragEnd = async (result: DropResult) => {
     // Bloqueia movimentação para viewers
@@ -109,7 +124,7 @@ export default function KanbanPage() {
 
   if (loading) {
     return (
-      <AppLayout title="Kanban">
+      <AppLayout title="CRM">
         <div className="flex gap-4 overflow-x-auto pb-4">
           {visibleColumns.map(col => (
             <div key={col.id} className="min-w-[300px] space-y-3">
@@ -124,7 +139,27 @@ export default function KanbanPage() {
   }
 
   return (
-    <AppLayout title="Kanban">
+    <AppLayout title="CRM">
+      {/* Search bar */}
+      <div className="mb-4 relative max-w-md">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          type="text"
+          placeholder="Buscar por nome, e-mail ou empresa..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10 pr-10"
+        />
+        {searchQuery && (
+          <button
+            onClick={() => setSearchQuery('')}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+
       <DragDropContext onDragEnd={handleDragEnd}>
         {/* Top scrollbar */}
         <KanbanScrollbar containerRef={kanbanContainerRef} />
@@ -328,7 +363,7 @@ export default function KanbanPage() {
       {/* Cold leads alert - only for SDRs with their assigned leads */}
       {!coldAlertDismissed && isSDR() && profile?.id && (
         <ColdLeadsAlert
-          leads={filteredLeads.filter(l => l.assigned_sdr_id === profile.id)}
+          leads={searchedLeads.filter(l => l.assigned_sdr_id === profile.id)}
           onDismiss={() => setColdAlertDismissed(true)}
           onLeadClick={(lead) => {
             setColdAlertDismissed(true);
