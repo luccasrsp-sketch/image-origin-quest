@@ -5,6 +5,7 @@ export type LeadStatus =
   | 'nao_atendeu'
   | 'em_contato'
   | 'qualificado'
+  | 'follow_up'
   | 'reuniao_marcada'
   | 'envio_proposta'
   | 'vendido'
@@ -160,6 +161,7 @@ export const KANBAN_COLUMNS: { id: LeadStatus; title: string; color: string; rol
   { id: 'nao_atendeu', title: 'Não Atendeu', color: 'bg-amber-100 text-amber-900', roles: ['sdr'] },
   { id: 'em_contato', title: 'Em Contato', color: 'bg-sky-100 text-sky-900', roles: ['sdr'] },
   { id: 'qualificado', title: 'Qualificado', color: 'bg-emerald-100 text-emerald-900', roles: ['sdr', 'closer'] },
+  { id: 'follow_up', title: 'Follow Up', color: 'bg-orange-100 text-orange-900', roles: ['sdr', 'closer'] },
   { id: 'reuniao_marcada', title: 'Reunião Marcada', color: 'bg-violet-100 text-violet-900', roles: ['closer'] },
   { id: 'envio_proposta', title: 'Em Negociação', color: 'bg-blue-100 text-blue-900', roles: ['closer'] },
   { id: 'vendido', title: 'Vendido', color: 'bg-green-100 text-green-900', roles: ['closer'] },
@@ -172,6 +174,7 @@ export const STATUS_LABELS: Record<LeadStatus, string> = {
   nao_atendeu: 'Não Atendeu',
   em_contato: 'Em Contato',
   qualificado: 'Qualificado',
+  follow_up: 'Follow Up',
   reuniao_marcada: 'Reunião Marcada',
   envio_proposta: 'Em Negociação',
   vendido: 'Vendido',
