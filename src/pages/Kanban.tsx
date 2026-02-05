@@ -207,7 +207,7 @@ export default function KanbanPage() {
                     <div
                       ref={provided.innerRef}
                       {...provided.droppableProps}
-                      className={`min-h-[500px] space-y-3 rounded-b-lg border border-t-0 p-3 transition-colors ${
+                      className={`min-h-[500px] max-h-[calc(100vh-280px)] overflow-y-auto space-y-3 rounded-b-lg border border-t-0 p-3 transition-colors scrollbar-thin ${
                         snapshot.isDraggingOver 
                           ? 'bg-slate-200 border-primary/50' 
                           : 'bg-white'

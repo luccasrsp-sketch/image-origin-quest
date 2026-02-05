@@ -871,6 +871,7 @@ export type Database = {
         | "nao_atendeu"
         | "em_contato"
         | "qualificado"
+        | "follow_up"
         | "reuniao_marcada"
         | "envio_proposta"
         | "vendido"
@@ -1020,6 +1021,7 @@ export const Constants = {
         "nao_atendeu",
         "em_contato",
         "qualificado",
+        "follow_up",
         "reuniao_marcada",
         "envio_proposta",
         "vendido",
