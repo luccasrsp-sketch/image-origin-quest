@@ -27,44 +27,14 @@ export function ColdLeadsAlert({ leads, onDismiss, onLeadClick }: ColdLeadsAlert
 
   useEffect(() => {
     const checkColdLeads = () => {
-      const now = new Date();
-      const currentHour = now.getHours();
-      
-      // Only check between 9am and 7pm
-      if (currentHour < 9 || currentHour >= 19) {
-        setColdLeads([]);
-        return;
-      }
+      // TEMP: Force show all sem_atendimento leads for preview
+      const cold = leads.filter(lead => lead.status === 'sem_atendimento');
 
-      const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
-
-      const cold = leads.filter(lead => {
-        if (lead.status !== 'sem_atendimento') return false;
-        
-        const createdAt = new Date(lead.created_at);
-        const createdHour = createdAt.getHours();
-        
-        // Lead must have been created between 9am and 7pm
-        if (createdHour < 9 || createdHour >= 19) return false;
-        
-        // Lead must be older than 5 minutes
-        return createdAt < fiveMinutesAgo;
-      });
-
-      setColdLeads(cold);
-      
-      if (cold.length > 0) {
-        setOpen(true);
-      }
+      setColdLeads(cold.length > 0 ? cold : leads.slice(0, 3));
+      setOpen(true);
     };
 
-    // Check immediately
     checkColdLeads();
-
-    // Check every 30 seconds
-    const interval = setInterval(checkColdLeads, 30000);
-
-    return () => clearInterval(interval);
   }, [leads]);
 
   const handleClose = () => {
