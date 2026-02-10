@@ -186,29 +186,34 @@ export default function KanbanPage() {
     <AppLayout title="CRM">
       {/* Filters and search */}
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <ToggleGroup 
-          type="single" 
-          value={activeFilter} 
-          onValueChange={(val) => val && setActiveFilter(val as LeadFilter)}
-          className="justify-start"
-        >
-          <ToggleGroupItem value="todos" aria-label="Todos" className="gap-1.5 text-xs data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
-            <LayoutGrid className="h-3.5 w-3.5" />
-            Todos
-          </ToggleGroupItem>
-          <ToggleGroupItem value="hoje" aria-label="Hoje" className="gap-1.5 text-xs data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
-            <CalendarDays className="h-3.5 w-3.5" />
-            Hoje
-          </ToggleGroupItem>
-          <ToggleGroupItem value="semana" aria-label="Semana" className="gap-1.5 text-xs data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
-            <CalendarRange className="h-3.5 w-3.5" />
-            Semana
-          </ToggleGroupItem>
-          <ToggleGroupItem value="meus" aria-label="Meus Leads" className="gap-1.5 text-xs data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
-            <User className="h-3.5 w-3.5" />
-            Meus Leads
-          </ToggleGroupItem>
-        </ToggleGroup>
+        <div className="flex items-center gap-3">
+          <ToggleGroup 
+            type="single" 
+            value={activeFilter} 
+            onValueChange={(val) => val && setActiveFilter(val as LeadFilter)}
+            className="justify-start"
+          >
+            <ToggleGroupItem value="todos" aria-label="Todos" className="gap-1.5 text-xs data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+              <LayoutGrid className="h-3.5 w-3.5" />
+              Todos
+            </ToggleGroupItem>
+            <ToggleGroupItem value="hoje" aria-label="Hoje" className="gap-1.5 text-xs data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+              <CalendarDays className="h-3.5 w-3.5" />
+              Hoje
+            </ToggleGroupItem>
+            <ToggleGroupItem value="semana" aria-label="Semana" className="gap-1.5 text-xs data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+              <CalendarRange className="h-3.5 w-3.5" />
+              Semana
+            </ToggleGroupItem>
+            <ToggleGroupItem value="meus" aria-label="Meus Leads" className="gap-1.5 text-xs data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+              <User className="h-3.5 w-3.5" />
+              Meus Leads
+            </ToggleGroupItem>
+          </ToggleGroup>
+          <Badge variant="outline" className="text-xs whitespace-nowrap">
+            {searchedLeads.length} / {filteredLeads.length}
+          </Badge>
+        </div>
 
         <div className="relative max-w-md w-full sm:w-auto sm:min-w-[280px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/70" />
