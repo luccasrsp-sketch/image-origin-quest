@@ -51,7 +51,7 @@ const DATE_RANGE_OPTIONS: { value: DateRange; label: string }[] = [
 
 const ACTIVITY_CONFIG = [
   { type: 'call', label: 'Ligações', icon: Phone, color: 'text-green-500', barColor: 'hsl(142, 76%, 36%)' },
-  { type: 'whatsapp', label: 'WhatsApp', icon: MessageSquare, color: 'text-emerald-500', barColor: 'hsl(160, 84%, 39%)' },
+  { type: 'whatsapp', label: 'WhatsApp', icon: MessageSquare, color: 'text-yellow-500', barColor: 'hsl(45, 93%, 47%)' },
   { type: 'meeting', label: 'Reuniões', icon: Calendar, color: 'text-violet-500', barColor: 'hsl(263, 70%, 50%)' },
   { type: 'email', label: 'E-mails', icon: Mail, color: 'text-blue-500', barColor: 'hsl(217, 91%, 60%)' },
 ];
