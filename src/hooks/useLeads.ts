@@ -61,21 +61,76 @@ export function useLeads() {
     setLoading(false);
   };
 
+  // Refetch silencioso (sem loading state) para sincronizar dados com relações
+  const silentRefetch = async () => {
+    const { data } = await supabase
+      .from('leads')
+      .select(`
+        *,
+        assigned_sdr:profiles!leads_assigned_sdr_id_fkey(*),
+        assigned_closer:profiles!leads_assigned_closer_id_fkey(*)
+      `)
+      .order('created_at', { ascending: false });
+
+    if (data) {
+      setLeads(data as Lead[]);
+    }
+  };
+
   useEffect(() => {
     fetchLeads();
 
-    // Subscribe to realtime changes
+    // Subscribe to realtime changes - atualiza localmente sem refetch completo
     const channel = supabase
       .channel('leads_changes')
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'INSERT',
           schema: 'public',
           table: 'leads',
         },
         () => {
-          fetchLeads();
+          // Novo lead adicionado - precisa refetch silencioso para trazer relações
+          silentRefetch();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'leads',
+        },
+        (payload) => {
+          // Atualiza apenas o lead modificado no estado local
+          setLeads(prev => {
+            const updated = payload.new as Lead;
+            const exists = prev.some(l => l.id === updated.id);
+            if (!exists) return prev;
+            return prev.map(l => 
+              l.id === updated.id 
+                ? { ...l, ...updated, assigned_sdr: l.assigned_sdr, assigned_closer: l.assigned_closer }
+                : l
+            );
+          });
+          // Se mudou assigned_sdr_id ou assigned_closer_id, refetch silencioso para atualizar relações
+          const old = leads.find(l => l.id === (payload.new as Lead).id);
+          if (old && (old.assigned_sdr_id !== (payload.new as Lead).assigned_sdr_id || 
+                      old.assigned_closer_id !== (payload.new as Lead).assigned_closer_id)) {
+            silentRefetch();
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'leads',
+        },
+        (payload) => {
+          setLeads(prev => prev.filter(l => l.id !== (payload.old as Lead).id));
         }
       )
       .subscribe();
