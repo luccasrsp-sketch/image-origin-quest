@@ -1,6 +1,7 @@
 import { useState, useRef, useMemo } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
-import { Search, X } from 'lucide-react';
+import { Search, X, CalendarDays, CalendarRange, User, LayoutGrid } from 'lucide-react';
+import { startOfDay, startOfWeek, isAfter } from 'date-fns';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { LeadCard } from '@/components/leads/LeadCard';
 import { LeadDetailDialog } from '@/components/leads/LeadDetailDialog';
@@ -19,6 +20,9 @@ import { Lead, LeadStatus, KANBAN_COLUMNS } from '@/types/crm';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+
+type LeadFilter = 'todos' | 'hoje' | 'semana' | 'meus';
 
 export default function KanbanPage() {
   const { leads, filteredLeads, loading, updateLeadStatus, moveToQualified, addNote, setNeedsScheduling, clearNeedsScheduling, saveProposal, saveSaleData, updateSaleStatus, markAsLost, changeLeadAssignment } = useLeads();
@@ -34,19 +38,47 @@ export default function KanbanPage() {
   const [lossLead, setLossLead] = useState<Lead | null>(null);
   const [coldAlertDismissed, setColdAlertDismissed] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeFilter, setActiveFilter] = useState<LeadFilter>('todos');
   const kanbanContainerRef = useRef<HTMLDivElement>(null);
+
+  // Filtra leads baseado no filtro ativo
+  const activeFilteredLeads = useMemo(() => {
+    const now = new Date();
+    
+    switch (activeFilter) {
+      case 'hoje': {
+        const todayStart = startOfDay(now);
+        return filteredLeads.filter(lead => 
+          isAfter(new Date(lead.created_at), todayStart)
+        );
+      }
+      case 'semana': {
+        const weekStart = startOfWeek(now, { weekStartsOn: 1 });
+        return filteredLeads.filter(lead => 
+          isAfter(new Date(lead.created_at), weekStart)
+        );
+      }
+      case 'meus':
+        return filteredLeads.filter(lead => 
+          lead.assigned_sdr_id === profile?.id || 
+          lead.assigned_closer_id === profile?.id
+        );
+      default:
+        return filteredLeads;
+    }
+  }, [filteredLeads, activeFilter, profile?.id]);
 
   // Filtra leads baseado na busca por nome ou e-mail
   const searchedLeads = useMemo(() => {
-    if (!searchQuery.trim()) return filteredLeads;
+    if (!searchQuery.trim()) return activeFilteredLeads;
     
     const query = searchQuery.toLowerCase().trim();
-    return filteredLeads.filter(lead => 
+    return activeFilteredLeads.filter(lead => 
       lead.full_name?.toLowerCase().includes(query) ||
       lead.email?.toLowerCase().includes(query) ||
       lead.company_name?.toLowerCase().includes(query)
     );
-  }, [filteredLeads, searchQuery]);
+  }, [activeFilteredLeads, searchQuery]);
 
   // Viewers podem apenas visualizar, não podem editar ou mover leads
   const canEdit = !isViewerOnly();
@@ -152,24 +184,50 @@ export default function KanbanPage() {
 
   return (
     <AppLayout title="CRM">
-      {/* Search bar */}
-      <div className="mb-4 relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/70" />
-        <Input
-          type="text"
-          placeholder="Buscar por nome, e-mail ou empresa..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 pr-10 bg-background/50 border-border text-white placeholder:text-white/50"
-        />
-        {searchQuery && (
-          <button
-            onClick={() => setSearchQuery('')}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        )}
+      {/* Filters and search */}
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <ToggleGroup 
+          type="single" 
+          value={activeFilter} 
+          onValueChange={(val) => val && setActiveFilter(val as LeadFilter)}
+          className="justify-start"
+        >
+          <ToggleGroupItem value="todos" aria-label="Todos" className="gap-1.5 text-xs data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+            <LayoutGrid className="h-3.5 w-3.5" />
+            Todos
+          </ToggleGroupItem>
+          <ToggleGroupItem value="hoje" aria-label="Hoje" className="gap-1.5 text-xs data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+            <CalendarDays className="h-3.5 w-3.5" />
+            Hoje
+          </ToggleGroupItem>
+          <ToggleGroupItem value="semana" aria-label="Semana" className="gap-1.5 text-xs data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+            <CalendarRange className="h-3.5 w-3.5" />
+            Semana
+          </ToggleGroupItem>
+          <ToggleGroupItem value="meus" aria-label="Meus Leads" className="gap-1.5 text-xs data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+            <User className="h-3.5 w-3.5" />
+            Meus Leads
+          </ToggleGroupItem>
+        </ToggleGroup>
+
+        <div className="relative max-w-md w-full sm:w-auto sm:min-w-[280px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/70" />
+          <Input
+            type="text"
+            placeholder="Buscar por nome, e-mail ou empresa..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 pr-10 bg-background/50 border-border text-white placeholder:text-white/50"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
       </div>
 
       <DragDropContext onDragEnd={handleDragEnd}>
