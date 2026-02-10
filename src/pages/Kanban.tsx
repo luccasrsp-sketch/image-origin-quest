@@ -210,9 +210,10 @@ export default function KanbanPage() {
               Meus Leads
             </ToggleGroupItem>
           </ToggleGroup>
-          <Badge variant="outline" className="text-xs whitespace-nowrap">
-            {searchedLeads.length} / {filteredLeads.length}
-          </Badge>
+          <span className="text-xs text-muted-foreground whitespace-nowrap">
+            Mostrando {searchedLeads.length} de {filteredLeads.length}
+            {activeFilter !== 'todos' && ` (${activeFilter === 'hoje' ? 'Hoje' : activeFilter === 'semana' ? 'Semana' : 'Meus Leads'})`}
+          </span>
         </div>
 
         <div className="relative max-w-md w-full sm:w-auto sm:min-w-[280px]">
