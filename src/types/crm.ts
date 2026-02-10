@@ -151,6 +151,7 @@ export interface LeadActivity {
   old_status?: LeadStatus;
   new_status?: LeadStatus;
   notes?: string;
+  activity_type?: string;
   created_at: string;
   user?: Profile;
 }

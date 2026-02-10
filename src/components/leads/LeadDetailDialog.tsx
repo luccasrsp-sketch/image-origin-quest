@@ -49,9 +49,10 @@ interface LeadDetailDialogProps {
   onAddNote?: (leadId: string, note: string) => Promise<boolean>;
   onMarkAsLost?: (lead: Lead) => void;
   onChangeAssignment?: (leadId: string, newUserId: string | null, type: 'sdr' | 'closer', newUserName: string, oldUserName?: string) => Promise<boolean>;
+  onAddActivity?: (leadId: string, activityType: string, note?: string) => Promise<boolean>;
 }
 
-export function LeadDetailDialog({ lead, open, onOpenChange, onStatusChange, onAddNote, onMarkAsLost, onChangeAssignment }: LeadDetailDialogProps) {
+export function LeadDetailDialog({ lead, open, onOpenChange, onStatusChange, onAddNote, onMarkAsLost, onChangeAssignment, onAddActivity }: LeadDetailDialogProps) {
   const { toast } = useToast();
   const { profile, isViewerOnly } = useAuth();
   const [newNote, setNewNote] = useState('');
@@ -62,7 +63,8 @@ export function LeadDetailDialog({ lead, open, onOpenChange, onStatusChange, onA
   const [teamMembers, setTeamMembers] = useState<(Profile & { roles: AppRole[] })[]>([]);
   const [selectedSdr, setSelectedSdr] = useState<string>('');
   const [selectedCloser, setSelectedCloser] = useState<string>('');
-  
+  const [activityNote, setActivityNote] = useState<string>('');
+  const [activeActivityType, setActiveActivityType] = useState<string | null>(null);
   // Viewers não podem editar
   const canEdit = !isViewerOnly();
 
@@ -367,6 +369,72 @@ export function LeadDetailDialog({ lead, open, onOpenChange, onStatusChange, onA
             )}
           </div>
 
+          {/* Ações Rápidas - botões de registro de atividade */}
+          {canEdit && onAddActivity && (
+            <div className="space-y-3">
+              <Label className="flex items-center gap-2">
+                <Phone className="h-4 w-4" />
+                Registrar Atividade
+              </Label>
+              <div className="flex gap-2 flex-wrap">
+                {[
+                  { type: 'call', icon: Phone, label: 'Ligação', color: 'text-green-600 hover:bg-green-50 border-green-200' },
+                  { type: 'whatsapp', icon: MessageSquare, label: 'WhatsApp', color: 'text-emerald-600 hover:bg-emerald-50 border-emerald-200' },
+                  { type: 'meeting', icon: Calendar, label: 'Reunião', color: 'text-violet-600 hover:bg-violet-50 border-violet-200' },
+                  { type: 'email', icon: Mail, label: 'E-mail', color: 'text-blue-600 hover:bg-blue-50 border-blue-200' },
+                ].map(({ type, icon: Icon, label, color }) => (
+                  <Button
+                    key={type}
+                    variant="outline"
+                    size="sm"
+                    className={`gap-1.5 ${color} ${activeActivityType === type ? 'ring-2 ring-offset-1' : ''}`}
+                    onClick={() => setActiveActivityType(activeActivityType === type ? null : type)}
+                    disabled={isSaving}
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    {label}
+                  </Button>
+                ))}
+              </div>
+              {activeActivityType && (
+                <div className="space-y-2">
+                  <Textarea
+                    value={activityNote}
+                    onChange={e => setActivityNote(e.target.value)}
+                    placeholder="Observação (opcional)..."
+                    rows={2}
+                    className="text-sm"
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      onClick={async () => {
+                        setIsSaving(true);
+                        const success = await onAddActivity(lead.id, activeActivityType, activityNote.trim() || undefined);
+                        if (success) {
+                          setActivityNote('');
+                          setActiveActivityType(null);
+                          await fetchActivities();
+                        }
+                        setIsSaving(false);
+                      }}
+                      disabled={isSaving}
+                    >
+                      Registrar
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => { setActiveActivityType(null); setActivityNote(''); }}
+                    >
+                      Cancelar
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Nova Observação - apenas para quem pode editar */}
           {canEdit && (
             <div className="space-y-2">
@@ -413,6 +481,15 @@ export function LeadDetailDialog({ lead, open, onOpenChange, onStatusChange, onA
                       {activity.action === 'status_change' && (
                         <p className="text-sm">
                           Alterou status de <strong>{STATUS_LABELS[activity.old_status!] || '-'}</strong> para <strong>{STATUS_LABELS[activity.new_status!]}</strong>
+                        </p>
+                      )}
+                      {activity.action === 'activity_logged' && (
+                        <p className="text-sm flex items-center gap-1.5">
+                          {activity.activity_type === 'call' && <Phone className="h-3 w-3 text-green-600" />}
+                          {activity.activity_type === 'whatsapp' && <MessageSquare className="h-3 w-3 text-emerald-600" />}
+                          {activity.activity_type === 'meeting' && <Calendar className="h-3 w-3 text-violet-600" />}
+                          {activity.activity_type === 'email' && <Mail className="h-3 w-3 text-blue-600" />}
+                          {activity.notes}
                         </p>
                       )}
                       {activity.action === 'note_added' && (
