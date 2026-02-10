@@ -25,7 +25,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 type LeadFilter = 'todos' | 'hoje' | 'semana' | 'meus';
 
 export default function KanbanPage() {
-  const { leads, filteredLeads, loading, updateLeadStatus, moveToQualified, addNote, setNeedsScheduling, clearNeedsScheduling, saveProposal, saveSaleData, updateSaleStatus, markAsLost, changeLeadAssignment } = useLeads();
+  const { leads, filteredLeads, loading, updateLeadStatus, moveToQualified, addNote, addActivity, setNeedsScheduling, clearNeedsScheduling, saveProposal, saveSaleData, updateSaleStatus, markAsLost, changeLeadAssignment } = useLeads();
   const { createEvent } = useCalendar();
   const { profile, isAdmin, isSDR, isCloser, isViewerOnly, viewingAs } = useAuth();
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
@@ -332,6 +332,7 @@ export default function KanbanPage() {
         onAddNote={addNote}
         onMarkAsLost={(lead) => setLossLead(lead)}
         onChangeAssignment={changeLeadAssignment}
+        onAddActivity={addActivity}
       />
 
       {/* Schedule meeting dialog */}

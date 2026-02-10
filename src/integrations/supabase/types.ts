@@ -360,6 +360,7 @@ export type Database = {
       lead_activities: {
         Row: {
           action: string
+          activity_type: string | null
           created_at: string
           id: string
           lead_id: string
@@ -370,6 +371,7 @@ export type Database = {
         }
         Insert: {
           action: string
+          activity_type?: string | null
           created_at?: string
           id?: string
           lead_id: string
@@ -380,6 +382,7 @@ export type Database = {
         }
         Update: {
           action?: string
+          activity_type?: string | null
           created_at?: string
           id?: string
           lead_id?: string

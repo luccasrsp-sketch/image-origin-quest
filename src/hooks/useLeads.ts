@@ -327,8 +327,54 @@ export function useLeads() {
         user_id: profile.id,
         action: 'note_added',
         notes: note,
+        activity_type: 'note',
       });
     }
+
+    fetchLeads();
+    return true;
+  };
+
+  const addActivity = async (leadId: string, activityType: string, note?: string) => {
+    if (!profile?.id) return false;
+
+    const activityLabels: Record<string, string> = {
+      call: 'Ligação realizada',
+      whatsapp: 'Mensagem WhatsApp enviada',
+      meeting: 'Reunião realizada',
+      email: 'E-mail enviado',
+    };
+
+    const label = activityLabels[activityType] || activityType;
+    const fullNote = note ? `${label}: ${note}` : label;
+
+    // Update last_contact_at
+    await supabase
+      .from('leads')
+      .update({ last_contact_at: new Date().toISOString() })
+      .eq('id', leadId);
+
+    const { error } = await supabase.from('lead_activities').insert({
+      lead_id: leadId,
+      user_id: profile.id,
+      action: 'activity_logged',
+      notes: fullNote,
+      activity_type: activityType,
+    });
+
+    if (error) {
+      toast({
+        title: 'Erro ao registrar atividade',
+        description: error.message,
+        variant: 'destructive',
+      });
+      return false;
+    }
+
+    toast({
+      title: 'Atividade registrada',
+      description: label,
+    });
 
     fetchLeads();
     return true;
@@ -651,6 +697,7 @@ export function useLeads() {
     assignLead,
     changeLeadAssignment,
     addNote,
+    addActivity,
     setNeedsScheduling,
     clearNeedsScheduling,
     saveProposal,
