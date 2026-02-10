@@ -1,4 +1,5 @@
 import { AppLayout } from '@/components/layout/AppLayout';
+import { ProductivityReport } from '@/components/reports/ProductivityReport';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useLeads } from '@/hooks/useLeads';
@@ -797,6 +798,9 @@ export default function RelatoriosPage() {
             </Card>
           </>
         )}
+
+        {/* Produtividade dos Vendedores */}
+        <ProductivityReport />
       </div>
     </AppLayout>
   );
