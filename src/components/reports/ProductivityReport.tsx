@@ -23,7 +23,7 @@ import {
   Activity,
   TrendingUp,
 } from 'lucide-react';
-import { format, subDays, startOfDay, endOfDay } from 'date-fns';
+import { format, subDays, startOfDay, endOfDay, startOfWeek, startOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 interface ActivityRecord {
@@ -36,9 +36,12 @@ interface ActivityRecord {
   user?: { full_name: string } | null;
 }
 
-type DateRange = '7d' | '15d' | '30d' | '60d' | '90d';
+type DateRange = 'today' | 'week' | 'month' | '7d' | '15d' | '30d' | '60d' | '90d';
 
 const DATE_RANGE_OPTIONS: { value: DateRange; label: string }[] = [
+  { value: 'today', label: 'Hoje' },
+  { value: 'week', label: 'Semana' },
+  { value: 'month', label: 'Mês' },
   { value: '7d', label: '7 dias' },
   { value: '15d', label: '15 dias' },
   { value: '30d', label: '30 dias' },
@@ -60,8 +63,31 @@ export function ProductivityReport() {
   const { team } = useTeam();
 
   const startDate = useMemo(() => {
+    if (dateRange === 'today') return startOfDay(new Date());
+    if (dateRange === 'week') return startOfWeek(new Date(), { locale: ptBR });
+    if (dateRange === 'month') return startOfMonth(new Date());
     const days = parseInt(dateRange);
     return subDays(new Date(), days);
+  }, [dateRange]);
+
+  const dateRangeLabel = useMemo(() => {
+    if (dateRange === 'today') return 'hoje';
+    if (dateRange === 'week') return 'esta semana';
+    if (dateRange === 'month') return 'este mês';
+    return `últimos ${dateRange.replace('d', '')} dias`;
+  }, [dateRange]);
+
+  const daysCount = useMemo(() => {
+    if (dateRange === 'today') return 1;
+    if (dateRange === 'week') {
+      const now = new Date();
+      return Math.max(1, Math.ceil((now.getTime() - startOfWeek(now, { locale: ptBR }).getTime()) / (1000 * 60 * 60 * 24)) + 1);
+    }
+    if (dateRange === 'month') {
+      const now = new Date();
+      return Math.max(1, Math.ceil((now.getTime() - startOfMonth(now).getTime()) / (1000 * 60 * 60 * 24)) + 1);
+    }
+    return parseInt(dateRange);
   }, [dateRange]);
 
   useEffect(() => {
@@ -156,7 +182,7 @@ export function ProductivityReport() {
                 <CardContent>
                   <div className="text-2xl font-bold">{(totals as any)[type]}</div>
                   <p className="text-xs text-muted-foreground">
-                    {((totals as any)[type] / Math.max(parseInt(dateRange), 1)).toFixed(1)}/dia
+                    {((totals as any)[type] / Math.max(daysCount, 1)).toFixed(1)}/dia
                   </p>
                 </CardContent>
               </Card>
@@ -169,7 +195,7 @@ export function ProductivityReport() {
               <CardContent>
                 <div className="text-2xl font-bold">{totals.total}</div>
                 <p className="text-xs text-muted-foreground">
-                  {(totals.total / Math.max(parseInt(dateRange), 1)).toFixed(1)}/dia
+                  {(totals.total / Math.max(daysCount, 1)).toFixed(1)}/dia
                 </p>
               </CardContent>
             </Card>
@@ -181,7 +207,7 @@ export function ProductivityReport() {
               <CardHeader>
                 <CardTitle>Atividades por Vendedor</CardTitle>
                 <CardDescription>
-                  Últimos {dateRange.replace('d', '')} dias — {format(startDate, "dd 'de' MMMM", { locale: ptBR })} a {format(new Date(), "dd 'de' MMMM", { locale: ptBR })}
+                  {dateRangeLabel} — {format(startDate, "dd 'de' MMMM", { locale: ptBR })} a {format(new Date(), "dd 'de' MMMM", { locale: ptBR })}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -263,7 +289,7 @@ export function ProductivityReport() {
             <Card>
               <CardContent className="py-12 text-center text-muted-foreground">
                 <Activity className="h-8 w-8 mx-auto mb-3 opacity-50" />
-                <p>Nenhuma atividade registrada nos últimos {dateRange.replace('d', '')} dias.</p>
+                <p>Nenhuma atividade registrada {dateRangeLabel}.</p>
                 <p className="text-xs mt-1">As atividades são registradas pelos vendedores nos detalhes de cada lead.</p>
               </CardContent>
             </Card>
