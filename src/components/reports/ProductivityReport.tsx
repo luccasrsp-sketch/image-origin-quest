@@ -158,7 +158,7 @@ export function ProductivityReport() {
               key={opt.value}
               variant={dateRange === opt.value ? 'default' : 'outline'}
               size="sm"
-              className="text-xs h-7 px-2.5"
+              className={`text-xs h-7 px-2.5 ${dateRange === opt.value ? 'text-primary-foreground' : 'text-foreground'}`}
               onClick={() => setDateRange(opt.value)}
             >
               {opt.label}
