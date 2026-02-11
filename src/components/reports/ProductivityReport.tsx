@@ -92,7 +92,7 @@ export function ProductivityReport() {
 
   useEffect(() => {
     fetchActivities();
-  }, [startDate]);
+  }, [dateRange]);
 
   const fetchActivities = async () => {
     setLoading(true);
