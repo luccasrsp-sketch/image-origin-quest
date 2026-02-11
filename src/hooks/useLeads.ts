@@ -140,9 +140,11 @@ export function useLeads() {
     };
   }, []);
 
-  // Função para obter o próximo closer via round-robin
-  const getNextCloser = async (): Promise<string | null> => {
-    const { data, error } = await supabase.rpc('get_next_closer');
+  // Função para obter o próximo closer via round-robin, excluindo opcionalmente um profile
+  const getNextCloser = async (excludeProfileId?: string): Promise<string | null> => {
+    const { data, error } = await supabase.rpc('get_next_closer', {
+      _exclude_profile_id: excludeProfileId || null,
+    });
     
     if (error) {
       console.error('Error getting next closer:', error);
@@ -221,8 +223,8 @@ export function useLeads() {
     const lead = leads.find(l => l.id === leadId);
     const oldStatus = lead?.status;
 
-    // Buscar próximo closer via round-robin
-    const nextCloserId = await getNextCloser();
+    // Buscar próximo closer via round-robin, excluindo o SDR do lead para evitar duplicidade
+    const nextCloserId = await getNextCloser(lead?.assigned_sdr_id || undefined);
     
     if (!nextCloserId) {
       toast({
