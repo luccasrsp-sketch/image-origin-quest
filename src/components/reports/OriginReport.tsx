@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Lead } from '@/types/crm';
 import { CalendarEvent } from '@/types/crm';
+import { subDays, isAfter } from 'date-fns';
 import {
   BarChart,
   Bar,
@@ -30,6 +31,7 @@ interface OriginReportProps {
 }
 
 type UtmDimension = 'utm_source' | 'utm_medium' | 'utm_campaign';
+type PeriodFilter = 7 | 30 | 60 | 90;
 
 const DIMENSION_OPTIONS: { value: UtmDimension; label: string }[] = [
   { value: 'utm_source', label: 'Fonte' },
@@ -37,8 +39,24 @@ const DIMENSION_OPTIONS: { value: UtmDimension; label: string }[] = [
   { value: 'utm_campaign', label: 'Campanha' },
 ];
 
+const PERIOD_OPTIONS: { value: PeriodFilter; label: string }[] = [
+  { value: 7, label: 'Últimos 7 dias' },
+  { value: 30, label: 'Últimos 30 dias' },
+  { value: 60, label: 'Últimos 60 dias' },
+  { value: 90, label: 'Últimos 90 dias' },
+];
+
 export function OriginReport({ leads, events }: OriginReportProps) {
   const [dimension, setDimension] = useState<UtmDimension>('utm_source');
+  const [period, setPeriod] = useState<PeriodFilter>(30);
+
+  const filteredLeads = useMemo(() => {
+    const cutoffDate = subDays(new Date(), period);
+    return leads.filter(lead => {
+      const leadDate = new Date(lead.created_at);
+      return isAfter(leadDate, cutoffDate);
+    });
+  }, [leads, period]);
 
   const originData = useMemo(() => {
     const grouped: Record<string, {
@@ -50,7 +68,7 @@ export function OriginReport({ leads, events }: OriginReportProps) {
       leadIds: string[];
     }> = {};
 
-    leads.forEach(lead => {
+    filteredLeads.forEach(lead => {
       const origin = lead[dimension] || 'Direto / Sem UTM';
 
       if (!grouped[origin]) {
@@ -78,7 +96,7 @@ export function OriginReport({ leads, events }: OriginReportProps) {
     });
 
     return Object.values(grouped).sort((a, b) => b.leads - a.leads);
-  }, [leads, dimension]);
+  }, [filteredLeads, dimension]);
 
   const totals = useMemo(() => {
     return originData.reduce(
@@ -97,25 +115,46 @@ export function OriginReport({ leads, events }: OriginReportProps) {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Globe className="h-5 w-5 text-primary" />
-          <h2 className="text-xl font-semibold">Relatório por Origem</h2>
-          <Badge variant="secondary">{originData.length} origens</Badge>
+      {/* Header and Filters */}
+      <div className="space-y-3">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Globe className="h-5 w-5 text-primary" />
+            <h2 className="text-xl font-semibold">Relatório por Origem</h2>
+            <Badge variant="secondary">{originData.length} origens</Badge>
+          </div>
+          <div className="flex gap-1.5">
+            {DIMENSION_OPTIONS.map(opt => (
+              <Button
+                key={opt.value}
+                variant={dimension === opt.value ? 'default' : 'outline'}
+                size="sm"
+                className={`text-xs h-7 px-2.5 ${dimension === opt.value ? 'text-primary-foreground' : 'text-foreground'}`}
+                onClick={() => setDimension(opt.value)}
+              >
+                {opt.label}
+              </Button>
+            ))}
+          </div>
         </div>
-        <div className="flex gap-1.5">
-          {DIMENSION_OPTIONS.map(opt => (
-            <Button
-              key={opt.value}
-              variant={dimension === opt.value ? 'default' : 'outline'}
-              size="sm"
-              className={`text-xs h-7 px-2.5 ${dimension === opt.value ? 'text-primary-foreground' : 'text-foreground'}`}
-              onClick={() => setDimension(opt.value)}
-            >
-              {opt.label}
-            </Button>
-          ))}
+
+        {/* Period Filter */}
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-muted-foreground">Período:</span>
+          <div className="flex gap-1.5">
+            {PERIOD_OPTIONS.map(opt => (
+              <Button
+                key={opt.value}
+                variant={period === opt.value ? 'default' : 'outline'}
+                size="sm"
+                className={`text-xs h-7 px-2.5 ${period === opt.value ? 'text-primary-foreground' : 'text-foreground'}`}
+                onClick={() => setPeriod(opt.value)}
+              >
+                {opt.label}
+              </Button>
+            ))}
+          </div>
         </div>
       </div>
 
