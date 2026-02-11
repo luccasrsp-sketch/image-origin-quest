@@ -150,8 +150,8 @@ export function CrmAssistant() {
   };
 
   return (
-    <Card className="border-accent/20 bg-gradient-to-br from-accent/5 to-accent/10">
-      <CardHeader className="pb-3 bg-gradient-to-r from-accent/10 to-transparent">
+    <Card className="border-warning/20 bg-gradient-to-br from-warning/5 to-warning/10">
+      <CardHeader className="pb-3 bg-gradient-to-r from-warning/10 to-transparent">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
