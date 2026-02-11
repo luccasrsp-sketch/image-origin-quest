@@ -22,7 +22,8 @@ import {
   Calendar,
   DollarSign,
   TrendingUp,
-  ArrowUpRight,
+  ShieldCheck,
+  XCircle,
 } from 'lucide-react';
 
 interface OriginReportProps {
@@ -63,8 +64,10 @@ export function OriginReport({ leads, events }: OriginReportProps) {
       name: string;
       leads: number;
       atendimentos: number;
+      qualificados: number;
       reunioes: number;
       vendas: number;
+      perdidos: number;
       leadIds: string[];
     }> = {};
 
@@ -72,26 +75,32 @@ export function OriginReport({ leads, events }: OriginReportProps) {
       const origin = lead[dimension] || 'Direto / Sem UTM';
 
       if (!grouped[origin]) {
-        grouped[origin] = { name: origin, leads: 0, atendimentos: 0, reunioes: 0, vendas: 0, leadIds: [] };
+        grouped[origin] = { name: origin, leads: 0, atendimentos: 0, qualificados: 0, reunioes: 0, vendas: 0, perdidos: 0, leadIds: [] };
       }
 
       grouped[origin].leads++;
       grouped[origin].leadIds.push(lead.id);
 
-      // Atendimento = any status beyond sem_atendimento
       if (lead.status !== 'sem_atendimento') {
         grouped[origin].atendimentos++;
       }
 
-      // Reunião = passed through reuniao_marcada or beyond
+      const qualificadoStatuses = ['qualificado', 'follow_up', 'reuniao_marcada', 'envio_proposta', 'vendido'];
+      if (qualificadoStatuses.includes(lead.status)) {
+        grouped[origin].qualificados++;
+      }
+
       const reuniaoStatuses = ['reuniao_marcada', 'envio_proposta', 'vendido'];
       if (reuniaoStatuses.includes(lead.status)) {
         grouped[origin].reunioes++;
       }
 
-      // Venda
       if (lead.status === 'vendido') {
         grouped[origin].vendas++;
+      }
+
+      if (lead.status === 'perdido') {
+        grouped[origin].perdidos++;
       }
     });
 
@@ -103,10 +112,12 @@ export function OriginReport({ leads, events }: OriginReportProps) {
       (acc, row) => ({
         leads: acc.leads + row.leads,
         atendimentos: acc.atendimentos + row.atendimentos,
+        qualificados: acc.qualificados + row.qualificados,
         reunioes: acc.reunioes + row.reunioes,
         vendas: acc.vendas + row.vendas,
+        perdidos: acc.perdidos + row.perdidos,
       }),
-      { leads: 0, atendimentos: 0, reunioes: 0, vendas: 0 }
+      { leads: 0, atendimentos: 0, qualificados: 0, reunioes: 0, vendas: 0, perdidos: 0 }
     );
   }, [originData]);
 
@@ -159,7 +170,7 @@ export function OriginReport({ leads, events }: OriginReportProps) {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Leads</CardTitle>
@@ -167,43 +178,57 @@ export function OriginReport({ leads, events }: OriginReportProps) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totals.leads}</div>
-            <p className="text-xs text-muted-foreground">{originData.length} origens distintas</p>
+            <p className="text-xs text-muted-foreground">{originData.length} origens</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Atendimentos</CardTitle>
-            <Phone className="h-4 w-4 text-blue-500" />
+            <Phone className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totals.atendimentos}</div>
-            <p className="text-xs text-muted-foreground">
-              {conversionRate(totals.leads, totals.atendimentos)} de conversão
-            </p>
+            <p className="text-xs text-muted-foreground">{conversionRate(totals.leads, totals.atendimentos)}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Qualificados</CardTitle>
+            <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totals.qualificados}</div>
+            <p className="text-xs text-muted-foreground">{conversionRate(totals.atendimentos, totals.qualificados)} dos atendidos</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Reuniões</CardTitle>
-            <Calendar className="h-4 w-4 text-violet-500" />
+            <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totals.reunioes}</div>
-            <p className="text-xs text-muted-foreground">
-              {conversionRate(totals.atendimentos, totals.reunioes)} dos atendidos
-            </p>
+            <p className="text-xs text-muted-foreground">{conversionRate(totals.qualificados, totals.reunioes)} dos qualificados</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Vendas</CardTitle>
-            <DollarSign className="h-4 w-4 text-green-500" />
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totals.vendas}</div>
-            <p className="text-xs text-muted-foreground">
-              {conversionRate(totals.leads, totals.vendas)} conversão geral
-            </p>
+            <p className="text-xs text-muted-foreground">{conversionRate(totals.leads, totals.vendas)} conv. geral</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Perdidos</CardTitle>
+            <XCircle className="h-4 w-4 text-destructive" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totals.perdidos}</div>
+            <p className="text-xs text-muted-foreground">{conversionRate(totals.leads, totals.perdidos)} do total</p>
           </CardContent>
         </Card>
       </div>
@@ -214,7 +239,7 @@ export function OriginReport({ leads, events }: OriginReportProps) {
           <CardHeader>
             <CardTitle>Funil por Origem</CardTitle>
             <CardDescription>
-              Leads → Atendimentos → Reuniões → Vendas por {DIMENSION_OPTIONS.find(d => d.value === dimension)?.label.toLowerCase()}
+              Leads → Atendimentos → Qualificados → Reuniões → Vendas | Perdidos por {DIMENSION_OPTIONS.find(d => d.value === dimension)?.label.toLowerCase()}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -233,8 +258,10 @@ export function OriginReport({ leads, events }: OriginReportProps) {
                 <Legend />
                 <Bar dataKey="leads" name="Leads" fill="hsl(var(--muted-foreground))" radius={0} />
                 <Bar dataKey="atendimentos" name="Atendimentos" fill="hsl(199, 89%, 48%)" radius={0} />
+                <Bar dataKey="qualificados" name="Qualificados" fill="hsl(45, 93%, 47%)" radius={0} />
                 <Bar dataKey="reunioes" name="Reuniões" fill="hsl(263, 70%, 50%)" radius={0} />
                 <Bar dataKey="vendas" name="Vendas" fill="hsl(142, 76%, 36%)" radius={0} />
+                <Bar dataKey="perdidos" name="Perdidos" fill="hsl(var(--destructive))" radius={0} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -261,20 +288,32 @@ export function OriginReport({ leads, events }: OriginReportProps) {
                     </th>
                     <th className="text-center py-2 px-3 font-medium">
                       <div className="flex items-center justify-center gap-1">
-                        <Phone className="h-3.5 w-3.5 text-blue-500" />
-                        <span className="hidden sm:inline">Atendimentos</span>
+                        <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span className="hidden sm:inline">Atend.</span>
                       </div>
                     </th>
                     <th className="text-center py-2 px-3 font-medium">
                       <div className="flex items-center justify-center gap-1">
-                        <Calendar className="h-3.5 w-3.5 text-violet-500" />
+                        <ShieldCheck className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span className="hidden sm:inline">Qualif.</span>
+                      </div>
+                    </th>
+                    <th className="text-center py-2 px-3 font-medium">
+                      <div className="flex items-center justify-center gap-1">
+                        <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
                         <span className="hidden sm:inline">Reuniões</span>
                       </div>
                     </th>
                     <th className="text-center py-2 px-3 font-medium">
                       <div className="flex items-center justify-center gap-1">
-                        <DollarSign className="h-3.5 w-3.5 text-green-500" />
+                        <DollarSign className="h-3.5 w-3.5 text-muted-foreground" />
                         <span className="hidden sm:inline">Vendas</span>
+                      </div>
+                    </th>
+                    <th className="text-center py-2 px-3 font-medium">
+                      <div className="flex items-center justify-center gap-1">
+                        <XCircle className="h-3.5 w-3.5 text-destructive" />
+                        <span className="hidden sm:inline">Perdidos</span>
                       </div>
                     </th>
                     <th className="text-center py-2 px-3 font-medium">
@@ -292,22 +331,19 @@ export function OriginReport({ leads, events }: OriginReportProps) {
                       <td className="text-center py-2.5 px-3">{row.leads}</td>
                       <td className="text-center py-2.5 px-3">
                         {row.atendimentos}
-                        <span className="text-xs text-muted-foreground ml-1">
-                          ({conversionRate(row.leads, row.atendimentos)})
-                        </span>
+                        <span className="text-xs text-muted-foreground ml-1">({conversionRate(row.leads, row.atendimentos)})</span>
+                      </td>
+                      <td className="text-center py-2.5 px-3">
+                        {row.qualificados}
+                        <span className="text-xs text-muted-foreground ml-1">({conversionRate(row.atendimentos, row.qualificados)})</span>
                       </td>
                       <td className="text-center py-2.5 px-3">
                         {row.reunioes}
-                        <span className="text-xs text-muted-foreground ml-1">
-                          ({conversionRate(row.atendimentos, row.reunioes)})
-                        </span>
+                        <span className="text-xs text-muted-foreground ml-1">({conversionRate(row.qualificados, row.reunioes)})</span>
                       </td>
-                      <td className="text-center py-2.5 px-3">
-                        {row.vendas}
-                      </td>
-                      <td className="text-center py-2.5 px-3 font-bold">
-                        {conversionRate(row.leads, row.vendas)}
-                      </td>
+                      <td className="text-center py-2.5 px-3">{row.vendas}</td>
+                      <td className="text-center py-2.5 px-3 text-destructive">{row.perdidos}</td>
+                      <td className="text-center py-2.5 px-3 font-bold">{conversionRate(row.leads, row.vendas)}</td>
                     </tr>
                   ))}
                   {/* Totals */}
@@ -316,17 +352,18 @@ export function OriginReport({ leads, events }: OriginReportProps) {
                     <td className="text-center py-2.5 px-3">{totals.leads}</td>
                     <td className="text-center py-2.5 px-3">
                       {totals.atendimentos}
-                      <span className="text-xs text-muted-foreground ml-1 font-normal">
-                        ({conversionRate(totals.leads, totals.atendimentos)})
-                      </span>
+                      <span className="text-xs text-muted-foreground ml-1 font-normal">({conversionRate(totals.leads, totals.atendimentos)})</span>
+                    </td>
+                    <td className="text-center py-2.5 px-3">
+                      {totals.qualificados}
+                      <span className="text-xs text-muted-foreground ml-1 font-normal">({conversionRate(totals.atendimentos, totals.qualificados)})</span>
                     </td>
                     <td className="text-center py-2.5 px-3">
                       {totals.reunioes}
-                      <span className="text-xs text-muted-foreground ml-1 font-normal">
-                        ({conversionRate(totals.atendimentos, totals.reunioes)})
-                      </span>
+                      <span className="text-xs text-muted-foreground ml-1 font-normal">({conversionRate(totals.qualificados, totals.reunioes)})</span>
                     </td>
                     <td className="text-center py-2.5 px-3">{totals.vendas}</td>
+                    <td className="text-center py-2.5 px-3 text-destructive">{totals.perdidos}</td>
                     <td className="text-center py-2.5 px-3">{conversionRate(totals.leads, totals.vendas)}</td>
                   </tr>
                 </tbody>
