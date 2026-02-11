@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.tv-dashboard-public]
 verify_jwt = false
+
+[functions.crm-assistant]
+verify_jwt = false
