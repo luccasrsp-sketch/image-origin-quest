@@ -32,7 +32,7 @@ interface OriginReportProps {
 }
 
 type UtmDimension = 'utm_source' | 'utm_medium' | 'utm_campaign';
-type PeriodFilter = 7 | 30 | 60 | 90;
+type PeriodFilter = 'today' | 7 | 30 | 60 | 90;
 
 const DIMENSION_OPTIONS: { value: UtmDimension; label: string }[] = [
   { value: 'utm_source', label: 'Fonte' },
@@ -41,6 +41,7 @@ const DIMENSION_OPTIONS: { value: UtmDimension; label: string }[] = [
 ];
 
 const PERIOD_OPTIONS: { value: PeriodFilter; label: string }[] = [
+  { value: 'today', label: 'Hoje' },
   { value: 7, label: 'Últimos 7 dias' },
   { value: 30, label: 'Últimos 30 dias' },
   { value: 60, label: 'Últimos 60 dias' },
@@ -52,7 +53,15 @@ export function OriginReport({ leads, events }: OriginReportProps) {
   const [period, setPeriod] = useState<PeriodFilter>(30);
 
   const filteredLeads = useMemo(() => {
-    const cutoffDate = subDays(new Date(), period);
+    if (period === 'today') {
+      const today = new Date();
+      const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      return leads.filter(lead => {
+        const leadDate = new Date(lead.created_at);
+        return leadDate >= startOfToday;
+      });
+    }
+    const cutoffDate = subDays(new Date(), period as number);
     return leads.filter(lead => {
       const leadDate = new Date(lead.created_at);
       return isAfter(leadDate, cutoffDate);
