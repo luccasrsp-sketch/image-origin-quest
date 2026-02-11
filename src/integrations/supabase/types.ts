@@ -834,7 +834,9 @@ export type Database = {
     }
     Functions: {
       get_current_profile_id: { Args: never; Returns: string }
-      get_next_closer: { Args: never; Returns: string }
+      get_next_closer:
+        | { Args: never; Returns: string }
+        | { Args: { _exclude_profile_id?: string }; Returns: string }
       get_team_sales_totals: {
         Args: never
         Returns: {
