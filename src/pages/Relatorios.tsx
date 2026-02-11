@@ -1,6 +1,7 @@
 import { AppLayout } from '@/components/layout/AppLayout';
 import { ProductivityReport } from '@/components/reports/ProductivityReport';
 import { OriginReport } from '@/components/reports/OriginReport';
+import { CrmAssistant } from '@/components/reports/CrmAssistant';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useLeads } from '@/hooks/useLeads';
@@ -799,6 +800,9 @@ export default function RelatoriosPage() {
             </Card>
           </>
         )}
+
+        {/* Assistente IA do Funil */}
+        <CrmAssistant />
 
         {/* Relatório por Origem (UTM) */}
         <OriginReport leads={leads} events={events} />
