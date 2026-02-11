@@ -59,7 +59,7 @@ const ACTIVITY_CONFIG = [
 export function ProductivityReport() {
   const [activities, setActivities] = useState<ActivityRecord[]>([]);
   const [loading, setLoading] = useState(true);
-  const [dateRange, setDateRange] = useState<DateRange>('30d');
+  const [dateRange, setDateRange] = useState<DateRange>('today');
   const { team } = useTeam();
 
   const startDate = useMemo(() => {
