@@ -223,10 +223,29 @@ export function useLeads() {
     const lead = leads.find(l => l.id === leadId);
     const oldStatus = lead?.status;
 
-    // Buscar próximo closer via round-robin, excluindo o SDR do lead para evitar duplicidade
-    const nextCloserId = await getNextCloser(lead?.assigned_sdr_id || undefined);
-    
-    if (!nextCloserId) {
+    let assignedCloserId: string | null = null;
+    let assignmentNote = '';
+
+    // Regra especial: se o SDR do lead também é Closer, ele assume como Closer diretamente
+    if (lead?.assigned_sdr_id) {
+      const { data: sdrIsCloser } = await supabase.rpc('is_closer_profile', {
+        profile_id: lead.assigned_sdr_id,
+      });
+
+      if (sdrIsCloser) {
+        // SDR também é Closer → ele fica com o lead no funil inteiro
+        assignedCloserId = lead.assigned_sdr_id;
+        assignmentNote = 'SDR também é Closer — lead mantido com o mesmo responsável';
+      }
+    }
+
+    // Se o SDR não é Closer, usar round-robin (excluindo o SDR)
+    if (!assignedCloserId) {
+      assignedCloserId = await getNextCloser(lead?.assigned_sdr_id || undefined);
+      assignmentNote = 'Lead atribuído automaticamente ao closer (round-robin)';
+    }
+
+    if (!assignedCloserId) {
       toast({
         title: 'Erro',
         description: 'Não há closers disponíveis para atribuição.',
@@ -239,7 +258,7 @@ export function useLeads() {
     setLeads(prevLeads => 
       prevLeads.map(l => 
         l.id === leadId 
-          ? { ...l, status: 'qualificado' as LeadStatus, assigned_closer_id: nextCloserId, last_contact_at: new Date().toISOString() }
+          ? { ...l, status: 'qualificado' as LeadStatus, assigned_closer_id: assignedCloserId!, last_contact_at: new Date().toISOString() }
           : l
       )
     );
@@ -248,7 +267,7 @@ export function useLeads() {
       .from('leads')
       .update({
         status: 'qualificado',
-        assigned_closer_id: nextCloserId,
+        assigned_closer_id: assignedCloserId,
         last_contact_at: new Date().toISOString(),
       })
       .eq('id', leadId);
@@ -278,14 +297,14 @@ export function useLeads() {
         action: 'status_change',
         old_status: oldStatus,
         new_status: 'qualificado',
-        notes: `Lead atribuído automaticamente ao closer (round-robin)`,
+        notes: assignmentNote,
       });
     }
 
     // Fetch para atualizar os dados do closer atribuído
     fetchLeads();
 
-    return { success: true, closerId: nextCloserId };
+    return { success: true, closerId: assignedCloserId };
   };
 
   const assignLead = async (leadId: string, userId: string, type: 'sdr' | 'closer') => {
