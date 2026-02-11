@@ -203,6 +203,9 @@ export default function RelatoriosPage() {
   return (
     <AppLayout title="Relatórios">
       <div className="space-y-6">
+        {/* Assistente IA do Funil */}
+        <CrmAssistant />
+
         {/* KPI Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
@@ -800,9 +803,6 @@ export default function RelatoriosPage() {
             </Card>
           </>
         )}
-
-        {/* Assistente IA do Funil */}
-        <CrmAssistant />
 
         {/* Relatório por Origem (UTM) */}
         <OriginReport leads={leads} events={events} />
