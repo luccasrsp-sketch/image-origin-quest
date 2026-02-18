@@ -1,6 +1,6 @@
 import { useState, useRef, useMemo } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
-import { Search, X, CalendarDays, CalendarRange, User, LayoutGrid } from 'lucide-react';
+import { Search, X, CalendarDays, CalendarRange, User, LayoutGrid, Download } from 'lucide-react';
 import { startOfDay, startOfWeek, isAfter } from 'date-fns';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { LeadCard } from '@/components/leads/LeadCard';
@@ -21,8 +21,32 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 type LeadFilter = 'todos' | 'hoje' | 'semana' | 'meus';
+
+const downloadColumnAsCSV = (leads: Lead[], columnTitle: string) => {
+  const headers = ['Nome', 'Empresa', 'Email', 'Telefone', 'Produto Proposta', 'Valor Proposta', 'Criado em', 'Último contato'];
+  const rows = leads.map(l => [
+    l.full_name,
+    l.company_name,
+    l.email || '',
+    l.phone,
+    l.proposal_product || '',
+    l.proposal_value ? l.proposal_value.toString() : '',
+    new Date(l.created_at).toLocaleDateString('pt-BR'),
+    l.last_contact_at ? new Date(l.last_contact_at).toLocaleDateString('pt-BR') : '',
+  ]);
+  const csv = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `leads-${columnTitle.toLowerCase().replace(/\s+/g, '-')}-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+};
 
 export default function KanbanPage() {
   const { leads, filteredLeads, loading, updateLeadStatus, moveToQualified, addNote, addActivity, setNeedsScheduling, clearNeedsScheduling, saveProposal, saveSaleData, updateSaleStatus, markAsLost, changeLeadAssignment } = useLeads();
@@ -256,9 +280,26 @@ export default function KanbanPage() {
                 <div className={`rounded-t-lg p-3 ${column.color} border border-b-0`}>
                   <div className="flex items-center justify-between">
                     <h3 className="font-semibold text-sm">{column.title}</h3>
-                    <Badge variant="secondary" className="text-xs">
-                      {columnLeads.length}
-                    </Badge>
+                    <div className="flex items-center gap-1.5">
+                      {isAdmin() && columnLeads.length > 0 && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => downloadColumnAsCSV(columnLeads, column.title)}
+                            >
+                              <Download className="h-3.5 w-3.5" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Baixar lista em CSV</TooltipContent>
+                        </Tooltip>
+                      )}
+                      <Badge variant="secondary" className="text-xs">
+                        {columnLeads.length}
+                      </Badge>
+                    </div>
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
                     {column.roles.includes('sdr') && column.roles.includes('closer') ? 'SDR / Closer' : column.roles.includes('sdr') ? 'SDR' : 'Closer'}
