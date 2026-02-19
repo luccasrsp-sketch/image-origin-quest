@@ -27,7 +27,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 type LeadFilter = 'todos' | 'hoje' | 'semana' | 'meus';
 
 const downloadColumnAsCSV = (leads: Lead[], columnTitle: string) => {
-  const headers = ['Nome', 'Empresa', 'Email', 'Telefone', 'Produto Proposta', 'Valor Proposta', 'Criado em', 'Último contato'];
+  const headers = ['Nome', 'Empresa', 'Email', 'Telefone', 'Produto Proposta', 'Valor Proposta', 'Criado em', 'Último contato', 'UTM Source', 'UTM Medium', 'UTM Campaign', 'UTM Content', 'UTM Term'];
   const rows = leads.map(l => [
     l.full_name,
     l.company_name,
@@ -37,6 +37,11 @@ const downloadColumnAsCSV = (leads: Lead[], columnTitle: string) => {
     l.proposal_value ? l.proposal_value.toString() : '',
     new Date(l.created_at).toLocaleDateString('pt-BR'),
     l.last_contact_at ? new Date(l.last_contact_at).toLocaleDateString('pt-BR') : '',
+    l.utm_source || '',
+    l.utm_medium || '',
+    l.utm_campaign || '',
+    l.utm_content || '',
+    l.utm_term || '',
   ]);
   const csv = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
   const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
