@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Users, TrendingUp, Calendar, Clock, DollarSign, Target, AlertCircle, Phone, FileText } from 'lucide-react';
+import { Users, TrendingUp, Calendar, Clock, DollarSign, Target, AlertCircle, Phone, FileText, Download } from 'lucide-react';
 import { useLeads } from '@/hooks/useLeads';
 import { useCalendar } from '@/hooks/useCalendar';
 import { useAuth } from '@/contexts/AuthContext';
@@ -12,6 +12,7 @@ import { STATUS_LABELS, PROPOSAL_PRODUCTS } from '@/types/crm';
 import { Button } from '@/components/ui/button';
 import { DailyReportDialog } from '@/components/reports/DailyReportDialog';
 import { DailyVerse } from '@/components/dashboard/DailyVerse';
+import { downloadAdvancedLeadsCSV } from '@/utils/downloadAdvancedLeads';
 import {
   BarChart,
   Bar,
@@ -103,13 +104,23 @@ export default function Dashboard() {
               }
             </p>
           </div>
-          <Button 
-            onClick={() => setReportOpen(true)} 
-            className="gap-2 bg-primary hover:bg-primary/90 w-full sm:w-auto touch-manipulation min-h-[44px]"
-          >
-            <FileText className="h-4 w-4" />
-            Relatório Simples
-          </Button>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <Button 
+              onClick={() => setReportOpen(true)} 
+              className="gap-2 bg-primary hover:bg-primary/90 flex-1 sm:flex-initial touch-manipulation min-h-[44px]"
+            >
+              <FileText className="h-4 w-4" />
+              Relatório Simples
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={() => downloadAdvancedLeadsCSV()} 
+              className="gap-2 flex-1 sm:flex-initial touch-manipulation min-h-[44px]"
+            >
+              <Download className="h-4 w-4" />
+              Leads Avançados CSV
+            </Button>
+          </div>
         </div>
 
         {/* Daily Verse */}
