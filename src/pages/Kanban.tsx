@@ -286,7 +286,7 @@ export default function KanbanPage() {
                   <div className="flex items-center justify-between">
                     <h3 className="font-semibold text-sm">{column.title}</h3>
                     <div className="flex items-center gap-1.5">
-                      {isAdmin() && columnLeads.length > 0 && (
+                      {columnLeads.length > 0 && (
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
