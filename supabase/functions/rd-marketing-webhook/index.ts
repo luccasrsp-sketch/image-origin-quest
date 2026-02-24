@@ -172,31 +172,31 @@ Deno.serve(async (req) => {
     
     const results: { success: boolean; lead_id?: string; email?: string; error?: string }[] = []
 
-    // Buscar SDRs disponíveis para distribuição randômica
-    const { data: sdrs, error: sdrsError } = await supabase
+    // Buscar Closers disponíveis para distribuição randômica
+    const { data: closers, error: closersError } = await supabase
       .from('user_roles')
       .select('user_id')
-      .eq('role', 'sdr')
+      .eq('role', 'closer')
 
-    if (sdrsError) {
-      console.error('Error fetching SDRs:', sdrsError)
+    if (closersError) {
+      console.error('Error fetching Closers:', closersError)
     }
 
     // Mapear user_id para profile_id
-    let sdrProfileIds: string[] = []
-    if (sdrs && sdrs.length > 0) {
-      const userIds = sdrs.map(s => s.user_id)
+    let closerProfileIds: string[] = []
+    if (closers && closers.length > 0) {
+      const userIds = closers.map(s => s.user_id)
       const { data: profiles } = await supabase
         .from('profiles')
         .select('id, user_id')
         .in('user_id', userIds)
       
       if (profiles) {
-        sdrProfileIds = profiles.map(p => p.id)
+        closerProfileIds = profiles.map(p => p.id)
       }
     }
 
-    console.log('SDRs disponíveis para distribuição:', sdrProfileIds.length)
+    console.log('Closers disponíveis para distribuição:', closerProfileIds.length)
 
     for (const leadData of leadsArray) {
       // Extract email from various possible locations
@@ -286,12 +286,12 @@ Deno.serve(async (req) => {
       const utmMedium = conversionOrigin.medium ? sanitizeText(conversionOrigin.medium, 100) : null
       const utmCampaign = conversionOrigin.campaign ? sanitizeText(conversionOrigin.campaign, 100) : null
 
-      // Selecionar SDR aleatório para atribuição automática
-      let assignedSdrId: string | null = null
-      if (sdrProfileIds.length > 0) {
-        const randomIndex = Math.floor(Math.random() * sdrProfileIds.length)
-        assignedSdrId = sdrProfileIds[randomIndex]
-        console.log('Lead atribuído ao SDR:', assignedSdrId)
+      // Selecionar Closer aleatório para atribuição automática
+      let assignedCloserId: string | null = null
+      if (closerProfileIds.length > 0) {
+        const randomIndex = Math.floor(Math.random() * closerProfileIds.length)
+        assignedCloserId = closerProfileIds[randomIndex]
+        console.log('Lead atribuído ao Closer:', assignedCloserId)
       }
 
       // Create lead in CRM with validated data
@@ -308,7 +308,7 @@ Deno.serve(async (req) => {
           utm_source: utmSource,
           utm_medium: utmMedium,
           utm_campaign: utmCampaign,
-          assigned_sdr_id: assignedSdrId,
+          assigned_closer_id: assignedCloserId,
           notes: conversionIdentifier 
             ? `Origem: RD Marketing - ${conversionIdentifier}` 
             : 'Origem: RD Marketing',
@@ -322,7 +322,7 @@ Deno.serve(async (req) => {
         continue
       }
 
-      console.log('Lead created successfully:', newLead.id, 'assigned to SDR:', assignedSdrId)
+      console.log('Lead created successfully:', newLead.id, 'assigned to Closer:', assignedCloserId)
       results.push({ success: true, lead_id: newLead.id, email })
     }
 
