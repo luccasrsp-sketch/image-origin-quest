@@ -109,6 +109,9 @@ export interface Lead {
   // Loss fields
   loss_reason?: string;
   lost_at?: string;
+  // Registration origin details
+  numero_de_franquias?: number;
+  seu_negocio_e_uma_franquia?: string;
   // Joined fields
   assigned_sdr?: Profile;
   assigned_closer?: Profile;
