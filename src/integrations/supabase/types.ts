@@ -433,6 +433,7 @@ export type Database = {
           monthly_revenue: number | null
           needs_scheduling: boolean | null
           notes: string | null
+          numero_de_franquias: number | null
           phone: string
           proposal_follow_up_at: string | null
           proposal_payment_method: string | null
@@ -450,6 +451,7 @@ export type Database = {
           sale_payment_received: boolean | null
           sale_remaining_value: number | null
           scheduling_pending_reason: string | null
+          seu_negocio_e_uma_franquia: string | null
           specialty: string | null
           status: Database["public"]["Enums"]["lead_status"]
           updated_at: string
@@ -476,6 +478,7 @@ export type Database = {
           monthly_revenue?: number | null
           needs_scheduling?: boolean | null
           notes?: string | null
+          numero_de_franquias?: number | null
           phone: string
           proposal_follow_up_at?: string | null
           proposal_payment_method?: string | null
@@ -493,6 +496,7 @@ export type Database = {
           sale_payment_received?: boolean | null
           sale_remaining_value?: number | null
           scheduling_pending_reason?: string | null
+          seu_negocio_e_uma_franquia?: string | null
           specialty?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
           updated_at?: string
@@ -519,6 +523,7 @@ export type Database = {
           monthly_revenue?: number | null
           needs_scheduling?: boolean | null
           notes?: string | null
+          numero_de_franquias?: number | null
           phone?: string
           proposal_follow_up_at?: string | null
           proposal_payment_method?: string | null
@@ -536,6 +541,7 @@ export type Database = {
           sale_payment_received?: boolean | null
           sale_remaining_value?: number | null
           scheduling_pending_reason?: string | null
+          seu_negocio_e_uma_franquia?: string | null
           specialty?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
           updated_at?: string

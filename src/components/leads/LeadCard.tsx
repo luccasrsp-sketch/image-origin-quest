@@ -168,6 +168,22 @@ export function LeadCard({ lead, onClick, onViewSale, onUpdateSaleStatus, onMark
             <span>{lead.phone}</span>
           </div>
           
+          {/* Detalhes de origem do cadastro */}
+          <div className="pt-1.5 mt-1.5 border-t border-border/50 space-y-0.5 text-xs text-muted-foreground">
+            <div className="flex justify-between">
+              <span>Faturamento:</span>
+              <span className="font-medium">{lead.monthly_revenue ? lead.monthly_revenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 'N/I'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Nº Franquias:</span>
+              <span className="font-medium">{lead.numero_de_franquias ?? 'N/I'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>É franquia?</span>
+              <span className="font-medium">{lead.seu_negocio_e_uma_franquia || 'N/I'}</span>
+            </div>
+          </div>
+          
           {/* Datas para leads vendidos */}
           {isVendido && (
             <div className="pt-2 mt-2 border-t border-success/30 space-y-1">
