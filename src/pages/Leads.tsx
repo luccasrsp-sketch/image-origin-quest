@@ -19,11 +19,12 @@ export default function LeadsPage() {
 
   const filteredLeads = newLeads.filter(lead => {
     const search = searchTerm.toLowerCase();
+    const searchDigits = search.replace(/\D/g, '');
     return (
       lead.full_name.toLowerCase().includes(search) ||
       lead.email.toLowerCase().includes(search) ||
       lead.company_name.toLowerCase().includes(search) ||
-      lead.phone.includes(search)
+      (searchDigits && lead.phone.replace(/\D/g, '').includes(searchDigits))
     );
   });
 
