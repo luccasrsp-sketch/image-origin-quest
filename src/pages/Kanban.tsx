@@ -105,7 +105,8 @@ export default function KanbanPage() {
     return activeFilteredLeads.filter(lead => 
       lead.full_name?.toLowerCase().includes(query) ||
       lead.email?.toLowerCase().includes(query) ||
-      lead.company_name?.toLowerCase().includes(query)
+      lead.company_name?.toLowerCase().includes(query) ||
+      lead.phone?.includes(query)
     );
   }, [activeFilteredLeads, searchQuery]);
 
@@ -249,7 +250,7 @@ export default function KanbanPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/70" />
           <Input
             type="text"
-            placeholder="Buscar por nome, e-mail ou empresa..."
+            placeholder="Buscar por nome, e-mail, empresa ou telefone..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10 pr-10 bg-background/50 border-border text-white placeholder:text-white/50"
