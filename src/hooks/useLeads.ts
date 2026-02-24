@@ -18,23 +18,38 @@ export function useLeads() {
     return leads.filter(lead => lead.company === selectedCompany);
   }, [leads, selectedCompany]);
 
-  // Retorna leads filtrados baseado no viewingAs (já filtrados por empresa)
+  // Retorna leads filtrados baseado no papel do usuário e viewingAs (já filtrados por empresa)
   const getFilteredLeads = () => {
     // Viewers veem todos os leads da empresa (apenas visualização)
     if (isViewerOnly()) return companyFilteredLeads;
     
-    if (!viewingAs) return companyFilteredLeads; // Admin vê tudo da empresa
+    // Admin sem viewingAs vê tudo da empresa
+    if (isAdmin() && !viewingAs) return companyFilteredLeads;
     
-    // Filtra leads pelo membro sendo visualizado
+    // Se admin está usando viewingAs, filtra pelo membro sendo visualizado
+    if (viewingAs) {
+      return companyFilteredLeads.filter(lead => {
+        if (viewingAs.roles.includes('sdr')) {
+          return lead.assigned_sdr_id === viewingAs.id || 
+                 (!lead.assigned_sdr_id && !lead.assigned_closer_id) ||
+                 lead.status === 'sem_atendimento' || lead.status === 'nao_atendeu';
+        }
+        if (viewingAs.roles.includes('closer')) {
+          return lead.assigned_closer_id === viewingAs.id;
+        }
+        return false;
+      });
+    }
+    
+    // SDR/Closer sem viewingAs: só vê leads atribuídos a si + leads sem atendimento
+    const myProfileId = profile?.id;
+    if (!myProfileId) return companyFilteredLeads;
+    
     return companyFilteredLeads.filter(lead => {
-      if (viewingAs.roles.includes('sdr')) {
-        return lead.assigned_sdr_id === viewingAs.id || 
-               (!lead.assigned_sdr_id && !lead.assigned_closer_id);
-      }
-      if (viewingAs.roles.includes('closer')) {
-        return lead.assigned_closer_id === viewingAs.id;
-      }
-      return false;
+      // Leads sem atendimento e não atendeu são visíveis para todos
+      if (lead.status === 'sem_atendimento' || lead.status === 'nao_atendeu') return true;
+      // Leads atribuídos ao usuário como SDR ou Closer
+      return lead.assigned_sdr_id === myProfileId || lead.assigned_closer_id === myProfileId;
     });
   };
 
