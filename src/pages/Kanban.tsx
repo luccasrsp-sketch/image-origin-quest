@@ -102,11 +102,12 @@ export default function KanbanPage() {
     if (!searchQuery.trim()) return activeFilteredLeads;
     
     const query = searchQuery.toLowerCase().trim();
+    const queryDigits = query.replace(/\D/g, '');
     return activeFilteredLeads.filter(lead => 
       lead.full_name?.toLowerCase().includes(query) ||
       lead.email?.toLowerCase().includes(query) ||
       lead.company_name?.toLowerCase().includes(query) ||
-      lead.phone?.includes(query)
+      (queryDigits && lead.phone?.replace(/\D/g, '').includes(queryDigits))
     );
   }, [activeFilteredLeads, searchQuery]);
 
