@@ -870,6 +870,16 @@ export type Database = {
       }
       is_closer_profile: { Args: { profile_id: string }; Returns: boolean }
       is_viewer_only: { Args: { _user_id: string }; Returns: boolean }
+      transfer_lead_assignment: {
+        Args: {
+          _assignment_type: string
+          _lead_id: string
+          _new_profile_id: string
+          _new_user_name?: string
+          _old_user_name?: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "sdr" | "closer" | "admin" | "viewer"

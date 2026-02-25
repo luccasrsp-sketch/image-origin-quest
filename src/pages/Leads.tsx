@@ -10,12 +10,12 @@ import { Search, Users, AlertCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function LeadsPage() {
-  const { leads, loading, changeLeadAssignment, updateLeadStatus, addNote, addActivity } = useLeads();
+  const { filteredLeads: roleFilteredLeads, loading, changeLeadAssignment, updateLeadStatus, addNote, addActivity } = useLeads();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
 
-  // Filter only new leads (sem_atendimento)
-  const newLeads = leads.filter(l => l.status === 'sem_atendimento');
+  // Filter only new leads (sem_atendimento) from the filtered (role-aware) leads
+  const newLeads = roleFilteredLeads.filter(l => l.status === 'sem_atendimento');
 
   const filteredLeads = newLeads.filter(lead => {
     const search = searchTerm.toLowerCase();

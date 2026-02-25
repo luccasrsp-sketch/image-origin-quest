@@ -88,10 +88,13 @@ export default function KanbanPage() {
         );
       }
       case 'meus':
-        return filteredLeads.filter(lead => 
-          lead.assigned_sdr_id === profile?.id || 
-          lead.assigned_closer_id === profile?.id
-        );
+        return filteredLeads.filter(lead => {
+          // Mostra apenas leads REALMENTE atribuídos ao usuário logado
+          // Exclui leads sem_atendimento/nao_atendeu que não estão atribuídos a ele
+          const isAssignedToMe = lead.assigned_sdr_id === profile?.id || 
+                                 lead.assigned_closer_id === profile?.id;
+          return isAssignedToMe;
+        });
       default:
         return filteredLeads;
     }

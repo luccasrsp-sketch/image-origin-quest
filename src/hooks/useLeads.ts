@@ -348,7 +348,7 @@ export function useLeads() {
     return true;
   };
 
-  // Função para alterar responsável com registro no histórico
+  // Função para alterar responsável com registro no histórico (via RPC SECURITY DEFINER)
   const changeLeadAssignment = async (
     leadId: string, 
     newUserId: string | null, 
@@ -356,13 +356,15 @@ export function useLeads() {
     newUserName: string,
     oldUserName?: string
   ) => {
-    const field = type === 'sdr' ? 'assigned_sdr_id' : 'assigned_closer_id';
     const roleName = type === 'sdr' ? 'SDR' : 'Closer';
     
-    const { error } = await supabase
-      .from('leads')
-      .update({ [field]: newUserId })
-      .eq('id', leadId);
+    const { error } = await supabase.rpc('transfer_lead_assignment', {
+      _lead_id: leadId,
+      _new_profile_id: newUserId,
+      _assignment_type: type,
+      _new_user_name: newUserName,
+      _old_user_name: oldUserName || null,
+    });
 
     if (error) {
       toast({
@@ -371,20 +373,6 @@ export function useLeads() {
         variant: 'destructive',
       });
       return false;
-    }
-
-    // Log activity - registrar a mudança de responsável
-    if (profile?.id) {
-      const noteText = oldUserName 
-        ? `${roleName} alterado de "${oldUserName}" para "${newUserName}"`
-        : `${roleName} atribuído: ${newUserName}`;
-      
-      await supabase.from('lead_activities').insert({
-        lead_id: leadId,
-        user_id: profile.id,
-        action: 'note_added',
-        notes: noteText,
-      });
     }
 
     toast({
