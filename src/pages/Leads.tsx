@@ -17,7 +17,7 @@ export default function LeadsPage() {
   // Filter only new leads (sem_atendimento) from the filtered (role-aware) leads
   const newLeads = roleFilteredLeads.filter(l => l.status === 'sem_atendimento');
 
-  const filteredLeads = newLeads.filter(lead => {
+  const searchFilteredLeads = newLeads.filter(lead => {
     const search = searchTerm.toLowerCase();
     const searchDigits = search.replace(/\D/g, '');
     return (
@@ -76,7 +76,7 @@ export default function LeadsPage() {
         )}
 
         {/* Empty state */}
-        {!loading && filteredLeads.length === 0 && (
+        {!loading && searchFilteredLeads.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
               <AlertCircle className="h-8 w-8 text-muted-foreground" />
@@ -94,9 +94,9 @@ export default function LeadsPage() {
         )}
 
         {/* Leads grid */}
-        {!loading && filteredLeads.length > 0 && (
+        {!loading && searchFilteredLeads.length > 0 && (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {filteredLeads.map(lead => (
+            {searchFilteredLeads.map(lead => (
               <LeadCard
                 key={lead.id}
                 lead={lead}
