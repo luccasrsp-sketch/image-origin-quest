@@ -263,30 +263,64 @@ Deno.serve(async (req) => {
       // Parse monthly revenue if provided
       let monthlyRevenue: number | null = null
       const revenueStr = leadData.custom_fields?.['Faturamento Mensal'] || 
+                        leadData.custom_fields?.['Faturamento mensal'] ||
                         leadData.custom_fields?.['cf_faturamento_mensal'] ||
                         conversionContent.cf_faturamento_mensal ||
                         conversionContent['Faturamento Mensal'] ||
+                        conversionContent['Faturamento mensal'] ||
                         conversionContent.faturamento_mensal
       if (revenueStr) {
-        const numericValue = parseFloat(String(revenueStr).replace(/[^\d.,]/g, '').replace(',', '.'))
-        if (!isNaN(numericValue) && numericValue > 0 && numericValue < 1000000000) {
-          monthlyRevenue = numericValue
+        // Handle formats like "10,000", "60 mil", "R$ 50.000,00"
+        let cleanStr = String(revenueStr).trim().toLowerCase()
+        // Handle "mil" suffix (e.g. "60 mil" → 60000)
+        const milMatch = cleanStr.match(/^[\d.,]+\s*mil/)
+        if (milMatch) {
+          const baseVal = parseFloat(cleanStr.replace(/[^\d.,]/g, '').replace(',', '.'))
+          if (!isNaN(baseVal) && baseVal > 0 && baseVal < 1000000) {
+            monthlyRevenue = baseVal * 1000
+          }
+        } else {
+          // Handle "10,000" or "50.000,00" - remove dots as thousand sep, comma as decimal
+          let numStr = cleanStr.replace(/[^\d.,]/g, '')
+          // If format is "10,000" (comma as thousand separator) or "50.000,00" (BR format)
+          if (numStr.includes(',') && numStr.includes('.')) {
+            // BR format: 50.000,00
+            numStr = numStr.replace(/\./g, '').replace(',', '.')
+          } else if (numStr.includes(',')) {
+            // Could be "10,000" (EN thousand) or "10,5" (BR decimal)
+            const parts = numStr.split(',')
+            if (parts[1] && parts[1].length === 3) {
+              // Thousand separator: 10,000
+              numStr = numStr.replace(',', '')
+            } else {
+              // Decimal: 10,5
+              numStr = numStr.replace(',', '.')
+            }
+          }
+          const numericValue = parseFloat(numStr)
+          if (!isNaN(numericValue) && numericValue > 0 && numericValue < 1000000000) {
+            monthlyRevenue = numericValue
+          }
         }
+        console.log('Revenue parsed:', revenueStr, '->', monthlyRevenue)
       }
 
       // Parse numero de franquias
       let numeroDeFranquias: number | null = null
       const franquiasStr = leadData.custom_fields?.['Número de Franquias'] ||
+                          leadData.custom_fields?.['Numero de Franquias'] ||
                           leadData.custom_fields?.['numero_de_franquias'] ||
                           leadData.custom_fields?.['cf_numero_de_franquias'] ||
                           conversionContent.cf_numero_de_franquias ||
                           conversionContent['Número de Franquias'] ||
+                          conversionContent['Numero de Franquias'] ||
                           conversionContent.numero_de_franquias
       if (franquiasStr) {
         const numVal = parseInt(String(franquiasStr).replace(/\D/g, ''), 10)
         if (!isNaN(numVal) && numVal > 0 && numVal < 100000) {
           numeroDeFranquias = numVal
         }
+        console.log('Franquias parsed:', franquiasStr, '->', numeroDeFranquias)
       }
 
       // Parse "seu negócio é uma franquia?"
