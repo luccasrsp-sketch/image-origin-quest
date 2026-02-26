@@ -263,12 +263,42 @@ Deno.serve(async (req) => {
       // Parse monthly revenue if provided
       let monthlyRevenue: number | null = null
       const revenueStr = leadData.custom_fields?.['Faturamento Mensal'] || 
-                        conversionContent.cf_faturamento_mensal
+                        leadData.custom_fields?.['cf_faturamento_mensal'] ||
+                        conversionContent.cf_faturamento_mensal ||
+                        conversionContent['Faturamento Mensal'] ||
+                        conversionContent.faturamento_mensal
       if (revenueStr) {
         const numericValue = parseFloat(String(revenueStr).replace(/[^\d.,]/g, '').replace(',', '.'))
         if (!isNaN(numericValue) && numericValue > 0 && numericValue < 1000000000) {
           monthlyRevenue = numericValue
         }
+      }
+
+      // Parse numero de franquias
+      let numeroDeFranquias: number | null = null
+      const franquiasStr = leadData.custom_fields?.['Número de Franquias'] ||
+                          leadData.custom_fields?.['numero_de_franquias'] ||
+                          leadData.custom_fields?.['cf_numero_de_franquias'] ||
+                          conversionContent.cf_numero_de_franquias ||
+                          conversionContent['Número de Franquias'] ||
+                          conversionContent.numero_de_franquias
+      if (franquiasStr) {
+        const numVal = parseInt(String(franquiasStr).replace(/\D/g, ''), 10)
+        if (!isNaN(numVal) && numVal > 0 && numVal < 100000) {
+          numeroDeFranquias = numVal
+        }
+      }
+
+      // Parse "seu negócio é uma franquia?"
+      let seuNegocioFranquia: string | null = null
+      const franquiaField = leadData.custom_fields?.['Seu negócio é uma franquia?'] ||
+                           leadData.custom_fields?.['seu_negocio_e_uma_franquia'] ||
+                           leadData.custom_fields?.['cf_seu_negocio_e_uma_franquia'] ||
+                           conversionContent.cf_seu_negocio_e_uma_franquia ||
+                           conversionContent['Seu negócio é uma franquia?'] ||
+                           conversionContent.seu_negocio_e_uma_franquia
+      if (franquiaField) {
+        seuNegocioFranquia = sanitizeText(String(franquiaField), 50)
       }
 
       // Determine funnel type based on conversion identifier
@@ -303,6 +333,8 @@ Deno.serve(async (req) => {
           phone: phone || '',
           company_name: companyName,
           monthly_revenue: monthlyRevenue,
+          numero_de_franquias: numeroDeFranquias,
+          seu_negocio_e_uma_franquia: seuNegocioFranquia,
           funnel_type: funnelType,
           status: 'sem_atendimento',
           utm_source: utmSource,
