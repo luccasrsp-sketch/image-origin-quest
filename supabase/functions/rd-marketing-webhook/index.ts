@@ -349,6 +349,8 @@ Deno.serve(async (req) => {
       const utmSource = conversionOrigin.source ? sanitizeText(conversionOrigin.source, 100) : null
       const utmMedium = conversionOrigin.medium ? sanitizeText(conversionOrigin.medium, 100) : null
       const utmCampaign = conversionOrigin.campaign ? sanitizeText(conversionOrigin.campaign, 100) : null
+      const utmContent = conversionOrigin.content ? sanitizeText(conversionOrigin.content, 100) : null
+      const utmTerm = conversionOrigin.term ? sanitizeText(conversionOrigin.term, 100) : null
 
       // Selecionar Closer aleatório para atribuição automática
       let assignedCloserId: string | null = null
@@ -374,6 +376,8 @@ Deno.serve(async (req) => {
           utm_source: utmSource,
           utm_medium: utmMedium,
           utm_campaign: utmCampaign,
+          utm_content: utmContent,
+          utm_term: utmTerm,
           assigned_closer_id: assignedCloserId,
           notes: conversionIdentifier 
             ? `Origem: RD Marketing - ${conversionIdentifier}` 
