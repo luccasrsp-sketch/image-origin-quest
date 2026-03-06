@@ -72,6 +72,25 @@ export default function KanbanPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<LeadFilter>('todos');
   const kanbanContainerRef = useRef<HTMLDivElement>(null);
+  const [selectedSellerId, setSelectedSellerId] = useState<string>('todos');
+  const [teamMembers, setTeamMembers] = useState<Profile[]>([]);
+
+  // Master admins que podem ver o filtro por vendedor
+  const MASTER_ADMIN_NAMES = ['lucas domingos', 'bruno lima corrêa', 'bruno lima correa'];
+  const isMasterAdmin = profile?.full_name && MASTER_ADMIN_NAMES.includes(profile.full_name.toLowerCase());
+
+  // Busca membros da equipe para o filtro (apenas para master admins)
+  useEffect(() => {
+    if (!isMasterAdmin) return;
+    const fetchMembers = async () => {
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('full_name');
+      if (profiles) setTeamMembers(profiles as Profile[]);
+    };
+    fetchMembers();
+  }, [isMasterAdmin]);
 
   // Filtra leads baseado no filtro ativo
   const activeFilteredLeads = useMemo(() => {
