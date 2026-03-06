@@ -276,9 +276,29 @@ export default function KanbanPage() {
               Meus Leads
             </ToggleGroupItem>
           </ToggleGroup>
+          
+          {/* Filtro por vendedor - apenas para master admins */}
+          {isMasterAdmin && (
+            <Select value={selectedSellerId} onValueChange={setSelectedSellerId}>
+              <SelectTrigger className="w-[180px] h-8 text-xs bg-background/50 border-border">
+                <Users className="h-3.5 w-3.5 mr-1.5" />
+                <SelectValue placeholder="Vendedor" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos os vendedores</SelectItem>
+                {teamMembers.map(member => (
+                  <SelectItem key={member.id} value={member.id}>
+                    {member.full_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
           <span className="text-xs text-muted-foreground whitespace-nowrap">
             Mostrando {searchedLeads.length} de {filteredLeads.length}
             {activeFilter !== 'todos' && ` (${activeFilter === 'hoje' ? 'Hoje' : activeFilter === 'semana' ? 'Semana' : 'Meus Leads'})`}
+            {selectedSellerId !== 'todos' && ` • ${teamMembers.find(m => m.id === selectedSellerId)?.full_name || ''}`}
           </span>
         </div>
 
