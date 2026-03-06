@@ -1,6 +1,6 @@
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
-import { Search, X, CalendarDays, CalendarRange, User, LayoutGrid, Download } from 'lucide-react';
+import { Search, X, CalendarDays, CalendarRange, User, LayoutGrid, Download, Users } from 'lucide-react';
 import { startOfDay, startOfWeek, isAfter } from 'date-fns';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { LeadCard } from '@/components/leads/LeadCard';
@@ -23,6 +23,9 @@ import { Input } from '@/components/ui/input';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { supabase } from '@/integrations/supabase/client';
+import { Profile } from '@/types/crm';
 
 type LeadFilter = 'todos' | 'hoje' | 'semana' | 'meus';
 
