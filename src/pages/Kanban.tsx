@@ -1,6 +1,6 @@
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
-import { Search, X, CalendarDays, CalendarRange, User, LayoutGrid, Download } from 'lucide-react';
+import { Search, X, CalendarDays, CalendarRange, User, LayoutGrid, Download, Users } from 'lucide-react';
 import { startOfDay, startOfWeek, isAfter } from 'date-fns';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { LeadCard } from '@/components/leads/LeadCard';
@@ -23,6 +23,9 @@ import { Input } from '@/components/ui/input';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { supabase } from '@/integrations/supabase/client';
+import { Profile } from '@/types/crm';
 
 type LeadFilter = 'todos' | 'hoje' | 'semana' | 'meus';
 
@@ -69,6 +72,25 @@ export default function KanbanPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<LeadFilter>('todos');
   const kanbanContainerRef = useRef<HTMLDivElement>(null);
+  const [selectedSellerId, setSelectedSellerId] = useState<string>('todos');
+  const [teamMembers, setTeamMembers] = useState<Profile[]>([]);
+
+  // Master admins que podem ver o filtro por vendedor
+  const MASTER_ADMIN_NAMES = ['lucas domingos', 'bruno lima corrêa', 'bruno lima correa'];
+  const isMasterAdmin = profile?.full_name && MASTER_ADMIN_NAMES.includes(profile.full_name.toLowerCase());
+
+  // Busca membros da equipe para o filtro (apenas para master admins)
+  useEffect(() => {
+    if (!isMasterAdmin) return;
+    const fetchMembers = async () => {
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('full_name');
+      if (profiles) setTeamMembers(profiles as Profile[]);
+    };
+    fetchMembers();
+  }, [isMasterAdmin]);
 
   // Filtra leads baseado no filtro ativo
   const activeFilteredLeads = useMemo(() => {
@@ -102,17 +124,27 @@ export default function KanbanPage() {
 
   // Filtra leads baseado na busca por nome ou e-mail
   const searchedLeads = useMemo(() => {
-    if (!searchQuery.trim()) return activeFilteredLeads;
+    let result = activeFilteredLeads;
+
+    // Filtro por vendedor (master admins)
+    if (selectedSellerId && selectedSellerId !== 'todos') {
+      result = result.filter(lead =>
+        lead.assigned_sdr_id === selectedSellerId ||
+        lead.assigned_closer_id === selectedSellerId
+      );
+    }
+
+    if (!searchQuery.trim()) return result;
     
     const query = searchQuery.toLowerCase().trim();
     const queryDigits = query.replace(/\D/g, '');
-    return activeFilteredLeads.filter(lead => 
+    return result.filter(lead => 
       lead.full_name?.toLowerCase().includes(query) ||
       lead.email?.toLowerCase().includes(query) ||
       lead.company_name?.toLowerCase().includes(query) ||
       (queryDigits && lead.phone?.replace(/\D/g, '').includes(queryDigits))
     );
-  }, [activeFilteredLeads, searchQuery]);
+  }, [activeFilteredLeads, searchQuery, selectedSellerId]);
 
   // Viewers podem apenas visualizar, não podem editar ou mover leads
   const canEdit = !isViewerOnly();
@@ -244,9 +276,29 @@ export default function KanbanPage() {
               Meus Leads
             </ToggleGroupItem>
           </ToggleGroup>
+          
+          {/* Filtro por vendedor - apenas para master admins */}
+          {isMasterAdmin && (
+            <Select value={selectedSellerId} onValueChange={setSelectedSellerId}>
+              <SelectTrigger className="w-[180px] h-8 text-xs bg-background/50 border-border">
+                <Users className="h-3.5 w-3.5 mr-1.5" />
+                <SelectValue placeholder="Vendedor" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos os vendedores</SelectItem>
+                {teamMembers.map(member => (
+                  <SelectItem key={member.id} value={member.id}>
+                    {member.full_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
           <span className="text-xs text-muted-foreground whitespace-nowrap">
             Mostrando {searchedLeads.length} de {filteredLeads.length}
             {activeFilter !== 'todos' && ` (${activeFilter === 'hoje' ? 'Hoje' : activeFilter === 'semana' ? 'Semana' : 'Meus Leads'})`}
+            {selectedSellerId !== 'todos' && ` • ${teamMembers.find(m => m.id === selectedSellerId)?.full_name || ''}`}
           </span>
         </div>
 
