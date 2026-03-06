@@ -124,17 +124,27 @@ export default function KanbanPage() {
 
   // Filtra leads baseado na busca por nome ou e-mail
   const searchedLeads = useMemo(() => {
-    if (!searchQuery.trim()) return activeFilteredLeads;
+    let result = activeFilteredLeads;
+
+    // Filtro por vendedor (master admins)
+    if (selectedSellerId && selectedSellerId !== 'todos') {
+      result = result.filter(lead =>
+        lead.assigned_sdr_id === selectedSellerId ||
+        lead.assigned_closer_id === selectedSellerId
+      );
+    }
+
+    if (!searchQuery.trim()) return result;
     
     const query = searchQuery.toLowerCase().trim();
     const queryDigits = query.replace(/\D/g, '');
-    return activeFilteredLeads.filter(lead => 
+    return result.filter(lead => 
       lead.full_name?.toLowerCase().includes(query) ||
       lead.email?.toLowerCase().includes(query) ||
       lead.company_name?.toLowerCase().includes(query) ||
       (queryDigits && lead.phone?.replace(/\D/g, '').includes(queryDigits))
     );
-  }, [activeFilteredLeads, searchQuery]);
+  }, [activeFilteredLeads, searchQuery, selectedSellerId]);
 
   // Viewers podem apenas visualizar, não podem editar ou mover leads
   const canEdit = !isViewerOnly();
